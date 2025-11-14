@@ -1,9 +1,8 @@
-
 import 'package:flutter/material.dart';
-import 'package:myapp/app/theme.dart';
-import 'package:myapp/screens/dashboard_screen.dart';
 import 'package:provider/provider.dart';
 
+import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/app/app_router.dart';
 
 void main() {
   runApp(
@@ -30,16 +29,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp(
-          title: 'Project Management App',
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: themeProvider.themeMode,
-          home: const DashboardScreen(),
-        );
-      },
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    return MaterialApp.router(
+      title: 'Project Management App',
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: themeProvider.themeMode,
+      routerConfig: router,
     );
   }
 }
