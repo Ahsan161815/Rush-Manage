@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:myapp/screens/dashboard_screen.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 import 'package:myapp/app/app_theme.dart';
@@ -88,7 +89,14 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 40),
                   GradientButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DashboardScreen(),
+                        ),
+                      );
+                    },
                     text: 'Log in',
                     isLoading: false,
                   ),

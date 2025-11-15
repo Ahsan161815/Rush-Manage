@@ -6,6 +6,9 @@ import 'package:myapp/screens/welcome_screen.dart';
 import 'package:myapp/screens/forgot_password_screen.dart';
 import 'package:myapp/screens/verify_email_screen.dart';
 import 'package:myapp/screens/reset_new_password_screen.dart';
+import 'package:myapp/screens/dashboard_screen.dart';
+import 'package:myapp/screens/create_project_screen.dart';
+import 'package:myapp/screens/project_detail_screen.dart';
 
 final GoRouter router = GoRouter(
   routes: <RouteBase>[
@@ -27,7 +30,7 @@ final GoRouter router = GoRouter(
         return const RegistrationScreen();
       },
     ),
-     GoRoute(
+    GoRoute(
       path: '/forgot-password',
       builder: (BuildContext context, GoRouterState state) {
         return const ForgotPasswordScreen();
@@ -43,6 +46,25 @@ final GoRouter router = GoRouter(
       path: '/reset-new-password',
       builder: (BuildContext context, GoRouterState state) {
         return const ResetNewPasswordScreen();
+      },
+    ),
+    GoRoute(
+      path: '/projects',
+      builder: (BuildContext context, GoRouterState state) {
+        return const DashboardScreen();
+      },
+    ),
+    GoRoute(
+      path: '/projects/create',
+      builder: (BuildContext context, GoRouterState state) {
+        return const CreateProjectScreen();
+      },
+    ),
+    GoRoute(
+      path: '/projects/:id',
+      builder: (BuildContext context, GoRouterState state) {
+        final id = state.pathParameters['id'] ?? '';
+        return ProjectDetailScreen(projectId: id);
       },
     ),
   ],

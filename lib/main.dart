@@ -3,27 +3,26 @@ import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/app_router.dart';
+import 'package:myapp/controllers/dashboard_controller.dart';
+import 'package:myapp/controllers/project_controller.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => DashboardController()),
+        ChangeNotifierProvider(create: (context) => ProjectController()),
+      ],
       child: const MyApp(),
     ),
   );
 }
 
 class ThemeProvider with ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => ThemeMode.light;
 
-  ThemeMode get themeMode => _themeMode;
-
-  void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light
-        ? ThemeMode.dark
-        : ThemeMode.light;
-    notifyListeners();
-  }
+  void toggleTheme() {}
 }
 
 class MyApp extends StatelessWidget {

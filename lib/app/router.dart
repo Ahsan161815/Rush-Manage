@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,6 +7,7 @@ import 'package:myapp/screens/finance_screen.dart';
 import 'package:myapp/screens/profile_screen.dart';
 import 'package:myapp/screens/calendar_screen.dart';
 import 'package:myapp/screens/create_project_screen.dart';
+import 'package:myapp/screens/project_detail_screen.dart';
 import 'package:myapp/screens/main_screen.dart';
 import 'package:myapp/screens/welcome_screen.dart';
 import 'package:myapp/screens/login_screen.dart';
@@ -23,10 +23,7 @@ final router = GoRouter(
       path: '/welcome',
       builder: (context, state) => const WelcomeScreen(),
     ),
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegistrationScreen(),
@@ -39,7 +36,7 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/',
+              path: '/dashboard',
               builder: (context, state) => const DashboardScreen(),
             ),
           ],
@@ -82,6 +79,24 @@ final router = GoRouter(
       path: '/create_project',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const CreateProjectScreen(),
+    ),
+    GoRoute(
+      path: '/projects',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const DashboardScreen(),
+    ),
+    GoRoute(
+      path: '/projects/create',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const CreateProjectScreen(),
+    ),
+    GoRoute(
+      path: '/projects/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final id = state.pathParameters['id'] ?? '';
+        return ProjectDetailScreen(projectId: id);
+      },
     ),
   ],
 );
