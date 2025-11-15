@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -32,13 +31,15 @@ class WelcomeScreen extends StatelessWidget {
               'assets/images/App_icon.svg',
               width: 70,
               height: 70,
-              colorFilter: const ColorFilter.mode(AppColors.primaryText, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                AppColors.primaryText,
+                BlendMode.srcIn,
+              ),
             ),
             const Spacer(),
             SvgPicture.asset(
               'assets/images/welcome_1.svg',
               width: screenWidth * 0.8,
-               colorFilter: const ColorFilter.mode(AppColors.primaryText, BlendMode.srcIn),
             ),
             const Spacer(),
             Padding(
@@ -49,19 +50,19 @@ class WelcomeScreen extends StatelessWidget {
                     'RUSH MANAGE',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                          color: AppColors.primaryText,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
+                      color: AppColors.primaryText,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 15),
                   Text(
                     'The best way to manage your projects.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.primaryText,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      color: AppColors.primaryText,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -101,9 +102,9 @@ class WelcomeScreen extends StatelessWidget {
         child: GradientText(
           'Create New Account',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
           colors: const [AppColors.primary, AppColors.secondary],
         ),
       ),
@@ -119,19 +120,16 @@ class WelcomeScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(40.0),
-          border: Border.all(
-            color: AppColors.primaryText,
-            width: 1.5,
-          ),
+          border: Border.all(color: AppColors.primaryText, width: 1.5),
         ),
         alignment: Alignment.center,
         child: Text(
           'Login Now',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.primaryText,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            color: AppColors.primaryText,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

@@ -47,85 +47,85 @@ class AppColors {
 }
 
 TextTheme appTextTheme(Color primaryText, Color secondaryText) => TextTheme(
-      displayLarge: GoogleFonts.lato(
-        color: primaryText,
-        fontWeight: FontWeight.w600,
-        fontSize: 64.0,
-      ),
-      displayMedium: TextStyle(
-        fontFamily: 'Code Bold',
-        color: primaryText,
-        fontWeight: FontWeight.bold,
-        fontSize: 42.0,
-      ),
-      displaySmall: GoogleFonts.lato(
-        color: secondaryText,
-        fontWeight: FontWeight.w900,
-        fontSize: 20.0,
-      ),
-      headlineLarge: GoogleFonts.lato(
-        color: secondaryText,
-        fontWeight: FontWeight.w800,
-        fontSize: 32.0,
-      ),
-      headlineMedium: GoogleFonts.lato(
-        color: primaryText,
-        fontWeight: FontWeight.w600,
-        fontSize: 28.0,
-      ),
-      headlineSmall: GoogleFonts.lato(
-        color: secondaryText,
-        fontWeight: FontWeight.w800,
-        fontSize: 26.0,
-      ),
-      titleLarge: GoogleFonts.lato(
-        color: secondaryText,
-        fontWeight: FontWeight.bold,
-        fontSize: 20.0,
-      ),
-      titleMedium: GoogleFonts.lato(
-        color: primaryText,
-        fontWeight: FontWeight.bold,
-        fontSize: 18.0,
-      ),
-      titleSmall: GoogleFonts.lato(
-        color: secondaryText,
-        fontWeight: FontWeight.w500,
-        fontSize: 18.0,
-      ),
-      labelLarge: GoogleFonts.lato(
-        color: primaryText,
-        fontWeight: FontWeight.w500,
-        fontSize: 15.0,
-      ),
-      labelMedium: GoogleFonts.lato(
-        color: secondaryText,
-        fontWeight: FontWeight.normal,
-        fontSize: 14.0,
-      ),
-      labelSmall: GoogleFonts.lato(
-        color: secondaryText,
-        fontWeight: FontWeight.normal,
-        fontSize: 12.0,
-      ),
-      bodyLarge: GoogleFonts.lato(
-        color: secondaryText,
-        fontWeight: FontWeight.bold,
-        fontSize: 16.0,
-      ),
-      bodyMedium: GoogleFonts.lato(
-        color: secondaryText,
-        fontWeight: FontWeight.bold,
-        fontSize: 14.0,
-      ),
-      bodySmall: GoogleFonts.dmSans(
-        color: secondaryText,
-        fontWeight: FontWeight.w500,
-        fontSize: 10.0,
-      ),
-    );
+  displayLarge: GoogleFonts.lato(
+    color: primaryText,
+    fontWeight: FontWeight.w600,
+    fontSize: 64.0,
+  ),
+  displayMedium: GoogleFonts.lato(
+    color: primaryText,
+    fontWeight: FontWeight.bold,
+    fontSize: 42.0,
+  ),
+  displaySmall: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.w900,
+    fontSize: 20.0,
+  ),
+  headlineLarge: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.w800,
+    fontSize: 32.0,
+  ),
+  headlineMedium: GoogleFonts.lato(
+    color: primaryText,
+    fontWeight: FontWeight.w600,
+    fontSize: 28.0,
+  ),
+  headlineSmall: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.w800,
+    fontSize: 26.0,
+  ),
+  titleLarge: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.bold,
+    fontSize: 20.0,
+  ),
+  titleMedium: GoogleFonts.lato(
+    color: primaryText,
+    fontWeight: FontWeight.bold,
+    fontSize: 18.0,
+  ),
+  titleSmall: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.w500,
+    fontSize: 18.0,
+  ),
+  labelLarge: GoogleFonts.lato(
+    color: primaryText,
+    fontWeight: FontWeight.w500,
+    fontSize: 15.0,
+  ),
+  labelMedium: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.normal,
+    fontSize: 14.0,
+  ),
+  labelSmall: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.normal,
+    fontSize: 12.0,
+  ),
+  bodyLarge: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.bold,
+    fontSize: 16.0,
+  ),
+  bodyMedium: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.bold,
+    fontSize: 14.0,
+  ),
+  bodySmall: GoogleFonts.lato(
+    color: secondaryText,
+    fontWeight: FontWeight.w500,
+    fontSize: 10.0,
+  ),
+);
 
 final ThemeData lightTheme = ThemeData(
+  fontFamily: GoogleFonts.lato().fontFamily,
   brightness: Brightness.light,
   primaryColor: AppColors.primary,
   scaffoldBackgroundColor: AppColors.primaryBackground,
@@ -161,6 +161,7 @@ final ThemeData lightTheme = ThemeData(
 );
 
 final ThemeData darkTheme = ThemeData(
+  fontFamily: GoogleFonts.lato().fontFamily,
   brightness: Brightness.dark,
   primaryColor: AppColors.primary,
   scaffoldBackgroundColor: AppColors.tertiary,
@@ -172,7 +173,7 @@ final ThemeData darkTheme = ThemeData(
     error: AppColors.error,
     surface: AppColors.tertiary,
   ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
+  elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       foregroundColor: AppColors.primaryText,
       backgroundColor: AppColors.primary,

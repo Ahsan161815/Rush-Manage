@@ -39,6 +39,80 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final double borderWidth = _focusNode.hasFocus ? 2.0 : 1.5;
+
+    // Show gradient border only when focused; otherwise show simple bordered box
+    if (_focusNode.hasFocus) {
+      return Container(
+        width: MediaQuery.of(context).size.width * 0.82,
+        height: 52.0,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.secondary, AppColors.primary],
+            begin: AlignmentDirectional(1.0, 0.34),
+            end: AlignmentDirectional(-1.0, -0.34),
+          ),
+          borderRadius: BorderRadius.circular(40.0),
+        ),
+        child: Container(
+          margin: EdgeInsets.all(borderWidth),
+          decoration: BoxDecoration(
+            color: AppColors.textfieldBackground,
+            borderRadius: BorderRadius.circular(40.0),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SvgPicture.asset(widget.iconPath, width: 16),
+              ),
+              Expanded(
+                child: TextFormField(
+                  focusNode: _focusNode,
+                  obscureText: widget.isPassword ? _obscureText : false,
+                  decoration: InputDecoration(
+                    hintText: widget.hintText,
+                    isDense: false,
+                    filled: false,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14.0),
+                    focusedBorder: InputBorder.none,
+                    hintStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: AppColors.hintTextfiled,
+                      letterSpacing: 0.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    border: InputBorder.none,
+                    suffixIcon: widget.isPassword
+                        ? IconButton(
+                            icon: Icon(
+                              _obscureText
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: AppColors.hintTextfiled,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureText = !_obscureText;
+                              });
+                            },
+                          )
+                        : null,
+                  ),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColors.initialTextfield,
+                    letterSpacing: 0.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Not focused: simple border with no gradient
     return Container(
       width: MediaQuery.of(context).size.width * 0.82,
       height: 52.0,
@@ -46,21 +120,16 @@ class _CustomTextFieldState extends State<CustomTextField> {
         color: AppColors.textfieldBackground,
         borderRadius: BorderRadius.circular(40.0),
         border: Border.all(
-          color: _focusNode.hasFocus ? AppColors.textfieldFocusBorder : AppColors.textfieldBorder,
-          width: 1.5,
+          color: AppColors.textfieldBorder,
+          width: borderWidth,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: SvgPicture.asset(
-              widget.iconPath,
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(AppColors.secondaryText, BlendMode.srcIn),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SvgPicture.asset(widget.iconPath, width: 16),
           ),
           Expanded(
             child: TextFormField(
@@ -68,18 +137,23 @@ class _CustomTextFieldState extends State<CustomTextField> {
               obscureText: widget.isPassword ? _obscureText : false,
               decoration: InputDecoration(
                 hintText: widget.hintText,
+                isDense: false,
                 filled: false,
-                focusColor: Colors.transparent,
-                hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.hintText,
-                      fontWeight: FontWeight.bold,
-                    ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14.0),
+                focusedBorder: InputBorder.none,
+                hintStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppColors.hintTextfiled,
+                  letterSpacing: 0.0,
+                  fontWeight: FontWeight.bold,
+                ),
                 border: InputBorder.none,
                 suffixIcon: widget.isPassword
                     ? IconButton(
                         icon: Icon(
-                          _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          color: AppColors.hintText,
+                          _obscureText
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: AppColors.hintTextfiled,
                         ),
                         onPressed: () {
                           setState(() {
@@ -88,6 +162,11 @@ class _CustomTextFieldState extends State<CustomTextField> {
                         },
                       )
                     : null,
+              ),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: AppColors.initialTextfield,
+                letterSpacing: 0.0,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/widgets/custom_text_field.dart';
+import 'package:myapp/app/widgets/gradient_button.dart';
 
 class ResetNewPasswordScreen extends StatelessWidget {
   const ResetNewPasswordScreen({super.key});
@@ -15,7 +16,7 @@ class ResetNewPasswordScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.secondaryText),
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
@@ -29,9 +30,9 @@ class ResetNewPasswordScreen extends StatelessWidget {
                   Text(
                     'Enter New Password',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -42,7 +43,9 @@ class ResetNewPasswordScreen extends StatelessWidget {
                       color: AppColors.secondaryText,
                     ),
                   ),
-                  SizedBox(height: MediaQuery.of(context).size.height < 700 ? 75 : 100),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height < 700 ? 75 : 100,
+                  ),
                   const CustomTextField(
                     hintText: 'Email Address',
                     iconPath: 'assets/images/emailAdress.svg',
@@ -60,23 +63,10 @@ class ResetNewPasswordScreen extends StatelessWidget {
                     isPassword: true,
                   ),
                   const SizedBox(height: 48),
-                  ElevatedButton(
+                  GradientButton(
                     onPressed: () => context.go('/login'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                    ),
-                    child: const Text(
-                      'Change Password',
-                      style: TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    text: 'Change Password',
+                    isLoading: false,
                   ),
                 ],
               ),

@@ -1,3 +1,14 @@
-<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-  <!-- TODO: Add your SVG content here -->
+<svg width="17" height="14" viewBox="0 0 17 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M9.65229 8.88325C9.24079 9.16044 8.76281 9.30697 8.27 9.30697C7.77722 9.30697 7.29924 9.16044 6.88775 8.88325L0.110127 4.31766C0.072524 4.29233 0.0358905 4.26592 0 4.23876V11.72C0 12.5777 0.688897 13.2585 1.52262 13.2585H15.0174C15.8663 13.2585 16.54 12.5624 16.54 11.72V4.23873C16.504 4.26595 16.4673 4.29242 16.4296 4.31779L9.65229 8.88325Z" fill="url(#paint0_linear_110_683)"/>
+<path d="M0.647709 3.50287L7.42533 8.0685C7.68189 8.24134 7.97593 8.32774 8.26997 8.32774C8.56404 8.32774 8.85811 8.2413 9.11467 8.0685L15.8923 3.50287C16.2979 3.22983 16.54 2.77285 16.54 2.27965C16.54 1.4316 15.8572 0.741699 15.0179 0.741699H1.5221C0.682824 0.741732 0 1.43163 0 2.28046C0 2.77285 0.242156 3.22983 0.647709 3.50287Z" fill="url(#paint1_linear_110_683)"/>
+<defs>
+<linearGradient id="paint0_linear_110_683" x1="0" y1="0.741699" x2="18.5334" y2="8.49069" gradientUnits="userSpaceOnUse">
+<stop stop-color="#181BF2"/>
+<stop offset="1" stop-color="#0ABEFF"/>
+</linearGradient>
+<linearGradient id="paint1_linear_110_683" x1="0" y1="0.741699" x2="18.5334" y2="8.49069" gradientUnits="userSpaceOnUse">
+<stop stop-color="#181BF2"/>
+<stop offset="1" stop-color="#0ABEFF"/>
+</linearGradient>
+</defs>
 </svg>

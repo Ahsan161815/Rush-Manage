@@ -5,6 +5,7 @@ import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/widgets/custom_text_field.dart';
+import 'package:myapp/app/widgets/gradient_button.dart';
 
 class RegistrationScreen extends StatelessWidget {
   const RegistrationScreen({super.key});
@@ -21,13 +22,15 @@ class RegistrationScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(height: MediaQuery.of(context).size.height < 700 ? 50 : 70),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height < 700 ? 50 : 70,
+                  ),
                   Text(
                     'Create Your Account',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -55,23 +58,10 @@ class RegistrationScreen extends StatelessWidget {
                     isPassword: true,
                   ),
                   const SizedBox(height: 60),
-                  ElevatedButton(
+                  GradientButton(
                     onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                    ),
-                    child: const Text(
-                      'Save & Next',
-                      style: TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    text: 'Save & Next',
+                    isLoading: false,
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -79,31 +69,42 @@ class RegistrationScreen extends StatelessWidget {
                     children: [
                       const Expanded(
                         child: Divider(
-                          color: AppColors.secondaryText,
-                          thickness: 1,
+                          color: AppColors.hintTextfiled,
+                          thickness: 0.5,
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
                           'OR',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.secondaryText,
-                              ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppColors.hintTextfiled),
                         ),
                       ),
                       const Expanded(
                         child: Divider(
-                          color: AppColors.secondaryText,
-                          thickness: 1,
+                          color: AppColors.hintTextfiled,
+                          thickness: 0.5,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _buildSocialButton(context, 'assets/images/Clip_path_group.svg', 'Continue with Google', AppColors.lightGrey, AppColors.black),
+                  _buildSocialButton(
+                    context,
+                    'assets/images/Clip_path_group.svg',
+                    'Continue with Google',
+                    AppColors.lightGrey,
+                    AppColors.black,
+                  ),
                   const SizedBox(height: 20),
-                  _buildSocialButton(context, 'assets/images/AppleWhite.svg', 'Continue with Apple', AppColors.black, AppColors.white),
+                  _buildSocialButton(
+                    context,
+                    'assets/images/AppleWhite.svg',
+                    'Continue with Apple',
+                    AppColors.black,
+                    AppColors.white,
+                  ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -118,13 +119,19 @@ class RegistrationScreen extends StatelessWidget {
                       ),
                       InkWell(
                         onTap: () => context.go('/login'),
-                        child: GradientText(
-                          'Login Now',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
+                        child: Opacity(
+                          opacity: 0.5,
+                          child: GradientText(
+                            'Login Now',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                            ),
+                            colors: const [
+                              AppColors.primary,
+                              AppColors.secondary,
+                            ],
                           ),
-                          colors: const [AppColors.primary, AppColors.secondary],
                         ),
                       ),
                     ],
@@ -139,27 +146,25 @@ class RegistrationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSocialButton(BuildContext context, String iconPath, String text, Color backgroundColor, Color textColor) {
+  Widget _buildSocialButton(
+    BuildContext context,
+    String iconPath,
+    String text,
+    Color backgroundColor,
+    Color textColor,
+  ) {
     return ElevatedButton.icon(
       onPressed: () {},
-      icon: SvgPicture.asset(
-        iconPath,
-        width: 25,
-        height: 25,
-      ),
+      icon: SvgPicture.asset(iconPath, width: 25, height: 25),
       label: Text(
         text,
-        style: TextStyle(
-          color: textColor,
-          fontWeight: FontWeight.bold,
-        ),
+        style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor,
-        minimumSize: Size(MediaQuery.of(context).size.width * 0.79, 52),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(40),
-        ),
+        minimumSize: Size(MediaQuery.of(context).size.width * 0.79, 58),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
+import 'package:myapp/app/widgets/gradient_button.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key});
@@ -36,7 +37,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.secondaryText),
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
@@ -50,9 +51,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   Text(
                     'Verify Email by OTP',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -83,23 +84,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 80),
-                  ElevatedButton(
+                  GradientButton(
                     onPressed: () => context.go('/reset-new-password'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 120, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                    ),
-                    child: const Text(
-                      'Confirm',
-                      style: TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    text: 'Confirm',
+                    isLoading: false,
                   ),
                   const SizedBox(height: 40),
                   Column(
@@ -117,7 +105,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         initialData: 0,
                         builder: (context, snap) {
                           final value = snap.data!;
-                          final displayTime = StopWatchTimer.getDisplayTime(value, hours: false, minute: false, second: true, milliSecond: false);
+                          final displayTime = StopWatchTimer.getDisplayTime(
+                            value,
+                            hours: false,
+                            minute: false,
+                            second: true,
+                            milliSecond: false,
+                          );
                           return value > 0
                               ? Text(
                                   'Resend in $displayTime',

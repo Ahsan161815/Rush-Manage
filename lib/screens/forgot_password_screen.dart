@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/widgets/custom_text_field.dart';
+import 'package:myapp/app/widgets/gradient_button.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -15,7 +16,7 @@ class ForgotPasswordScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.secondaryText),
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
@@ -26,13 +27,15 @@ class ForgotPasswordScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(height: MediaQuery.of(context).size.height < 700 ? 50 : 70),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height < 700 ? 50 : 70,
+                  ),
                   Text(
                     'Reset Password',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -49,23 +52,10 @@ class ForgotPasswordScreen extends StatelessWidget {
                     iconPath: 'assets/images/emailAdress.svg',
                   ),
                   const SizedBox(height: 28),
-                  ElevatedButton(
+                  GradientButton(
                     onPressed: () => context.go('/verify-email'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                    ),
-                    child: const Text(
-                      'Request OTP Verify',
-                      style: TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    text: 'Request OTP Verify',
+                    isLoading: false,
                   ),
                 ],
               ),
