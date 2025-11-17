@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
-import 'package:myapp/app/app_router.dart';
+import 'package:myapp/app/router.dart';
 import 'package:myapp/controllers/dashboard_controller.dart';
 import 'package:myapp/controllers/project_controller.dart';
 

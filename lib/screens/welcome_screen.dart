@@ -90,7 +90,7 @@ class WelcomeScreen extends StatelessWidget {
 
   Widget _buildCreateAccountButton(BuildContext context, double screenWidth) {
     return InkWell(
-      onTap: () => context.go('/register'),
+      onTap: () => context.goNamed('register'),
       child: Container(
         width: screenWidth * 0.82,
         height: 48.0,
@@ -113,7 +113,7 @@ class WelcomeScreen extends StatelessWidget {
 
   Widget _buildLoginButton(BuildContext context, double screenWidth) {
     return InkWell(
-      onTap: () => context.go('/login'),
+      onTap: () => context.goNamed('login'),
       child: Container(
         width: screenWidth * 0.82,
         height: 48.0,

@@ -37,7 +37,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.secondaryText),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(
@@ -85,7 +85,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   ),
                   const SizedBox(height: 80),
                   GradientButton(
-                    onPressed: () => context.go('/reset-new-password'),
+                    onPressed: () => context.pushNamed('resetPassword'),
                     text: 'Confirm',
                     isLoading: false,
                   ),

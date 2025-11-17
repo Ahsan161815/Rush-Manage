@@ -18,23 +18,47 @@ class Task extends Equatable {
   final String title;
   final String? assigneeId;
   final bool completed;
+  final DateTime? dueDate;
+  final String? description;
+  final List<String> attachments;
 
   const Task({
     required this.id,
     required this.title,
     this.assigneeId,
     this.completed = false,
+    this.dueDate,
+    this.description,
+    this.attachments = const [],
   });
 
-  Task copyWith({bool? completed}) => Task(
+  Task copyWith({
+    String? title,
+    String? assigneeId,
+    bool? completed,
+    DateTime? dueDate,
+    String? description,
+    List<String>? attachments,
+  }) => Task(
     id: id,
-    title: title,
-    assigneeId: assigneeId,
+    title: title ?? this.title,
+    assigneeId: assigneeId ?? this.assigneeId,
     completed: completed ?? this.completed,
+    dueDate: dueDate ?? this.dueDate,
+    description: description ?? this.description,
+    attachments: attachments ?? this.attachments,
   );
 
   @override
-  List<Object?> get props => [id, title, assigneeId, completed];
+  List<Object?> get props => [
+    id,
+    title,
+    assigneeId,
+    completed,
+    dueDate,
+    description,
+    attachments,
+  ];
 }
 
 class Project extends Equatable {

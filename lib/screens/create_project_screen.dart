@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:myapp/widgets/custom_text_field.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/app/widgets/app_form_fields.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/models/project.dart';
 
@@ -22,7 +23,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   final _descriptionController = TextEditingController();
   final _inviteController = TextEditingController();
   final List<_Invitee> _invitees = [];
-
   DateTime? _startDate;
   DateTime? _endDate;
   String? _selectedCategory;
@@ -190,7 +190,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 const SizedBox(height: 28),
                 _LabeledField(
                   label: 'Project name',
-                  child: _StyledTextField(
+                  child: AppFormTextField(
                     controller: _nameController,
                     hintText: 'e.g. Dupont Wedding',
                     validator: (value) =>
@@ -202,7 +202,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 const SizedBox(height: 18),
                 _LabeledField(
                   label: 'Client',
-                  child: _StyledTextField(
+                  child: AppFormTextField(
                     controller: _clientController,
                     hintText: 'Client or company name',
                   ),
@@ -210,7 +210,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 const SizedBox(height: 18),
                 _LabeledField(
                   label: 'Category',
-                  child: _DropdownField<String>(
+                  child: AppDropdownField<String>(
                     value: _selectedCategory,
                     items: _categories,
                     hintText: 'Select category',
@@ -224,9 +224,15 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                     Expanded(
                       child: _LabeledField(
                         label: 'Start date',
-                        child: _DateField(
+                        child: AppDateField(
                           label: _formatDate(_startDate),
+                          hasValue: _startDate != null,
                           onTap: () => _pickDate(isStart: true),
+                          leading: SvgPicture.asset(
+                            'assets/images/calendar_2.svg',
+                            width: 22,
+                            height: 22,
+                          ),
                         ),
                       ),
                     ),
@@ -234,9 +240,15 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                     Expanded(
                       child: _LabeledField(
                         label: 'End date',
-                        child: _DateField(
+                        child: AppDateField(
                           label: _formatDate(_endDate),
+                          hasValue: _endDate != null,
                           onTap: () => _pickDate(isStart: false),
+                          leading: SvgPicture.asset(
+                            'assets/images/calendar_2.svg',
+                            width: 22,
+                            height: 22,
+                          ),
                         ),
                       ),
                     ),
@@ -245,7 +257,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 const SizedBox(height: 18),
                 _LabeledField(
                   label: 'Description (optional)',
-                  child: _StyledTextField(
+                  child: AppFormTextField(
                     controller: _descriptionController,
                     hintText: 'Add a short brief for your team...',
                     maxLines: 4,
@@ -257,7 +269,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                   description: 'Assign roles to control access.',
                 ),
                 const SizedBox(height: 14),
-                _StyledTextField(
+                AppFormTextField(
                   controller: _inviteController,
                   hintText: 'Email address',
                   keyboardType: TextInputType.emailAddress,
@@ -312,34 +324,126 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                   ),
                 ],
                 const SizedBox(height: 24),
-                SwitchListTile.adaptive(
-                  value: _inviteExternal,
-                  activeColor: AppColors.primary,
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    'Invite external collaborator',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.secondaryText,
-                      fontWeight: FontWeight.bold,
+                Material(
+                  color: Colors.transparent,
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      color: AppColors.textfieldBackground,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: AppColors.textfieldBorder),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.secondary.withOpacity(0.08),
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () =>
+                          setState(() => _inviteExternal = !_inviteExternal),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 18,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Invite external collaborator',
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(
+                                          color: AppColors.secondaryText,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Send a secure link via email or WhatsApp for limited access.',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: AppColors.hintTextfiled,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Theme(
+                              data: Theme.of(context).copyWith(
+                                switchTheme: SwitchThemeData(
+                                  thumbColor: MaterialStateProperty.resolveWith(
+                                    (states) {
+                                      if (states.contains(
+                                        MaterialState.selected,
+                                      )) {
+                                        return AppColors.primary;
+                                      }
+                                      if (states.contains(
+                                        MaterialState.disabled,
+                                      )) {
+                                        return AppColors.hintTextfiled;
+                                      }
+                                      return AppColors.secondaryText
+                                          .withOpacity(0.5);
+                                    },
+                                  ),
+                                  trackColor: MaterialStateProperty.resolveWith(
+                                    (states) {
+                                      if (states.contains(
+                                        MaterialState.selected,
+                                      )) {
+                                        return AppColors.primary.withOpacity(
+                                          0.28,
+                                        );
+                                      }
+                                      if (states.contains(
+                                        MaterialState.disabled,
+                                      )) {
+                                        return AppColors.textfieldBorder
+                                            .withOpacity(0.3);
+                                      }
+                                      return AppColors.textfieldBorder
+                                          .withOpacity(0.6);
+                                    },
+                                  ),
+                                  trackOutlineColor:
+                                      MaterialStateProperty.resolveWith(
+                                        (states) => Colors.transparent,
+                                      ),
+                                ),
+                              ),
+                              child: Switch(
+                                value: _inviteExternal,
+                                onChanged: (value) =>
+                                    setState(() => _inviteExternal = value),
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  subtitle: Text(
-                    'Send a secure link via email or WhatsApp for limited access.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.hintTextfiled,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  onChanged: (value) => setState(() => _inviteExternal = value),
                 ),
                 if (_inviteExternal)
                   Container(
                     width: double.infinity,
-                    margin: const EdgeInsets.only(top: 12),
-                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(top: 14),
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: AppColors.textfieldBackground,
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppColors.secondaryBackground,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: AppColors.textfieldBorder.withOpacity(0.7),
+                      ),
                     ),
                     child: Text(
                       'Preview link: https://rush.manage/invite/${DateTime.now().millisecondsSinceEpoch}',
@@ -403,183 +507,6 @@ class _LabeledField extends StatelessWidget {
         const SizedBox(height: 10),
         child,
       ],
-    );
-  }
-}
-
-class _StyledTextField extends StatelessWidget {
-  const _StyledTextField({
-    required this.controller,
-    required this.hintText,
-    this.maxLines = 1,
-    this.keyboardType,
-    this.validator,
-  });
-
-  final TextEditingController controller;
-  final String hintText;
-  final int maxLines;
-  final TextInputType? keyboardType;
-  final String? Function(String?)? validator;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.secondaryBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.textfieldBorder, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.secondary.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        validator: validator,
-        decoration: InputDecoration(
-          hintText: hintText,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-          ),
-
-          filled: false,
-
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 14,
-          ),
-        ),
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: AppColors.secondaryText,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _DropdownField<T> extends StatelessWidget {
-  const _DropdownField({
-    required this.items,
-    required this.onChanged,
-    required this.hintText,
-    this.value,
-  });
-
-  final List<T> items;
-  final ValueChanged<T?> onChanged;
-  final String hintText;
-  final T? value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppColors.secondaryBackground,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.textfieldBorder, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.secondary.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          hint: Text(
-            hintText,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.hintTextfiled,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          items: items
-              .map(
-                (item) => DropdownMenuItem<T>(
-                  value: item,
-                  child: Text(
-                    item.toString(),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.secondaryText,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: onChanged,
-          icon: const Icon(Icons.expand_more, color: AppColors.secondaryText),
-        ),
-      ),
-    );
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.secondaryBackground,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.textfieldBorder, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.secondary.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.calendar_today_outlined,
-              color: AppColors.primary,
-              size: 18,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: label == 'Select date'
-                      ? AppColors.hintTextfiled
-                      : AppColors.secondaryText,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

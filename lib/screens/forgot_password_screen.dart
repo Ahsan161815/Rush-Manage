@@ -16,7 +16,7 @@ class ForgotPasswordScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.secondaryText),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(
@@ -53,7 +53,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
                   GradientButton(
-                    onPressed: () => context.go('/verify-email'),
+                    onPressed: () => context.pushNamed('verifyEmail'),
                     text: 'Request OTP Verify',
                     isLoading: false,
                   ),

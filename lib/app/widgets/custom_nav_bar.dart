@@ -1,5 +1,6 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
 
@@ -7,37 +8,41 @@ import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/models/bottom_nav_item.dart';
 
 class CustomNavBar extends StatelessWidget {
-  const CustomNavBar({
-    super.key,
-    required this.navigationShell,
-  });
+  const CustomNavBar({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
-  static final List<BottomNavItem> bottomNavItems = [
+  static const List<BottomNavItem> bottomNavItems = [
     BottomNavItem(
-      icon: Icons.dashboard,
+      inactiveIcon: FeatherIcons.grid,
+      activeAsset: 'assets/images/rentals_active.svg',
       label: 'Dashboard',
-      route: '/',
+      route: '/dashboard',
     ),
     BottomNavItem(
-      icon: Icons.directions_car,
-      label: 'Vehicles',
-      route: '/vehicles',
+      inactiveIcon: FeatherIcons.mail,
+      inactiveAsset: 'assets/images/user_email.svg',
+      activeAsset: 'assets/images/user_email.svg',
+      label: 'Chats',
+      route: '/chats',
     ),
     BottomNavItem(
-      icon: Icons.calendar_today,
+      inactiveIcon: FeatherIcons.calendar,
+      activeAsset: 'assets/images/calendar_2.svg',
       label: 'Calendar',
       route: '/calendar',
-      isCenter: true,
     ),
     BottomNavItem(
-      icon: Icons.attach_money,
+      inactiveIcon: FeatherIcons.creditCard,
+      inactiveAsset: 'assets/images/financial.svg',
+      activeAsset: 'assets/images/financial.svg',
       label: 'Finance',
       route: '/finance',
     ),
     BottomNavItem(
-      icon: Icons.person,
+      inactiveIcon: FeatherIcons.user,
+      inactiveAsset: 'assets/images/profile_active.svg',
+      activeAsset: 'assets/images/profile_active.svg',
       label: 'Profile',
       route: '/profile',
     ),
@@ -47,102 +52,207 @@ class CustomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: Container(
-        height: 100,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
+      bottomNavigationBar: SizedBox(
+        height: 118,
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
-            BottomAppBar(
-              color: Colors.transparent,
-              elevation: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: bottomNavItems.map((item) {
-                  final isSelected =
-                      navigationShell.currentIndex ==
-                          bottomNavItems.indexOf(item);
-                  return item.isCenter
-                      ? const SizedBox(width: 60) // Placeholder for center button
-                      : _buildNavItem(context, item, isSelected);
-                }).toList(),
+            _NavBackground(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(
+                    bottomNavItems.length,
+                    (index) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: _NavItemButton(
+                          item: bottomNavItems[index],
+                          index: index,
+                          navigationShell: navigationShell,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
             Positioned(
-              top: 0,
-              child: _buildCenterButton(context, bottomNavItems[2]),
+              bottom: 44,
+              child: _AddProjectButton(
+                onTap: () => context.pushNamed('projectsCreate'),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildNavItem(BuildContext context, BottomNavItem item, bool isSelected) {
-    return InkWell(
-      onTap: () {
-        navigationShell.goBranch(bottomNavItems.indexOf(item));
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+class _NavBackground extends StatelessWidget {
+  const _NavBackground({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Stack(
+        alignment: Alignment.bottomCenter,
         children: [
-          Icon(
-            item.icon,
-            color: isSelected ? AppColors.secondary : AppColors.primaryText,
-          ),
-          const SizedBox(height: 4),
-          if (isSelected)
-            GradientText(
-              item.label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              colors: const [
-                AppColors.secondary,
-                Color.fromARGB(255, 13, 71, 161),
-              ],
-            )
-          else
-            Text(
-              item.label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.primaryText,
-              ),
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
+            child: Image.asset(
+              'assets/images/nav_image.png',
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          child,
         ],
       ),
     );
   }
+}
 
-  Widget _buildCenterButton(BuildContext context, BottomNavItem item) {
-    final isSelected =
-        navigationShell.currentIndex == bottomNavItems.indexOf(item);
+class _NavItemButton extends StatelessWidget {
+  const _NavItemButton({
+    required this.item,
+    required this.index,
+    required this.navigationShell,
+  });
+
+  final BottomNavItem item;
+  final int index;
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = navigationShell.currentIndex == index;
+    final textTheme = Theme.of(context).textTheme;
+
+    return InkWell(
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      onTap: () => navigationShell.goBranch(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _NavIcon(item: item, isSelected: isSelected),
+          const SizedBox(height: 10),
+          if (isSelected)
+            GradientText(
+              item.label,
+              colors: const [AppColors.primary, AppColors.secondary],
+              style:
+                  (textTheme.bodySmall ??
+                          textTheme.bodyMedium ??
+                          const TextStyle(fontSize: 10))
+                      .copyWith(fontSize: 10, fontWeight: FontWeight.bold),
+            )
+          else
+            Opacity(
+              opacity: 0.6,
+              child: Text(
+                item.label,
+                style:
+                    (textTheme.bodySmall ??
+                            textTheme.bodyMedium ??
+                            const TextStyle(fontSize: 10))
+                        .copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryText,
+                        ),
+              ),
+            ),
+          const SizedBox(height: 3),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({required this.item, required this.isSelected});
+
+  final BottomNavItem item;
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isSelected) {
+      if (item.activeAsset != null) {
+        return SvgPicture.asset(item.activeAsset!, width: 20, height: 20);
+      }
+      if (item.inactiveAsset != null) {
+        return SvgPicture.asset(item.inactiveAsset!, width: 20, height: 20);
+      }
+      return Icon(item.inactiveIcon, size: 20, color: AppColors.primaryText);
+    }
+
+    if (item.inactiveAsset != null) {
+      return Opacity(
+        opacity: 0.65,
+        child: SvgPicture.asset(item.inactiveAsset!, width: 20, height: 20),
+      );
+    }
+
+    return Icon(
+      item.inactiveIcon,
+      size: 20,
+      color: AppColors.primaryText.withOpacity(0.6),
+    );
+  }
+}
+
+class _AddProjectButton extends StatelessWidget {
+  const _AddProjectButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        navigationShell.goBranch(bottomNavItems.indexOf(item));
-      },
+      onTap: onTap,
       child: Container(
-        width: 70,
-        height: 70,
-        decoration: BoxDecoration(
+        width: 62,
+        height: 62,
+        padding: const EdgeInsets.all(2),
+        decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            colors: [AppColors.secondary, AppColors.primary],
-          ),
-          border: Border.all(
-            color: isSelected ? Colors.white : Colors.transparent,
-            width: 3,
+          gradient: LinearGradient(
+            colors: [AppColors.primary, AppColors.secondary],
+            begin: AlignmentDirectional(-1.0, -0.87),
+            end: AlignmentDirectional(1.0, 0.87),
           ),
         ),
-        child: Icon(
-          item.icon,
-          color: AppColors.primaryText,
-          size: 35,
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.secondaryBackground,
+          ),
+          alignment: Alignment.center,
+          child: SvgPicture.asset(
+            'assets/images/ug4be_+.svg',
+            width: 24,
+            height: 24,
+          ),
         ),
       ),
     );

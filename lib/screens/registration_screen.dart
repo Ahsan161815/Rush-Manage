@@ -59,7 +59,7 @@ class RegistrationScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 60),
                   GradientButton(
-                    onPressed: () {},
+                    onPressed: () => context.pushNamed('setupProfile'),
                     text: 'Save & Next',
                     isLoading: false,
                   ),
@@ -118,7 +118,7 @@ class RegistrationScreen extends StatelessWidget {
                         ),
                       ),
                       InkWell(
-                        onTap: () => context.go('/login'),
+                        onTap: () => context.goNamed('login'),
                         child: Opacity(
                           opacity: 0.5,
                           child: GradientText(

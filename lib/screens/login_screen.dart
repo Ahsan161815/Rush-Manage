@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:myapp/screens/dashboard_screen.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 import 'package:myapp/app/app_theme.dart';
@@ -41,12 +40,12 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 69),
-                  const CustomTextField(
+                  CustomTextField(
                     hintText: 'Email Address',
                     iconPath: 'assets/images/emailAdress.svg',
                   ),
                   const SizedBox(height: 14),
-                  const CustomTextField(
+                  CustomTextField(
                     hintText: 'Enter Password',
                     iconPath: 'assets/images/Password.svg',
                     isPassword: true,
@@ -67,7 +66,7 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ),
                           InkWell(
-                            onTap: () => context.go('/forgot-password'),
+                            onTap: () => context.goNamed('forgotPassword'),
                             child: Opacity(
                               opacity: 0.5,
                               child: GradientText(
@@ -89,14 +88,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 40),
                   GradientButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DashboardScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: () => context.goNamed('dashboard'),
                     text: 'Log in',
                     isLoading: false,
                   ),
@@ -155,7 +147,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                       InkWell(
-                        onTap: () => context.go('/register'),
+                        onTap: () => context.goNamed('register'),
                         child: Opacity(
                           opacity: 0.5,
                           child: GradientText(

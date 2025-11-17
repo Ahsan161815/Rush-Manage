@@ -16,7 +16,7 @@ class ResetNewPasswordScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.secondaryText),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(
@@ -64,7 +64,7 @@ class ResetNewPasswordScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 48),
                   GradientButton(
-                    onPressed: () => context.go('/login'),
+                    onPressed: () => context.goNamed('login'),
                     text: 'Change Password',
                     isLoading: false,
                   ),

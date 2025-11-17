@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/app/widgets/avatar_stack.dart';
+import 'package:myapp/app/widgets/gradient_progress_bar.dart';
+import 'package:myapp/common/utils/project_ui.dart';
 import 'package:myapp/models/project.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -7,32 +10,6 @@ class ProjectCard extends StatelessWidget {
 
   final Project project;
   final VoidCallback? onTap;
-
-  String _statusLabel(ProjectStatus status) {
-    switch (status) {
-      case ProjectStatus.ongoing:
-        return 'Ongoing';
-      case ProjectStatus.inPreparation:
-        return 'Preparation';
-      case ProjectStatus.completed:
-        return 'Completed';
-      case ProjectStatus.archived:
-        return 'Archived';
-    }
-  }
-
-  Color _statusColor(ProjectStatus status) {
-    switch (status) {
-      case ProjectStatus.ongoing:
-        return AppColors.secondary;
-      case ProjectStatus.inPreparation:
-        return AppColors.warning;
-      case ProjectStatus.completed:
-        return AppColors.available;
-      case ProjectStatus.archived:
-        return AppColors.hintTextfiled;
-    }
-  }
 
   String _formatDate(DateTime? date) {
     if (date == null) return '--';
@@ -101,23 +78,7 @@ class ProjectCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _statusColor(project.status).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      _statusLabel(project.status),
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: _statusColor(project.status),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                  _StatusBadge(status: project.status),
                 ],
               ),
               const SizedBox(height: 18),
@@ -140,16 +101,9 @@ class ProjectCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: LinearProgressIndicator(
-                        value: project.progress / 100,
-                        minHeight: 8,
-                        backgroundColor: AppColors.textfieldBackground,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
-                        ),
-                      ),
+                    child: GradientProgressBar(
+                      progress: project.progress,
+                      height: 10,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -163,19 +117,7 @@ class ProjectCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 18),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: project.members.isEmpty
-                    ? const [_MemberAvatar(initial: '?')]
-                    : project.members
-                          .map(
-                            (m) => _MemberAvatar(
-                              initial: m.name.isNotEmpty ? m.name[0] : '?',
-                            ),
-                          )
-                          .toList(),
-              ),
+              AvatarStack(members: project.members),
             ],
           ),
         ),
@@ -234,22 +176,42 @@ class _InfoPill extends StatelessWidget {
   }
 }
 
-class _MemberAvatar extends StatelessWidget {
-  const _MemberAvatar({required this.initial});
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status});
 
-  final String initial;
+  final ProjectStatus status;
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 18,
-      backgroundColor: AppColors.primary,
-      child: Text(
-        initial,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: AppColors.primaryText,
-          fontWeight: FontWeight.bold,
-        ),
+    final meta = projectStatusMeta(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: meta.background,
+        border: Border.all(color: meta.border, width: 1.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: meta.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Text(
+            meta.label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: meta.color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
