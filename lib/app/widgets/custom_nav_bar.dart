@@ -2,86 +2,102 @@ import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/models/bottom_nav_item.dart';
 
 class CustomNavBar extends StatelessWidget {
-  const CustomNavBar({super.key, required this.navigationShell});
+  const CustomNavBar({super.key, required this.currentRouteName});
 
-  final StatefulNavigationShell navigationShell;
+  final String currentRouteName;
 
-  static const List<BottomNavItem> bottomNavItems = [
+  static const double height = 110;
+  static const double bottomInset = 0;
+  static const List<BottomNavItem> _items = [
     BottomNavItem(
-      inactiveIcon: FeatherIcons.grid,
-      activeAsset: 'assets/images/rentals_active.svg',
+      routeName: 'dashboard',
       label: 'Dashboard',
-      route: '/dashboard',
+      asset: 'assets/images/rentals_active.svg',
+      activeAsset: 'assets/images/rentals_active.svg',
+      icon: FeatherIcons.grid,
     ),
     BottomNavItem(
-      inactiveIcon: FeatherIcons.mail,
-      inactiveAsset: 'assets/images/user_email.svg',
-      activeAsset: 'assets/images/user_email.svg',
+      routeName: 'chats',
       label: 'Chats',
-      route: '/chats',
+      asset: 'assets/images/email.svg',
+      activeAsset: 'assets/images/email.svg',
+      icon: FeatherIcons.mail,
     ),
     BottomNavItem(
-      inactiveIcon: FeatherIcons.calendar,
-      activeAsset: 'assets/images/calendar_2.svg',
-      label: 'Calendar',
-      route: '/calendar',
-    ),
-    BottomNavItem(
-      inactiveIcon: FeatherIcons.creditCard,
-      inactiveAsset: 'assets/images/financial.svg',
-      activeAsset: 'assets/images/financial.svg',
+      routeName: 'finance',
       label: 'Finance',
-      route: '/finance',
+      asset: 'assets/images/financial.svg',
+      activeAsset: 'assets/images/financial.svg',
+      icon: FeatherIcons.creditCard,
     ),
     BottomNavItem(
-      inactiveIcon: FeatherIcons.user,
-      inactiveAsset: 'assets/images/profile_active.svg',
-      activeAsset: 'assets/images/profile_active.svg',
+      routeName: 'profile',
       label: 'Profile',
-      route: '/profile',
+      asset: 'assets/images/profile_active.svg',
+      activeAsset: 'assets/images/profile_active.svg',
+      icon: FeatherIcons.user,
     ),
   ];
 
+  static double get totalHeight => height + bottomInset;
+
+  bool _isSelected(String routeName) => currentRouteName == routeName;
+
+  void _onItemTap(BuildContext context, BottomNavItem item) {
+    if (_isSelected(item.routeName)) {
+      return;
+    }
+    context.goNamed(item.routeName);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: SizedBox(
-        height: 118,
+    final leadingItems = _items.take(2).toList(growable: false);
+    final trailingItems = _items.skip(2).toList(growable: false);
+
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: totalHeight,
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
             _NavBackground(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(
-                    bottomNavItems.length,
-                    (index) => Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                  children: [
+                    for (final item in leadingItems)
+                      Expanded(
                         child: _NavItemButton(
-                          item: bottomNavItems[index],
-                          index: index,
-                          navigationShell: navigationShell,
+                          item: item,
+                          isSelected: _isSelected(item.routeName),
+                          onTap: () => _onItemTap(context, item),
                         ),
                       ),
-                    ),
-                  ),
+                    const SizedBox(width: 80),
+                    for (final item in trailingItems)
+                      Expanded(
+                        child: _NavItemButton(
+                          item: item,
+                          isSelected: _isSelected(item.routeName),
+                          onTap: () => _onItemTap(context, item),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
             Positioned(
-              bottom: 44,
+              bottom: 48,
               child: _AddProjectButton(
-                onTap: () => context.pushNamed('projectsCreate'),
+                onTap: () => context.goNamed('projectsCreate'),
               ),
             ),
           ],
@@ -99,11 +115,11 @@ class _NavBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 100,
+      height: CustomNavBar.height,
       decoration: const BoxDecoration(
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          // topLeft: Radius.circular(20),
+          // topRight: Radius.circular(20),
         ),
       ),
       child: Stack(
@@ -111,14 +127,14 @@ class _NavBackground extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+              // topLeft: Radius.circular(20),
+              // topRight: Radius.circular(20),
             ),
             child: Image.asset(
               'assets/images/nav_image.png',
               width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.cover,
+              // height: 200,
+              fit: BoxFit.fill,
             ),
           ),
           child,
@@ -131,58 +147,52 @@ class _NavBackground extends StatelessWidget {
 class _NavItemButton extends StatelessWidget {
   const _NavItemButton({
     required this.item,
-    required this.index,
-    required this.navigationShell,
+    required this.isSelected,
+    required this.onTap,
   });
 
   final BottomNavItem item;
-  final int index;
-  final StatefulNavigationShell navigationShell;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = navigationShell.currentIndex == index;
     final textTheme = Theme.of(context).textTheme;
 
-    return InkWell(
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      onTap: () => navigationShell.goBranch(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _NavIcon(item: item, isSelected: isSelected),
-          const SizedBox(height: 10),
-          if (isSelected)
-            GradientText(
-              item.label,
-              colors: const [AppColors.primary, AppColors.secondary],
-              style:
-                  (textTheme.bodySmall ??
-                          textTheme.bodyMedium ??
-                          const TextStyle(fontSize: 10))
-                      .copyWith(fontSize: 10, fontWeight: FontWeight.bold),
-            )
-          else
-            Opacity(
-              opacity: 0.6,
-              child: Text(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        splashColor: AppColors.primary.withValues(alpha: 0.18),
+        highlightColor: AppColors.primary.withValues(alpha: 0.08),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _NavIcon(item: item, isSelected: isSelected),
+              const SizedBox(height: 6),
+              Text(
                 item.label,
                 style:
                     (textTheme.bodySmall ??
                             textTheme.bodyMedium ??
-                            const TextStyle(fontSize: 10))
+                            const TextStyle(fontSize: 11))
                         .copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryText,
+                          fontSize: 12,
+                          color: isSelected
+                              ? AppColors.secondaryText
+                              : AppColors.secondaryText.withValues(alpha: 1),
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
               ),
-            ),
-          const SizedBox(height: 3),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -196,27 +206,29 @@ class _NavIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isSelected) {
-      if (item.activeAsset != null) {
-        return SvgPicture.asset(item.activeAsset!, width: 20, height: 20);
-      }
-      if (item.inactiveAsset != null) {
-        return SvgPicture.asset(item.inactiveAsset!, width: 20, height: 20);
-      }
-      return Icon(item.inactiveIcon, size: 20, color: AppColors.primaryText);
+    final double opacity = isSelected ? 1 : 0.9;
+
+    if (item.activeAsset != null) {
+      final assetPath = isSelected
+          ? item.activeAsset!
+          : (item.asset ?? item.activeAsset!);
+      return Opacity(
+        opacity: opacity,
+        child: SvgPicture.asset(assetPath, height: 24, width: 24),
+      );
     }
 
-    if (item.inactiveAsset != null) {
+    if (item.asset != null) {
       return Opacity(
-        opacity: 0.65,
-        child: SvgPicture.asset(item.inactiveAsset!, width: 20, height: 20),
+        opacity: opacity,
+        child: SvgPicture.asset(item.asset!, height: 24, width: 24),
       );
     }
 
     return Icon(
-      item.inactiveIcon,
-      size: 20,
-      color: AppColors.primaryText.withOpacity(0.6),
+      item.icon,
+      size: 22,
+      color: AppColors.secondaryText.withValues(alpha: opacity),
     );
   }
 }
@@ -248,11 +260,7 @@ class _AddProjectButton extends StatelessWidget {
             color: AppColors.secondaryBackground,
           ),
           alignment: Alignment.center,
-          child: SvgPicture.asset(
-            'assets/images/ug4be_+.svg',
-            width: 24,
-            height: 24,
-          ),
+          child: SvgPicture.asset('assets/images/ug4be_+.svg', width: 24),
         ),
       ),
     );

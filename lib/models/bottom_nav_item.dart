@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 
 class BottomNavItem {
-  final IconData? inactiveIcon;
-  final String? inactiveAsset;
+  final String routeName;
   final String label;
-  final String route;
-  final bool isCenter;
+  final IconData? icon;
+  final String? asset;
   final String? activeAsset;
 
   const BottomNavItem({
-    this.inactiveIcon,
-    this.inactiveAsset,
+    required this.routeName,
     required this.label,
-    required this.route,
-    this.isCenter = false,
+    this.icon,
+    this.asset,
     this.activeAsset,
   }) : assert(
-         inactiveIcon != null || inactiveAsset != null || isCenter,
-         'A bottom navigation item needs an icon or asset unless it is the center action.',
+         icon != null || asset != null || activeAsset != null,
+         'Bottom navigation items require at least one visual representation.',
        );
 }

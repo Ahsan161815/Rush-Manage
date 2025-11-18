@@ -89,7 +89,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () => context.go('/projects'),
+                  onPressed: () => context.goNamed('dashboard'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.primaryText,

@@ -3,6 +3,7 @@ import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -44,68 +45,86 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ProfileHeader(snapshot: _profile),
-              const SizedBox(height: 20),
-              _InfoSection(
-                title: 'Contact',
-                children: [
-                  _InfoRow(
-                    icon: FeatherIcons.mail,
-                    label: 'Email',
-                    value: _profile.email,
-                  ),
-                  _InfoRow(
-                    icon: FeatherIcons.phone,
-                    label: 'Phone',
-                    value: _profile.phone,
-                  ),
-                  _InfoRow(
-                    icon: FeatherIcons.mapPin,
-                    label: 'Location',
-                    value: _profile.location,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _InfoSection(
-                title: 'Focus Area',
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [_FocusBadge(label: _profile.focusArea)],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _InfoSection(
-                title: 'About',
-                children: [
-                  Text(
-                    _profile.bio,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppColors.secondaryText,
-                      fontWeight: FontWeight.w600,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  16,
+                  24,
+                  CustomNavBar.totalHeight + 56,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ProfileHeader(snapshot: _profile),
+                    const SizedBox(height: 20),
+                    _InfoSection(
+                      title: 'Contact',
+                      children: [
+                        _InfoRow(
+                          icon: FeatherIcons.mail,
+                          label: 'Email',
+                          value: _profile.email,
+                        ),
+                        _InfoRow(
+                          icon: FeatherIcons.phone,
+                          label: 'Phone',
+                          value: _profile.phone,
+                        ),
+                        _InfoRow(
+                          icon: FeatherIcons.mapPin,
+                          label: 'Location',
+                          value: _profile.location,
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    _InfoSection(
+                      title: 'Focus Area',
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [_FocusBadge(label: _profile.focusArea)],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _InfoSection(
+                      title: 'About',
+                      children: [
+                        Text(
+                          _profile.bio,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.secondaryText,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+                    GradientButton(
+                      onPressed: () => context.pushNamed('setupProfile'),
+                      text: 'Edit Profile',
+                      width: double.infinity,
+                      height: 52,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 28),
-              GradientButton(
-                onPressed: () => context.pushNamed('setupProfile'),
-                text: 'Edit Profile',
-                width: double.infinity,
-                height: 52,
-              ),
-            ],
+            ),
           ),
-        ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CustomNavBar(currentRouteName: 'profile'),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -47,7 +46,7 @@ class ProjectDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 GradientButton(
-                  onPressed: () => context.go('/projects'),
+                  onPressed: () => context.goNamed('dashboard'),
                   text: 'Back to Projects',
                   width: 200,
                   height: 46,

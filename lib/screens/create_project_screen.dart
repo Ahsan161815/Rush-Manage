@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/app/widgets/app_form_fields.dart';
 import 'package:myapp/controllers/project_controller.dart';
@@ -121,7 +122,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
     if (!mounted) return;
     setState(() => _isLoading = false);
-    context.go('/projects/$id');
+    context.goNamed('projectDetail', pathParameters: {'id': id});
   }
 
   @override
@@ -130,348 +131,385 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.textfieldBackground,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.chevron_left,
-                          color: AppColors.secondaryText,
-                        ),
-                        onPressed: () {
-                          final router = GoRouter.of(context);
-                          if (router.canPop()) {
-                            router.pop();
-                          } else {
-                            router.go('/projects');
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  20,
+                  24,
+                  CustomNavBar.totalHeight + 40,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            'New Project',
-                            style: Theme.of(context).textTheme.displaySmall
-                                ?.copyWith(
-                                  color: AppColors.secondaryText,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.textfieldBackground,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.chevron_left,
+                                color: AppColors.secondaryText,
+                              ),
+                              onPressed: () {
+                                final router = GoRouter.of(context);
+                                if (router.canPop()) {
+                                  router.pop();
+                                } else {
+                                  router.goNamed('dashboard');
+                                }
+                              },
+                            ),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Set up the essentials in a few quick steps.',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: AppColors.hintTextfiled,
-                                  fontWeight: FontWeight.w600,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'New Project',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displaySmall
+                                      ?.copyWith(
+                                        color: AppColors.secondaryText,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Set up the essentials in a few quick steps.',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.hintTextfiled,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 28),
-                _LabeledField(
-                  label: 'Project name',
-                  child: AppFormTextField(
-                    controller: _nameController,
-                    hintText: 'e.g. Dupont Wedding',
-                    validator: (value) =>
-                        (value == null || value.trim().isEmpty)
-                        ? 'Project name is required'
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                _LabeledField(
-                  label: 'Client',
-                  child: AppFormTextField(
-                    controller: _clientController,
-                    hintText: 'Client or company name',
-                  ),
-                ),
-                const SizedBox(height: 18),
-                _LabeledField(
-                  label: 'Category',
-                  child: AppDropdownField<String>(
-                    value: _selectedCategory,
-                    items: _categories,
-                    hintText: 'Select category',
-                    onChanged: (value) =>
-                        setState(() => _selectedCategory = value),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _LabeledField(
-                        label: 'Start date',
-                        child: AppDateField(
-                          label: _formatDate(_startDate),
-                          hasValue: _startDate != null,
-                          onTap: () => _pickDate(isStart: true),
-                          leading: SvgPicture.asset(
-                            'assets/images/calendar_2.svg',
-                            width: 22,
-                            height: 22,
-                          ),
+                      const SizedBox(height: 28),
+                      _LabeledField(
+                        label: 'Project name',
+                        child: AppFormTextField(
+                          controller: _nameController,
+                          hintText: 'e.g. Dupont Wedding',
+                          validator: (value) =>
+                              (value == null || value.trim().isEmpty)
+                              ? 'Project name is required'
+                              : null,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _LabeledField(
-                        label: 'End date',
-                        child: AppDateField(
-                          label: _formatDate(_endDate),
-                          hasValue: _endDate != null,
-                          onTap: () => _pickDate(isStart: false),
-                          leading: SvgPicture.asset(
-                            'assets/images/calendar_2.svg',
-                            width: 22,
-                            height: 22,
-                          ),
+                      const SizedBox(height: 18),
+                      _LabeledField(
+                        label: 'Client',
+                        child: AppFormTextField(
+                          controller: _clientController,
+                          hintText: 'Client or company name',
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                _LabeledField(
-                  label: 'Description (optional)',
-                  child: AppFormTextField(
-                    controller: _descriptionController,
-                    hintText: 'Add a short brief for your team...',
-                    maxLines: 4,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _SectionHeader(
-                  title: 'Invite team members',
-                  description: 'Assign roles to control access.',
-                ),
-                const SizedBox(height: 14),
-                AppFormTextField(
-                  controller: _inviteController,
-                  hintText: 'Email address',
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: ['Admin', 'Collaborator', 'Viewer']
-                      .map(
-                        (role) => _RoleChip(
-                          label: role,
-                          selected: _selectedRole == role,
-                          onTap: () => setState(() => _selectedRole = role),
+                      const SizedBox(height: 18),
+                      _LabeledField(
+                        label: 'Category',
+                        child: AppDropdownField<String>(
+                          value: _selectedCategory,
+                          items: _categories,
+                          hintText: 'Select category',
+                          onChanged: (value) =>
+                              setState(() => _selectedCategory = value),
                         ),
-                      )
-                      .toList(),
-                ),
-                const SizedBox(height: 14),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GradientButton(
-                    onPressed: _addInvitee,
-                    text: 'Add member',
-                    width: 160,
-                    height: 40,
-                  ),
-                ),
-                if (_invitees.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: _invitees
-                        .map(
-                          (invite) => Chip(
-                            backgroundColor: AppColors.textfieldBackground,
-                            label: Text(
-                              '${invite.email} • ${invite.role}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: AppColors.secondaryText,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _LabeledField(
+                              label: 'Start date',
+                              child: AppDateField(
+                                label: _formatDate(_startDate),
+                                hasValue: _startDate != null,
+                                onTap: () => _pickDate(isStart: true),
+                                leading: SvgPicture.asset(
+                                  'assets/images/calendar_2.svg',
+                                  width: 22,
+                                  height: 22,
+                                ),
+                              ),
                             ),
-                            deleteIcon: const Icon(Icons.close, size: 18),
-                            onDeleted: () =>
-                                setState(() => _invitees.remove(invite)),
                           ),
-                        )
-                        .toList(),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                Material(
-                  color: Colors.transparent,
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      color: AppColors.textfieldBackground,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.textfieldBorder),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.secondary.withOpacity(0.08),
-                          blurRadius: 18,
-                          offset: const Offset(0, 10),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _LabeledField(
+                              label: 'End date',
+                              child: AppDateField(
+                                label: _formatDate(_endDate),
+                                hasValue: _endDate != null,
+                                onTap: () => _pickDate(isStart: false),
+                                leading: SvgPicture.asset(
+                                  'assets/images/calendar_2.svg',
+                                  width: 22,
+                                  height: 22,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      _LabeledField(
+                        label: 'Description (optional)',
+                        child: AppFormTextField(
+                          controller: _descriptionController,
+                          hintText: 'Add a short brief for your team...',
+                          maxLines: 4,
                         ),
-                      ],
-                    ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(24),
-                      onTap: () =>
-                          setState(() => _inviteExternal = !_inviteExternal),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 18,
+                      ),
+                      const SizedBox(height: 24),
+                      _SectionHeader(
+                        title: 'Invite team members',
+                        description: 'Assign roles to control access.',
+                      ),
+                      const SizedBox(height: 14),
+                      AppFormTextField(
+                        controller: _inviteController,
+                        hintText: 'Email address',
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: ['Admin', 'Collaborator', 'Viewer']
+                            .map(
+                              (role) => _RoleChip(
+                                label: role,
+                                selected: _selectedRole == role,
+                                onTap: () =>
+                                    setState(() => _selectedRole = role),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      const SizedBox(height: 14),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GradientButton(
+                          onPressed: _addInvitee,
+                          text: 'Add member',
+                          width: 160,
+                          height: 40,
                         ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Invite external collaborator',
-                                    style: Theme.of(context).textTheme.bodyLarge
+                      ),
+                      if (_invitees.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: _invitees
+                              .map(
+                                (invite) => Chip(
+                                  backgroundColor:
+                                      AppColors.textfieldBackground,
+                                  label: Text(
+                                    '${invite.email} • ${invite.role}',
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: AppColors.secondaryText,
                                           fontWeight: FontWeight.bold,
                                         ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    'Send a secure link via email or WhatsApp for limited access.',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: AppColors.hintTextfiled,
-                                          fontWeight: FontWeight.w600,
+                                  deleteIcon: const Icon(Icons.close, size: 18),
+                                  onDeleted: () =>
+                                      setState(() => _invitees.remove(invite)),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      Material(
+                        color: Colors.transparent,
+                        child: Ink(
+                          decoration: BoxDecoration(
+                            color: AppColors.textfieldBackground,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: AppColors.textfieldBorder,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.secondary.withValues(
+                                  alpha: 0.08,
+                                ),
+                                blurRadius: 18,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(24),
+                            onTap: () => setState(
+                              () => _inviteExternal = !_inviteExternal,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 18,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Invite external collaborator',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.copyWith(
+                                                color: AppColors.secondaryText,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                         ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'Send a secure link via email or WhatsApp for limited access.',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: AppColors.hintTextfiled,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Theme(
+                                    data: Theme.of(context).copyWith(
+                                      switchTheme: SwitchThemeData(
+                                        thumbColor:
+                                            WidgetStateProperty.resolveWith((
+                                              states,
+                                            ) {
+                                              if (states.contains(
+                                                WidgetState.selected,
+                                              )) {
+                                                return AppColors.primary;
+                                              }
+                                              if (states.contains(
+                                                WidgetState.disabled,
+                                              )) {
+                                                return AppColors.hintTextfiled;
+                                              }
+                                              return AppColors.secondaryText
+                                                  .withValues(alpha: 0.5);
+                                            }),
+                                        trackColor:
+                                            WidgetStateProperty.resolveWith((
+                                              states,
+                                            ) {
+                                              if (states.contains(
+                                                WidgetState.selected,
+                                              )) {
+                                                return AppColors.primary
+                                                    .withValues(alpha: 0.28);
+                                              }
+                                              if (states.contains(
+                                                WidgetState.disabled,
+                                              )) {
+                                                return AppColors.textfieldBorder
+                                                    .withValues(alpha: 0.3);
+                                              }
+                                              return AppColors.textfieldBorder
+                                                  .withValues(alpha: 0.6);
+                                            }),
+                                        trackOutlineColor:
+                                            WidgetStateProperty.resolveWith(
+                                              (states) => Colors.transparent,
+                                            ),
+                                      ),
+                                    ),
+                                    child: Switch(
+                                      value: _inviteExternal,
+                                      onChanged: (value) => setState(
+                                        () => _inviteExternal = value,
+                                      ),
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                            Theme(
-                              data: Theme.of(context).copyWith(
-                                switchTheme: SwitchThemeData(
-                                  thumbColor: MaterialStateProperty.resolveWith(
-                                    (states) {
-                                      if (states.contains(
-                                        MaterialState.selected,
-                                      )) {
-                                        return AppColors.primary;
-                                      }
-                                      if (states.contains(
-                                        MaterialState.disabled,
-                                      )) {
-                                        return AppColors.hintTextfiled;
-                                      }
-                                      return AppColors.secondaryText
-                                          .withOpacity(0.5);
-                                    },
-                                  ),
-                                  trackColor: MaterialStateProperty.resolveWith(
-                                    (states) {
-                                      if (states.contains(
-                                        MaterialState.selected,
-                                      )) {
-                                        return AppColors.primary.withOpacity(
-                                          0.28,
-                                        );
-                                      }
-                                      if (states.contains(
-                                        MaterialState.disabled,
-                                      )) {
-                                        return AppColors.textfieldBorder
-                                            .withOpacity(0.3);
-                                      }
-                                      return AppColors.textfieldBorder
-                                          .withOpacity(0.6);
-                                    },
-                                  ),
-                                  trackOutlineColor:
-                                      MaterialStateProperty.resolveWith(
-                                        (states) => Colors.transparent,
-                                      ),
-                                ),
-                              ),
-                              child: Switch(
-                                value: _inviteExternal,
-                                onChanged: (value) =>
-                                    setState(() => _inviteExternal = value),
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                      if (_inviteExternal)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(top: 14),
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondaryBackground,
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: AppColors.textfieldBorder.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'Preview link: https://rush.manage/invite/${DateTime.now().millisecondsSinceEpoch}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColors.secondaryText,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                      const SizedBox(height: 32),
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 420),
+                          child: GradientButton(
+                            onPressed: () {
+                              if (_isLoading) return;
+                              _submit(controller);
+                            },
+                            text: 'Create project',
+                            isLoading: _isLoading,
+                            width: double.infinity,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (_inviteExternal)
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(top: 14),
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondaryBackground,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: AppColors.textfieldBorder.withOpacity(0.7),
-                      ),
-                    ),
-                    child: Text(
-                      'Preview link: https://rush.manage/invite/${DateTime.now().millisecondsSinceEpoch}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.secondaryText,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 32),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: GradientButton(
-                      onPressed: () {
-                        if (_isLoading) return;
-                        _submit(controller);
-                      },
-                      text: 'Create project',
-                      isLoading: _isLoading,
-                      width: double.infinity,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CustomNavBar(currentRouteName: 'projectsCreate'),
+          ),
+        ],
       ),
     );
   }
@@ -584,14 +622,14 @@ class _RoleChip extends StatelessWidget {
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: AppColors.secondary.withOpacity(0.2),
+                    color: AppColors.secondary.withValues(alpha: 0.2),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: AppColors.secondary.withOpacity(0.08),
+                    color: AppColors.secondary.withValues(alpha: 0.08),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

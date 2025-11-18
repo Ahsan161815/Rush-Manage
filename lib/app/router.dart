@@ -8,7 +8,6 @@ import 'package:myapp/screens/dashboard_screen.dart';
 import 'package:myapp/screens/finance_screen.dart';
 import 'package:myapp/screens/forgot_password_screen.dart';
 import 'package:myapp/screens/login_screen.dart';
-import 'package:myapp/screens/main_screen.dart';
 import 'package:myapp/screens/profile_screen.dart';
 import 'package:myapp/screens/project_chat_screen.dart';
 import 'package:myapp/screens/project_detail_screen.dart';
@@ -59,80 +58,45 @@ final router = GoRouter(
       name: 'setupProfile',
       builder: (context, state) => const SetupProfileScreen(),
     ),
-    StatefulShellRoute.indexedStack(
-      builder: (context, state, navigationShell) {
-        return MainScreen(navigationShell: navigationShell);
-      },
-      branches: [
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/dashboard',
-              name: 'dashboard',
-              builder: (context, state) => const DashboardScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/chats',
-              name: 'chats',
-              builder: (context, state) => const ChatsScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/calendar',
-              name: 'calendar',
-              builder: (context, state) => const CalendarScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/finance',
-              name: 'finance',
-              builder: (context, state) => const FinanceScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/profile',
-              name: 'profile',
-              builder: (context, state) => const ProfileScreen(),
-            ),
-          ],
-        ),
-      ],
+    GoRoute(
+      path: '/dashboard',
+      name: 'dashboard',
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: DashboardScreen()),
     ),
     GoRoute(
-      path: '/create_project',
-      name: 'createProject',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const CreateProjectScreen(),
+      path: '/chats',
+      name: 'chats',
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: ChatsScreen()),
     ),
     GoRoute(
-      path: '/projects',
-      name: 'projects',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const DashboardScreen(),
+      path: '/calendar',
+      name: 'calendar',
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: CalendarScreen()),
+    ),
+    GoRoute(
+      path: '/finance',
+      name: 'finance',
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: FinanceScreen()),
+    ),
+    GoRoute(
+      path: '/profile',
+      name: 'profile',
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: ProfileScreen()),
     ),
     GoRoute(
       path: '/projects/create',
       name: 'projectsCreate',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const CreateProjectScreen(),
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: CreateProjectScreen()),
     ),
     GoRoute(
       path: '/projects/:id',
       name: 'projectDetail',
-      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final id = state.pathParameters['id'] ?? '';
         return ProjectDetailScreen(projectId: id);
@@ -141,7 +105,6 @@ final router = GoRouter(
     GoRoute(
       path: '/projects/:id/chat',
       name: 'projectChat',
-      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final id = state.pathParameters['id'] ?? '';
         return ProjectChatScreen(projectId: id);
