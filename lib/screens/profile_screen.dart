@@ -93,25 +93,26 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    _InfoSection(
-                      title: 'About',
-                      children: [
-                        Text(
-                          _profile.bio,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: AppColors.secondaryText,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 12),
                     GradientButton(
                       onPressed: () => context.pushNamed('setupProfile'),
                       text: 'Edit Profile',
                       width: double.infinity,
                       height: 52,
+                    ),
+                    const SizedBox(height: 12),
+                    _SecondaryActionButton(
+                      icon: FeatherIcons.barChart2,
+                      label: 'View Analytics',
+                      onTap: () => context.pushNamed('analytics'),
+                      accentColor: AppColors.secondary,
+                    ),
+                    const SizedBox(height: 12),
+                    _SecondaryActionButton(
+                      icon: FeatherIcons.bell,
+                      label: 'Invitation Notifications',
+                      onTap: () => context.pushNamed('invitationNotifications'),
+                      accentColor: AppColors.primary,
                     ),
                   ],
                 ),
@@ -125,6 +126,62 @@ class ProfileScreen extends StatelessWidget {
             child: CustomNavBar(currentRouteName: 'profile'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SecondaryActionButton extends StatelessWidget {
+  const _SecondaryActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.accentColor,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? accentColor;
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.secondaryBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: (accentColor ?? AppColors.textfieldBorder).withValues(
+              alpha: 0.55,
+            ),
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: accentColor ?? AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.secondaryText,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Icon(
+              FeatherIcons.chevronRight,
+              size: 18,
+              color: (accentColor ?? AppColors.hintTextfiled).withValues(
+                alpha: 0.9,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/avatar_stack.dart';
 import 'package:myapp/app/widgets/gradient_progress_bar.dart';
@@ -20,105 +21,100 @@ class ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const gradient = LinearGradient(
-      colors: [AppColors.secondary, AppColors.primary],
-      begin: AlignmentDirectional(1.0, 0.34),
-      end: AlignmentDirectional(-1.0, -0.34),
-    );
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(28),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(28),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
         child: Container(
-          margin: const EdgeInsets.all(1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-          decoration: BoxDecoration(
-            color: AppColors.secondaryBackground,
-            borderRadius: BorderRadius.circular(26),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x1A181BF2),
-                blurRadius: 18,
-                offset: Offset(0, 10),
-              ),
-            ],
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(28)),
+            gradient: LinearGradient(
+              colors: [AppColors.secondary, AppColors.primary],
+              begin: AlignmentDirectional(1.0, 0.34),
+              end: AlignmentDirectional(-1.0, -0.34),
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          project.name,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(color: AppColors.secondaryText),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          project.client.isEmpty
-                              ? 'Client TBD'
-                              : project.client,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: AppColors.hintTextfiled,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                      ],
+          padding: const EdgeInsets.all(1.8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.textfieldBackground,
+              borderRadius: BorderRadius.circular(26),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            project.name,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(color: AppColors.secondaryText),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            project.client.isEmpty
+                                ? 'Client TBD'
+                                : project.client,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.hintTextfiled,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  _StatusBadge(status: project.status),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  _InfoPill(
-                    icon: Icons.calendar_today_outlined,
-                    label: 'Start',
-                    value: _formatDate(project.startDate),
-                  ),
-                  const SizedBox(width: 12),
-                  _InfoPill(
-                    icon: Icons.flag_outlined,
-                    label: 'Due',
-                    value: _formatDate(project.endDate),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: GradientProgressBar(
-                      progress: project.progress,
-                      height: 10,
+                    _StatusBadge(status: project.status),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    _InfoPill(
+                      icon: FeatherIcons.calendar,
+                      label: 'Start',
+                      value: _formatDate(project.startDate),
+                      accent: AppColors.secondary,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '${project.progress}%',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.secondaryText,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(width: 12),
+                    _InfoPill(
+                      icon: FeatherIcons.flag,
+                      label: 'Due',
+                      value: _formatDate(project.endDate),
+                      accent: AppColors.orange,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              AvatarStack(members: project.members),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GradientProgressBar(
+                        progress: project.progress,
+                        height: 10,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${project.progress}%',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.secondaryText,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                AvatarStack(members: project.members),
+              ],
+            ),
           ),
         ),
       ),
@@ -131,11 +127,13 @@ class _InfoPill extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    required this.accent,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -148,8 +146,17 @@ class _InfoPill extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: AppColors.primary),
-            const SizedBox(width: 8),
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: accent.withValues(alpha: 0.12),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 18, color: accent),
+            ),
+            const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

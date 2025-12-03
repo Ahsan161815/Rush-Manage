@@ -1,14 +1,7 @@
-<svg width="23" height="22" viewBox="0 0 23 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M11.5 21C17.0228 21 21.5 16.5228 21.5 11C21.5 5.47715 17.0228 1 11.5 1C5.97715 1 1.5 5.47715 1.5 11C1.5 16.5228 5.97715 21 11.5 21Z" stroke="url(#paint0_linear_913_2459)" stroke-width="1.6"/>
-<path d="M5.8999 18.3113C8.72385 15.3535 13.9456 15.2143 16.7999 18.3113M14.3717 9.22797C14.3717 10.9002 13.0142 12.2558 11.3396 12.2558C9.66513 12.2558 8.30756 10.9002 8.30756 9.22797C8.30756 7.55578 9.66513 6.2002 11.3396 6.2002C13.0142 6.2002 14.3717 7.55578 14.3717 9.22797Z" stroke="url(#paint1_linear_913_2459)" stroke-width="1.6" stroke-linecap="round"/>
-<defs>
-<linearGradient id="paint0_linear_913_2459" x1="1.5" y1="1" x2="25.4322" y2="8.5723" gradientUnits="userSpaceOnUse">
-<stop stop-color="#181BF2"/>
-<stop offset="1" stop-color="#0ABEFF"/>
-</linearGradient>
-<linearGradient id="paint1_linear_913_2459" x1="5.8999" y1="6.2002" x2="19.1724" y2="9.97976" gradientUnits="userSpaceOnUse">
-<stop stop-color="#181BF2"/>
-<stop offset="1" stop-color="#0ABEFF"/>
-</linearGradient>
-</defs>
-</svg>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Transformed by: SVG Repo Mixer Tools -->
+<svg width="256px" height="256px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="SVGRepo_bgCarrier" stroke-width="0"/>
+<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/>
+<g id="SVGRepo_iconCarrier"> <path d="M12 21.25C17.1086 21.25 21.25 17.1086 21.25 12C21.25 6.89137 17.1086 2.75 12 2.75C6.89137 2.75 2.75 6.89137 2.75 12C2.75 17.1086 6.89137 21.25 12 21.25Z" stroke="#000000" stroke-width="2.304" stroke-linecap="round" stroke-linejoin="round"/> <path d="M12.1303 13C13.8203 13 15.1903 11.63 15.1903 9.94C15.1903 8.25001 13.8203 6.88 12.1303 6.88C10.4403 6.88 9.07031 8.25001 9.07031 9.94C9.07031 11.63 10.4403 13 12.1303 13Z" stroke="#000000" stroke-width="2.304" stroke-linecap="round" stroke-linejoin="round"/> <path d="M6.5 19.11C6.80719 17.8839 7.51529 16.7956 8.51178 16.0179C9.50827 15.2403 10.736 14.818 12 14.818C13.264 14.818 14.4917 15.2403 15.4882 16.0179C16.4847 16.7956 17.1928 17.8839 17.5 19.11" stroke="#000000" stroke-width="2.304" stroke-linecap="round" stroke-linejoin="round"/> </g>
+</svg>

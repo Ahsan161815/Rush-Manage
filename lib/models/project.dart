@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 
 enum ProjectStatus { inPreparation, ongoing, completed, archived }
 
+enum TaskStatus { planned, inProgress, completed, deferred }
+
 class Member extends Equatable {
   final String id;
   final String name;
@@ -17,8 +19,9 @@ class Task extends Equatable {
   final String id;
   final String title;
   final String? assigneeId;
-  final bool completed;
-  final DateTime? dueDate;
+  final TaskStatus status;
+  final DateTime? startDate;
+  final DateTime? endDate;
   final String? description;
   final List<String> attachments;
 
@@ -26,8 +29,9 @@ class Task extends Equatable {
     required this.id,
     required this.title,
     this.assigneeId,
-    this.completed = false,
-    this.dueDate,
+    this.status = TaskStatus.planned,
+    this.startDate,
+    this.endDate,
     this.description,
     this.attachments = const [],
   });
@@ -35,7 +39,9 @@ class Task extends Equatable {
   Task copyWith({
     String? title,
     String? assigneeId,
-    bool? completed,
+    TaskStatus? status,
+    DateTime? startDate,
+    DateTime? endDate,
     DateTime? dueDate,
     String? description,
     List<String>? attachments,
@@ -43,19 +49,25 @@ class Task extends Equatable {
     id: id,
     title: title ?? this.title,
     assigneeId: assigneeId ?? this.assigneeId,
-    completed: completed ?? this.completed,
-    dueDate: dueDate ?? this.dueDate,
+    status: status ?? this.status,
+    startDate: startDate ?? this.startDate,
+    endDate: endDate ?? dueDate ?? this.endDate,
     description: description ?? this.description,
     attachments: attachments ?? this.attachments,
   );
+
+  bool get isCompleted => status == TaskStatus.completed;
+
+  DateTime? get dueDate => endDate;
 
   @override
   List<Object?> get props => [
     id,
     title,
     assigneeId,
-    completed,
-    dueDate,
+    status,
+    startDate,
+    endDate,
     description,
     attachments,
   ];

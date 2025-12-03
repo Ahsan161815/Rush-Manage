@@ -5,6 +5,7 @@ import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/router.dart';
 import 'package:myapp/controllers/dashboard_controller.dart';
 import 'package:myapp/controllers/project_controller.dart';
+import 'package:myapp/controllers/finance_controller.dart';
 
 void main() {
   runApp(
@@ -13,6 +14,7 @@ void main() {
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => DashboardController()),
         ChangeNotifierProvider(create: (context) => ProjectController()),
+        ChangeNotifierProvider(create: (context) => FinanceController()),
       ],
       child: const MyApp(),
     ),

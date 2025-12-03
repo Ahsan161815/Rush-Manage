@@ -85,6 +85,7 @@ class AppDropdownField<T> extends StatelessWidget {
     required this.hintText,
     this.value,
     this.labelBuilder,
+    this.compact = false,
   });
 
   final List<T> items;
@@ -92,6 +93,7 @@ class AppDropdownField<T> extends StatelessWidget {
   final String hintText;
   final T? value;
   final String Function(T value)? labelBuilder;
+  final bool compact;
 
   String _resolveLabel(T item) => labelBuilder?.call(item) ?? item.toString();
 
@@ -113,7 +115,7 @@ class AppDropdownField<T> extends StatelessWidget {
           initialValue: value,
           color: AppColors.secondaryBackground,
           elevation: 6,
-          offset: const Offset(0, 10),
+          offset: Offset(0, compact ? 6 : 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
@@ -126,7 +128,7 @@ class AppDropdownField<T> extends StatelessWidget {
                 .map(
                   (item) => PopupMenuItem<T>(
                     value: item,
-                    height: 44,
+                    height: compact ? 36 : 44,
                     child: Text(
                       _resolveLabel(item),
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -140,7 +142,10 @@ class AppDropdownField<T> extends StatelessWidget {
           },
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: compact ? 6 : 8,
+            ),
             decoration: BoxDecoration(
               color: AppColors.secondaryBackground,
               borderRadius: BorderRadius.circular(18),
@@ -167,17 +172,17 @@ class AppDropdownField<T> extends StatelessWidget {
                       color: hasValue
                           ? AppColors.secondaryText
                           : AppColors.hintTextfiled,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Icon(
+                Icon(
                   FeatherIcons.chevronDown,
                   color: AppColors.secondaryText,
-                  size: 18,
+                  size: compact ? 16 : 18,
                 ),
               ],
             ),

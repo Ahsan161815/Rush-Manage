@@ -8,6 +8,7 @@ class CustomTextField extends StatefulWidget {
   final String iconPath;
   final bool isPassword;
   final TextEditingController? controller;
+  final double widthFactor;
 
   const CustomTextField({
     super.key,
@@ -15,6 +16,7 @@ class CustomTextField extends StatefulWidget {
     required this.iconPath,
     this.isPassword = false,
     this.controller,
+    this.widthFactor = 0.82,
   });
 
   @override
@@ -66,7 +68,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
-      width: MediaQuery.of(context).size.width * 0.82,
+      width: MediaQuery.of(context).size.width * widget.widthFactor,
       height: 52.0,
       decoration: BoxDecoration(
         gradient: hasFocus
@@ -93,7 +95,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: SvgPicture.asset(widget.iconPath, width: 16),
+              child: SvgPicture.asset(
+                widget.iconPath,
+                width: 18,
+                // height: 18, removed height to maintain aspect ratio and avoid distortion
+                colorFilter: const ColorFilter.mode(
+                  AppColors.secondary,
+                  BlendMode.srcIn,
+                ),
+              ),
             ),
             Expanded(
               child: TextFormField(

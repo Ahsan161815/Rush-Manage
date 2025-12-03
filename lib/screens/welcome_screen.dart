@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 import 'package:myapp/app/app_theme.dart';
@@ -27,19 +26,17 @@ class WelcomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Spacer(flex: 2),
-            SvgPicture.asset(
-              'assets/images/App_icon.svg',
-              width: 70,
-              height: 70,
-              colorFilter: const ColorFilter.mode(
-                AppColors.primaryText,
-                BlendMode.srcIn,
-              ),
+            Image.asset(
+              'assets/images/App_icon.png',
+              width: 200,
+              // height: 70,
+              fit: BoxFit.contain,
             ),
             const Spacer(),
-            SvgPicture.asset(
-              'assets/images/welcome_1.svg',
+            Image.asset(
+              'assets/images/welcome_1.png',
               width: screenWidth * 0.8,
+              fit: BoxFit.contain,
             ),
             const Spacer(),
             Padding(

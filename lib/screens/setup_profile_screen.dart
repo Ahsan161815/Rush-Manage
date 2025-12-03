@@ -144,14 +144,14 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
               ),
               const SizedBox(height: 36),
               GradientButton(
-                onPressed: () => context.goNamed('dashboard'),
+                onPressed: () => context.goNamed('home'),
                 text: 'Finish Setup',
                 width: double.infinity,
                 height: 52,
               ),
               const SizedBox(height: 16),
               TextButton(
-                onPressed: () => context.goNamed('dashboard'),
+                onPressed: () => context.goNamed('home'),
                 child: Text(
                   'Skip for now',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

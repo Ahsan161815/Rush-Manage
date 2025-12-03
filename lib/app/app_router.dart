@@ -6,7 +6,7 @@ import 'package:myapp/screens/welcome_screen.dart';
 import 'package:myapp/screens/forgot_password_screen.dart';
 import 'package:myapp/screens/verify_email_screen.dart';
 import 'package:myapp/screens/reset_new_password_screen.dart';
-import 'package:myapp/screens/dashboard_screen.dart';
+import 'package:myapp/screens/management_screen.dart';
 import 'package:myapp/screens/create_project_screen.dart';
 import 'package:myapp/screens/project_detail_screen.dart';
 
@@ -51,7 +51,7 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/projects',
       builder: (BuildContext context, GoRouterState state) {
-        return const DashboardScreen();
+        return const ManagementScreen();
       },
     ),
     GoRoute(

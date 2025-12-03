@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:myapp/app/app_theme.dart';
-
 class GradientProgressBar extends StatelessWidget {
   const GradientProgressBar({
     super.key,
@@ -35,7 +33,7 @@ class GradientProgressBar extends StatelessWidget {
           child: Container(
             height: height,
             decoration: BoxDecoration(
-              color: AppColors.textfieldBackground,
+              color: const Color.fromARGB(255, 206, 202, 202),
               borderRadius: BorderRadius.circular(height / 2),
             ),
             child: Align(

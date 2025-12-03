@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/app/widgets/app_form_fields.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/models/project.dart';
 
@@ -27,7 +27,10 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   String? _selectedCategory;
-  String _selectedRole = 'Collaborator';
+  static const List<String> _rolePresets = ['Owner', 'Editor', 'Viewer'];
+  final List<String> _customRoles = [];
+  String _selectedRole = _rolePresets.first;
+  final TextEditingController _customRoleController = TextEditingController();
   bool _inviteExternal = false;
   bool _isLoading = false;
 
@@ -78,6 +81,34 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       _invitees.add(_Invitee(email: email, role: _selectedRole));
       _inviteController.clear();
     });
+  }
+
+  List<String> get _availableRoles => [..._rolePresets, ..._customRoles];
+
+  void _addCustomRole() {
+    final raw = _customRoleController.text.trim();
+    if (raw.isEmpty) {
+      return;
+    }
+
+    final normalized = raw.toLowerCase();
+    final existing = _availableRoles.firstWhere(
+      (role) => role.toLowerCase() == normalized,
+      orElse: () => '',
+    );
+
+    if (existing.isNotEmpty) {
+      setState(() => _selectedRole = existing);
+      _customRoleController.clear();
+      return;
+    }
+
+    setState(() {
+      _customRoles.add(raw);
+      _selectedRole = raw;
+      _customRoleController.clear();
+    });
+    FocusScope.of(context).unfocus();
   }
 
   Future<void> _submit(ProjectController controller) async {
@@ -165,7 +196,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                 if (router.canPop()) {
                                   router.pop();
                                 } else {
-                                  router.goNamed('dashboard');
+                                  router.goNamed('management');
                                 }
                               },
                             ),
@@ -244,6 +275,10 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                   'assets/images/calendar_2.svg',
                                   width: 22,
                                   height: 22,
+                                  colorFilter: const ColorFilter.mode(
+                                    AppColors.secondary,
+                                    BlendMode.srcIn,
+                                  ),
                                 ),
                               ),
                             ),
@@ -260,6 +295,10 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                   'assets/images/calendar_2.svg',
                                   width: 22,
                                   height: 22,
+                                  colorFilter: const ColorFilter.mode(
+                                    AppColors.secondary,
+                                    BlendMode.srcIn,
+                                  ),
                                 ),
                               ),
                             ),
@@ -290,7 +329,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
-                        children: ['Admin', 'Collaborator', 'Viewer']
+                        children: _availableRoles
                             .map(
                               (role) => _RoleChip(
                                 label: role,
@@ -301,6 +340,26 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             )
                             .toList(),
                       ),
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: AppFormTextField(
+                              controller: _customRoleController,
+                              hintText: 'Custom role (e.g. Coordinator)',
+                              textInputAction: TextInputAction.done,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          GradientButton(
+                            onPressed: _addCustomRole,
+                            text: 'Add role',
+                            width: 140,
+                            height: 48,
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 14),
                       Align(
                         alignment: Alignment.centerRight,
@@ -308,7 +367,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           onPressed: _addInvitee,
                           text: 'Add member',
                           width: 160,
-                          height: 40,
+                          height: 48,
                         ),
                       ),
                       if (_invitees.isNotEmpty) ...[
@@ -520,6 +579,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     _clientController.dispose();
     _descriptionController.dispose();
     _inviteController.dispose();
+    _customRoleController.dispose();
     super.dispose();
   }
 }
