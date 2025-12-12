@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/utils/project_ui.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/models/project.dart';
@@ -86,6 +87,7 @@ class _ProjectScheduleScreenState extends State<ProjectScheduleScreen> {
     final project = controller.getById(widget.projectId);
     final media = MediaQuery.of(context);
     final isMobile = media.size.width < 600; // simple breakpoint
+    final loc = context.l10n;
 
     if (project == null) {
       return Scaffold(
@@ -102,7 +104,7 @@ class _ProjectScheduleScreenState extends State<ProjectScheduleScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Project not found',
+                  loc.projectNotFoundTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: AppColors.secondaryText,
                     fontWeight: FontWeight.bold,
@@ -118,7 +120,7 @@ class _ProjectScheduleScreenState extends State<ProjectScheduleScreen> {
                       router.goNamed('management');
                     }
                   },
-                  child: const Text('Back'),
+                  child: Text(loc.commonBack),
                 ),
               ],
             ),

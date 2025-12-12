@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/emoji_reaction_picker.dart';
 import 'package:myapp/common/models/message.dart';
+import 'package:myapp/common/localization/formatters.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/models/project.dart';
 
@@ -106,6 +109,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
       builder: (sheetContext) {
         final controller = context.read<ProjectController>();
         final members = project.members;
+        final loc = sheetContext.l10n;
 
         return SafeArea(
           top: false,
@@ -135,7 +139,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Project collaborators',
+                    loc.projectChatCollaboratorsTitle,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
@@ -144,7 +148,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                   const SizedBox(height: 12),
                   if (members.isEmpty)
                     Text(
-                      'No collaborators added yet.',
+                      loc.projectChatCollaboratorsEmpty,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.hintTextfiled,
                         fontWeight: FontWeight.w600,
@@ -163,7 +167,9 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                         itemBuilder: (_, index) {
                           final member = members[index];
                           final contact = controller.contactForMember(member);
-                          final subtitle = contact?.profession ?? 'Contributor';
+                          final subtitle =
+                              contact?.profession ??
+                              loc.projectChatCollaboratorRoleFallback;
                           return _MemberTile(
                             member: member,
                             subtitle: subtitle,
@@ -193,6 +199,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
   Widget build(BuildContext context) {
     final controller = context.watch<ProjectController>();
     final project = controller.getById(widget.projectId);
+    final loc = context.l10n;
 
     if (project == null) {
       return Scaffold(
@@ -219,7 +226,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Project not found',
+                          loc.projectNotFoundTitle,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: AppColors.secondaryText,
@@ -240,7 +247,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),
-                          child: const Text('Back to projects'),
+                          child: Text(loc.projectDetailBackToProjects),
                         ),
                       ],
                     ),
@@ -252,7 +259,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
               left: 0,
               right: 0,
               bottom: 0,
-              child: CustomNavBar(currentRouteName: 'chats'),
+              child: CustomNavBar(currentRouteName: 'crm'),
             ),
           ],
         ),
@@ -318,7 +325,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Tap to view collaborators',
+                    loc.projectChatViewCollaboratorsHint,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: AppColors.hintTextfiled,
                       fontWeight: FontWeight.w600,
@@ -348,8 +355,8 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                       final isMine = message.authorId == 'me';
                       final author = members[message.authorId];
                       final authorName = isMine
-                          ? 'You'
-                          : (author?.name ?? 'Team member');
+                          ? loc.homeAuthorYou
+                          : (author?.name ?? loc.homeCollaboratorFallback);
                       return _ChatBubble(
                         message: message,
                         author: author,
@@ -383,7 +390,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: CustomNavBar(currentRouteName: 'chats'),
+            child: CustomNavBar(currentRouteName: 'crm'),
           ),
         ],
       ),
@@ -413,7 +420,8 @@ class _ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final statusIndicator = _statusIndicator(message, isMine);
+    final loc = context.l10n;
+    final statusIndicator = _statusIndicator(context, message, isMine);
 
     final baseTextStyle = theme.textTheme.bodyMedium?.copyWith(
       color: AppColors.secondaryText,
@@ -511,6 +519,7 @@ class _ChatBubble extends StatelessWidget {
                           context: context,
                           onSelected: onReact,
                         ),
+                        tooltip: loc.collaborationChatReactTooltip,
                       ),
                     ),
                   ],
@@ -533,7 +542,10 @@ class _ChatBubble extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(_relativeTimeLabel(message.sentAt), style: metaStyle),
+                    Text(
+                      _relativeTimeLabel(context, message.sentAt),
+                      style: metaStyle,
+                    ),
                     const SizedBox(width: 8),
                     Tooltip(
                       message: statusIndicator.label,
@@ -589,8 +601,13 @@ class _ChatBubble extends StatelessWidget {
     return spans;
   }
 
-  _StatusIndicator _statusIndicator(Message message, bool isMine) {
+  _StatusIndicator _statusIndicator(
+    BuildContext context,
+    Message message,
+    bool isMine,
+  ) {
     final receipts = message.receipts;
+    final loc = context.l10n;
 
     if (isMine) {
       final recipientIds = members
@@ -600,7 +617,7 @@ class _ChatBubble extends StatelessWidget {
 
       if (recipientIds.isEmpty) {
         final aggregated = _aggregateStatus(receipts.values);
-        return _indicatorForOwn(aggregated);
+        return _indicatorForOwn(context, aggregated);
       }
 
       var allRead = true;
@@ -618,12 +635,12 @@ class _ChatBubble extends StatelessWidget {
       }
 
       if (allRead) {
-        return _indicatorForOwn(MessageReceiptStatus.read);
+        return _indicatorForOwn(context, MessageReceiptStatus.read);
       }
       if (anyReceived) {
-        return _indicatorForOwn(MessageReceiptStatus.received);
+        return _indicatorForOwn(context, MessageReceiptStatus.received);
       }
-      return _indicatorForOwn(MessageReceiptStatus.sent);
+      return _indicatorForOwn(context, MessageReceiptStatus.sent);
     }
 
     final myStatus = receipts['me'];
@@ -632,43 +649,47 @@ class _ChatBubble extends StatelessWidget {
         return _StatusIndicator(
           icon: Icons.check_circle,
           color: AppColors.secondary,
-          label: 'Read',
+          label: loc.projectChatReceiptRead,
         );
       case MessageReceiptStatus.received:
         return _StatusIndicator(
           icon: Icons.check_circle_outline,
           color: AppColors.secondaryText,
-          label: 'Received',
+          label: loc.projectChatReceiptReceived,
         );
       case MessageReceiptStatus.sent:
       case null:
-        return const _StatusIndicator(
+        return _StatusIndicator(
           icon: Icons.radio_button_unchecked,
           color: AppColors.hintTextfiled,
-          label: 'Unread',
+          label: loc.projectChatReceiptUnread,
         );
     }
   }
 
-  _StatusIndicator _indicatorForOwn(MessageReceiptStatus status) {
+  _StatusIndicator _indicatorForOwn(
+    BuildContext context,
+    MessageReceiptStatus status,
+  ) {
+    final loc = context.l10n;
     switch (status) {
       case MessageReceiptStatus.sent:
-        return const _StatusIndicator(
+        return _StatusIndicator(
           icon: Icons.done,
           color: AppColors.hintTextfiled,
-          label: 'Sent',
+          label: loc.projectChatReceiptSent,
         );
       case MessageReceiptStatus.received:
-        return const _StatusIndicator(
+        return _StatusIndicator(
           icon: Icons.done_all,
           color: AppColors.hintTextfiled,
-          label: 'Received',
+          label: loc.projectChatReceiptReceived,
         );
       case MessageReceiptStatus.read:
-        return const _StatusIndicator(
+        return _StatusIndicator(
           icon: Icons.done_all,
           color: AppColors.secondary,
-          label: 'Read',
+          label: loc.projectChatReceiptRead,
         );
     }
   }
@@ -720,10 +741,15 @@ class _AttachmentStrip extends StatelessWidget {
 }
 
 class _BubbleActionButton extends StatelessWidget {
-  const _BubbleActionButton({required this.onTap, required this.isMine});
+  const _BubbleActionButton({
+    required this.onTap,
+    required this.isMine,
+    required this.tooltip,
+  });
 
   final VoidCallback onTap;
   final bool isMine;
+  final String tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -736,7 +762,7 @@ class _BubbleActionButton extends StatelessWidget {
     final iconColor = isMine ? AppColors.secondary : AppColors.hintTextfiled;
 
     return Tooltip(
-      message: 'React to message',
+      message: tooltip,
       child: Material(
         color: Colors.transparent,
         shape: const CircleBorder(),
@@ -1090,6 +1116,7 @@ class _ComposerBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return SafeArea(
       top: false,
@@ -1118,7 +1145,7 @@ class _ComposerBar extends StatelessWidget {
                 children: [
                   _ComposerActionButton(
                     icon: FeatherIcons.paperclip,
-                    tooltip: 'Add attachment',
+                    tooltip: loc.collaborationChatAddAttachment,
                     onTap: () => _showAttachmentOptions(context),
                   ),
                   const SizedBox(width: 12),
@@ -1133,7 +1160,7 @@ class _ComposerBar extends StatelessWidget {
                         //   vertical: 0,
                         // ),
                         isDense: false,
-                        hintText: 'Write a message…',
+                        hintText: loc.collaborationChatComposerHint,
                         hintStyle: theme.textTheme.bodyMedium?.copyWith(
                           color: AppColors.hintTextfiled,
                           fontWeight: FontWeight.w500,
@@ -1158,7 +1185,7 @@ class _ComposerBar extends StatelessWidget {
                   const SizedBox(width: 12),
                   _ComposerActionButton(
                     icon: FeatherIcons.send,
-                    tooltip: 'Send message',
+                    tooltip: loc.collaborationChatSendMessage,
                     onTap: canSend ? onSend : null,
                     enabled: canSend,
                     variant: _ComposerButtonVariant.primary,
@@ -1178,6 +1205,7 @@ class _ComposerBar extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         final theme = Theme.of(sheetContext);
+        final loc = sheetContext.l10n;
         final bottomPadding = MediaQuery.of(sheetContext).viewPadding.bottom;
         return SafeArea(
           top: false,
@@ -1204,7 +1232,7 @@ class _ComposerBar extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Attach from',
+                      loc.collaborationChatAttachTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: AppColors.secondaryText,
                         fontWeight: FontWeight.bold,
@@ -1214,22 +1242,22 @@ class _ComposerBar extends StatelessWidget {
                   const SizedBox(height: 20),
                   _AttachmentOption(
                     icon: FeatherIcons.image,
-                    label: 'Photo or image',
+                    label: loc.collaborationChatAttachPhoto,
                     onTap: () => Navigator.of(sheetContext).pop(),
                   ),
                   _AttachmentOption(
                     icon: FeatherIcons.fileText,
-                    label: 'Document',
+                    label: loc.collaborationChatAttachDocument,
                     onTap: () => Navigator.of(sheetContext).pop(),
                   ),
                   _AttachmentOption(
                     icon: FeatherIcons.file,
-                    label: 'PDF',
+                    label: loc.collaborationChatAttachPdf,
                     onTap: () => Navigator.of(sheetContext).pop(),
                   ),
                   _AttachmentOption(
                     icon: FeatherIcons.camera,
-                    label: 'Capture from camera',
+                    label: loc.collaborationChatAttachCamera,
                     onTap: () => Navigator.of(sheetContext).pop(),
                   ),
                 ],
@@ -1345,38 +1373,11 @@ class _AttachmentOption extends StatelessWidget {
   }
 }
 
-String _relativeTimeLabel(DateTime timestamp) {
-  final now = DateTime.now();
-  final difference = now.difference(timestamp);
-
-  if (difference.inMinutes < 1) {
-    return 'Just now';
+String _relativeTimeLabel(BuildContext context, DateTime timestamp) {
+  final difference = DateTime.now().difference(timestamp);
+  if (difference.inDays >= 7) {
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMMMd(locale).format(timestamp);
   }
-  if (difference.inMinutes < 60) {
-    return '${difference.inMinutes}m ago';
-  }
-  if (difference.inHours < 24) {
-    return '${difference.inHours}h ago';
-  }
-  if (difference.inDays < 7) {
-    return '${difference.inDays}d ago';
-  }
-
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  final month = months[timestamp.month - 1];
-  final day = timestamp.day.toString().padLeft(2, '0');
-  return '$month $day, ${timestamp.year}';
+  return formatRelativeTime(context, timestamp);
 }

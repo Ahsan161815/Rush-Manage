@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 
 class CollaboratorProfileScreen extends StatelessWidget {
   const CollaboratorProfileScreen({super.key, required this.collaboratorId});
@@ -30,6 +31,7 @@ class CollaboratorProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     final profile = _sampleProfile; // Mocked; replace with real lookup later.
 
     return Scaffold(
@@ -53,7 +55,7 @@ class CollaboratorProfileScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'Invite to project',
+            tooltip: loc.collaboratorInviteTooltip,
             icon: const Icon(
               FeatherIcons.userPlus,
               color: AppColors.secondaryText,
@@ -61,7 +63,7 @@ class CollaboratorProfileScreen extends StatelessWidget {
             onPressed: () => context.pushNamed('inviteCollaborator'),
           ),
           IconButton(
-            tooltip: 'Start chat',
+            tooltip: loc.collaboratorStartChatTooltip,
             icon: const Icon(
               FeatherIcons.messageCircle,
               color: AppColors.secondaryText,
@@ -88,7 +90,7 @@ class CollaboratorProfileScreen extends StatelessWidget {
                     _ProfileHeader(profile: profile),
                     const SizedBox(height: 20),
                     _SectionCard(
-                      title: 'Key Skills',
+                      title: loc.collaboratorSectionSkills,
                       child: Wrap(
                         spacing: 12,
                         runSpacing: 12,
@@ -124,7 +126,7 @@ class CollaboratorProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     _SectionCard(
-                      title: 'About',
+                      title: loc.collaboratorSectionAbout,
                       child: Text(
                         profile.bio,
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -135,7 +137,7 @@ class CollaboratorProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     _SectionCard(
-                      title: 'Collaboration History',
+                      title: loc.collaboratorSectionHistory,
                       child: Column(
                         children: profile.collaborationHistory
                             .map(
@@ -172,7 +174,7 @@ class CollaboratorProfileScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     GradientButton(
                       onPressed: () => context.pushNamed('inviteCollaborator'),
-                      text: 'Invite to Project',
+                      text: loc.collaboratorsActionInvite,
                       width: double.infinity,
                       height: 52,
                     ),
@@ -194,7 +196,7 @@ class CollaboratorProfileScreen extends StatelessWidget {
                         ),
                       ),
                       label: Text(
-                        'Send Message',
+                        loc.collaboratorSendMessage,
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: AppColors.secondary,
                           fontWeight: FontWeight.bold,
@@ -226,6 +228,7 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return Container(
       padding: const EdgeInsets.all(22),
@@ -310,7 +313,10 @@ class _ProfileHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '${profile.rating} • ${profile.reviewCount} reviews',
+                      loc.collaboratorReviewsMeta(
+                        profile.rating.toStringAsFixed(1),
+                        profile.reviewCount,
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: AppColors.secondaryText,
                         fontWeight: FontWeight.bold,

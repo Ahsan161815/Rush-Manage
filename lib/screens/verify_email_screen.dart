@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:myapp/app/app_theme.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
+
+import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key});
@@ -30,6 +32,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -49,17 +52,17 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Verify Email by OTP',
+                    loc.verifyTitle,
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'A verification code sent on your email address',
+                  Text(
+                    loc.verifySubtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       color: AppColors.secondaryText,
                     ),
@@ -86,14 +89,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   const SizedBox(height: 80),
                   GradientButton(
                     onPressed: () => context.pushNamed('resetPassword'),
-                    text: 'Confirm',
+                    text: loc.verifyConfirm,
                     isLoading: false,
                   ),
                   const SizedBox(height: 40),
                   Column(
                     children: [
-                      const Text(
-                        'Didn\'t receive a code?',
+                      Text(
+                        loc.verifyNoCode,
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.secondaryText,
@@ -114,7 +117,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                           );
                           return value > 0
                               ? Text(
-                                  'Resend in $displayTime',
+                                  loc.verifyResendIn(displayTime),
                                   style: const TextStyle(
                                     color: AppColors.secondaryText,
                                     fontSize: 14,
@@ -125,9 +128,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                     _stopWatchTimer.onResetTimer();
                                     _stopWatchTimer.onStartTimer();
                                   },
-                                  child: const Text(
-                                    'Resend Now',
-                                    style: TextStyle(
+                                  child: Text(
+                                    loc.verifyResendNow,
+                                    style: const TextStyle(
                                       color: AppColors.primary,
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,

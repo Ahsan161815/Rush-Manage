@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -11,6 +13,7 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    final loc = context.l10n;
 
     return Scaffold(
       body: Container(
@@ -44,7 +47,7 @@ class WelcomeScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'RUSH MANAGE',
+                    loc.appTitle.toUpperCase(),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
                       color: AppColors.primaryText,
@@ -54,7 +57,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 15),
                   Text(
-                    'The best way to manage your projects.',
+                    loc.welcomeSubtitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppColors.primaryText,
@@ -73,9 +76,9 @@ class WelcomeScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildCreateAccountButton(context, screenWidth),
+                  _buildCreateAccountButton(context, screenWidth, loc),
                   const SizedBox(height: 14),
-                  _buildLoginButton(context, screenWidth),
+                  _buildLoginButton(context, screenWidth, loc),
                 ],
               ),
             ),
@@ -85,7 +88,11 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCreateAccountButton(BuildContext context, double screenWidth) {
+  Widget _buildCreateAccountButton(
+    BuildContext context,
+    double screenWidth,
+    AppLocalizations loc,
+  ) {
     return InkWell(
       onTap: () => context.goNamed('register'),
       child: Container(
@@ -97,7 +104,7 @@ class WelcomeScreen extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: GradientText(
-          'Create New Account',
+          loc.welcomeCreateAccount,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -108,7 +115,11 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLoginButton(BuildContext context, double screenWidth) {
+  Widget _buildLoginButton(
+    BuildContext context,
+    double screenWidth,
+    AppLocalizations loc,
+  ) {
     return InkWell(
       onTap: () => context.goNamed('login'),
       child: Container(
@@ -121,7 +132,7 @@ class WelcomeScreen extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Text(
-          'Login Now',
+          loc.welcomeLogin,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: AppColors.primaryText,
             fontSize: 18,

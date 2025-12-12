@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 
 class CalendarScreen extends StatelessWidget {
   const CalendarScreen({super.key});
@@ -21,15 +22,7 @@ class CalendarScreen extends StatelessWidget {
                   24,
                   CustomNavBar.totalHeight + 48,
                 ),
-                child: const Center(
-                  child: Text(
-                    'Calendar Screen',
-                    style: TextStyle(
-                      color: AppColors.secondaryText,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                child: Center(child: _CalendarPlaceholder()),
               ),
             ),
           ),
@@ -40,6 +33,19 @@ class CalendarScreen extends StatelessWidget {
             child: CustomNavBar(currentRouteName: 'calendar'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CalendarPlaceholder extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      context.l10n.calendarPlaceholder,
+      style: const TextStyle(
+        color: AppColors.secondaryText,
+        fontWeight: FontWeight.w700,
       ),
     );
   }

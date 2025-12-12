@@ -6,7 +6,8 @@ import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/project_card.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/models/project.dart';
-import 'package:myapp/common/models/message.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/widgets/section_hero_header.dart';
 
 class ManagementScreen extends StatefulWidget {
   const ManagementScreen({super.key});
@@ -32,14 +33,8 @@ class _ManagementScreenState extends State<ManagementScreen> {
   Widget build(BuildContext context) {
     final projectController = context.watch<ProjectController>();
     final projects = _filterProjects(projectController.projects);
-    int unreadMessages = 0; // used for bottom nav badge later
-    for (final p in projectController.projects) {
-      final msgs = projectController.messagesFor(p.id);
-      for (final m in msgs) {
-        final me = m.receipts['me'];
-        if (me != MessageReceiptStatus.read) unreadMessages++;
-      }
-    }
+    final theme = Theme.of(context);
+    final loc = context.l10n;
 
     final projectCards = projects
         .map(
@@ -63,16 +58,16 @@ class _ManagementScreenState extends State<ManagementScreen> {
               Icon(Icons.folder_open, size: 80, color: AppColors.hintTextfiled),
               const SizedBox(height: 12),
               Text(
-                'No projects yet',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                loc.managementEmptyTitle,
+                style: theme.textTheme.titleMedium?.copyWith(
                   color: AppColors.secondaryText,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                'Create your first project to see progress.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                loc.managementEmptySubtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.hintTextfiled,
                   fontWeight: FontWeight.w600,
                 ),
@@ -93,27 +88,15 @@ class _ManagementScreenState extends State<ManagementScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Management',
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(
-                                color: AppColors.secondaryText,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Projects, staffing, and blockers in one view',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: AppColors.hintTextfiled,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ],
+                    SectionHeroHeader(
+                      title: loc.managementTitle,
+                      subtitle: loc.managementSubtitle,
+                      actionTooltip: loc.managementCreateProjectTooltip,
+                      onActionTap: () => context.goNamed('projectsCreate'),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 26,
+                      ),
                     ),
                     const SizedBox(height: 18),
                     SizedBox(
@@ -124,13 +107,13 @@ class _ManagementScreenState extends State<ManagementScreen> {
                         padding: EdgeInsets.zero,
                         children: [
                           _StatusChip(
-                            label: 'All',
+                            label: loc.commonAllFilter,
                             selected: _selectedStatus == null,
                             onTap: () => setState(() => _selectedStatus = null),
                           ),
                           const SizedBox(width: 10),
                           _StatusChip(
-                            label: 'Ongoing',
+                            label: loc.managementFilterOngoing,
                             selected: _selectedStatus == ProjectStatus.ongoing,
                             onTap: () => setState(
                               () => _selectedStatus = ProjectStatus.ongoing,
@@ -138,7 +121,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
                           ),
                           const SizedBox(width: 10),
                           _StatusChip(
-                            label: 'Upcoming',
+                            label: loc.managementFilterUpcoming,
                             selected:
                                 _selectedStatus == ProjectStatus.inPreparation,
                             onTap: () => setState(
@@ -148,7 +131,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
                           ),
                           const SizedBox(width: 10),
                           _StatusChip(
-                            label: 'Completed',
+                            label: loc.managementFilterCompleted,
                             selected:
                                 _selectedStatus == ProjectStatus.completed,
                             onTap: () => setState(
@@ -159,27 +142,12 @@ class _ManagementScreenState extends State<ManagementScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Projects (${projects.length})',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  color: AppColors.secondaryText,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => context.goNamed('projectsCreate'),
-                          icon: const Icon(
-                            Icons.add_circle_outline,
-                            color: AppColors.secondary,
-                          ),
-                          tooltip: 'Create project',
-                        ),
-                      ],
+                    Text(
+                      loc.managementProjectsHeading(projects.length),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: AppColors.secondaryText,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     projectsSection,
@@ -192,10 +160,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: CustomNavBar(
-              currentRouteName: 'management',
-              unreadChatsCount: unreadMessages,
-            ),
+            child: CustomNavBar(currentRouteName: 'management'),
           ),
         ],
       ),

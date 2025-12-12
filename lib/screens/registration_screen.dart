@@ -4,14 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 import 'package:myapp/app/app_theme.dart';
-import 'package:myapp/widgets/custom_text_field.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/widgets/custom_text_field.dart';
 
 class RegistrationScreen extends StatelessWidget {
   const RegistrationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -26,41 +28,41 @@ class RegistrationScreen extends StatelessWidget {
                     height: MediaQuery.of(context).size.height < 700 ? 50 : 70,
                   ),
                   Text(
-                    'Create Your Account',
+                    loc.registrationTitle,
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Please fill in your details to create an account',
+                  Text(
+                    loc.registrationSubtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       color: AppColors.secondaryText,
                     ),
                   ),
                   const SizedBox(height: 60),
-                  const CustomTextField(
-                    hintText: 'Name',
+                  CustomTextField(
+                    hintText: loc.commonName,
                     iconPath: 'assets/images/fullname.svg',
                   ),
                   const SizedBox(height: 14),
-                  const CustomTextField(
-                    hintText: 'Email Address',
+                  CustomTextField(
+                    hintText: loc.commonEmailAddress,
                     iconPath: 'assets/images/emailAdress.svg',
                   ),
                   const SizedBox(height: 14),
-                  const CustomTextField(
-                    hintText: 'Set Password',
+                  CustomTextField(
+                    hintText: loc.commonPassword,
                     iconPath: 'assets/images/Password.svg',
                     isPassword: true,
                   ),
                   const SizedBox(height: 60),
                   GradientButton(
                     onPressed: () => context.pushNamed('setupProfile'),
-                    text: 'Save & Next',
+                    text: loc.registrationButton,
                     isLoading: false,
                   ),
                   const SizedBox(height: 20),
@@ -76,7 +78,7 @@ class RegistrationScreen extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
-                          'OR',
+                          loc.commonOr,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: AppColors.hintTextfiled),
                         ),
@@ -93,7 +95,7 @@ class RegistrationScreen extends StatelessWidget {
                   _buildSocialButton(
                     context,
                     'assets/images/Clip_path_group.svg',
-                    'Continue with Google',
+                    loc.loginSocialGoogle,
                     AppColors.lightGrey,
                     AppColors.black,
                   ),
@@ -101,7 +103,7 @@ class RegistrationScreen extends StatelessWidget {
                   _buildSocialButton(
                     context,
                     'assets/images/AppleWhite.svg',
-                    'Continue with Apple',
+                    loc.loginSocialApple,
                     AppColors.black,
                     AppColors.white,
                   ),
@@ -109,8 +111,8 @@ class RegistrationScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Already a Subscriber? ',
+                      Text(
+                        '${loc.registrationAlreadyPrompt} ',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.secondaryText,
@@ -122,7 +124,7 @@ class RegistrationScreen extends StatelessWidget {
                         child: Opacity(
                           opacity: 0.5,
                           child: GradientText(
-                            'Login Now',
+                            loc.registrationLoginNow,
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,

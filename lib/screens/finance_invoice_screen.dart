@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/controllers/finance_controller.dart';
 import 'package:myapp/models/finance.dart';
 
@@ -41,13 +42,14 @@ class _FinanceInvoiceScreenState extends State<FinanceInvoiceScreen> {
     final finance = context.watch<FinanceController>();
     final invoice = finance.getInvoice(widget.invoiceId);
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          'Invoice #${invoice?.id.substring(3) ?? '—'}',
+          loc.financeInvoiceTitle(invoice?.id.substring(3) ?? '—'),
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -89,8 +91,8 @@ class _FinanceInvoiceScreenState extends State<FinanceInvoiceScreen> {
                     ),
                     child: Text(
                       invoice?.status == InvoiceStatus.paid
-                          ? 'Already Paid'
-                          : 'Mark Paid',
+                          ? loc.financeInvoiceButtonAlreadyPaid
+                          : loc.financeInvoiceButtonMarkPaid,
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: AppColors.secondary,
                         fontWeight: FontWeight.bold,
@@ -102,7 +104,7 @@ class _FinanceInvoiceScreenState extends State<FinanceInvoiceScreen> {
                 Expanded(
                   child: GradientButton(
                     onPressed: () {},
-                    text: 'Send Reminder',
+                    text: loc.financeInvoiceButtonSendReminder,
                     height: 54,
                     width: double.infinity,
                   ),
@@ -122,6 +124,7 @@ class _InvoiceSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: BoxDecoration(
@@ -135,7 +138,7 @@ class _InvoiceSummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            invoice?.clientName ?? 'Unknown client',
+            invoice?.clientName ?? loc.financeInvoiceUnknownClient,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -143,7 +146,9 @@ class _InvoiceSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Amount: €${invoice?.amount.toStringAsFixed(2) ?? '0.00'}',
+            loc.financeInvoiceAmountLabel(
+              '€${invoice?.amount.toStringAsFixed(2) ?? '0.00'}',
+            ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.hintTextfiled,
               fontWeight: FontWeight.w600,
@@ -167,10 +172,11 @@ class _InvoiceStatusBadge extends StatelessWidget {
       InvoiceStatus.unpaid => const Color(0xFFE55454),
       InvoiceStatus.paid => AppColors.secondary,
     };
+    final loc = context.l10n;
     final label = switch (status) {
-      InvoiceStatus.draft => 'Draft',
-      InvoiceStatus.unpaid => 'Unpaid',
-      InvoiceStatus.paid => 'Paid',
+      InvoiceStatus.draft => loc.financeInvoiceStatusDraft,
+      InvoiceStatus.unpaid => loc.financeInvoiceStatusUnpaid,
+      InvoiceStatus.paid => loc.financeInvoiceStatusPaid,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -208,10 +214,17 @@ class _InvoiceFieldsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     String format(DateTime? d) {
-      if (d == null) return 'Select date';
+      if (d == null) return loc.financeInvoiceDatePlaceholder;
       return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
     }
+
+    String labelFor(PaymentMethod m) => switch (m) {
+      PaymentMethod.bankTransfer => loc.financeInvoiceMethodBankTransfer,
+      PaymentMethod.card => loc.financeInvoiceMethodCard,
+      PaymentMethod.applePay => loc.financeInvoiceMethodApplePay,
+    };
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
@@ -226,7 +239,7 @@ class _InvoiceFieldsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Invoice Fields',
+            loc.financeInvoiceFieldsTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -237,7 +250,7 @@ class _InvoiceFieldsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _DateButton(
-                  label: 'Issue Date',
+                  label: loc.financeInvoiceIssueLabel,
                   value: format(issueDate),
                   onTap: onPickIssue,
                 ),
@@ -245,7 +258,7 @@ class _InvoiceFieldsCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _DateButton(
-                  label: 'Payment Due',
+                  label: loc.financeInvoiceDueLabel,
                   value: format(dueDate),
                   onTap: onPickDue,
                 ),
@@ -254,7 +267,7 @@ class _InvoiceFieldsCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            'Payment Method',
+            loc.financeInvoiceMethodLabel,
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.hintTextfiled,
               fontWeight: FontWeight.w600,
@@ -267,7 +280,7 @@ class _InvoiceFieldsCard extends StatelessWidget {
             children: [
               for (final m in PaymentMethod.values)
                 _MethodChip(
-                  label: _label(m),
+                  label: labelFor(m),
                   selected: m == method,
                   onTap: () => onMethodChanged(m),
                 ),
@@ -277,12 +290,6 @@ class _InvoiceFieldsCard extends StatelessWidget {
       ),
     );
   }
-
-  String _label(PaymentMethod m) => switch (m) {
-    PaymentMethod.bankTransfer => 'Bank Transfer',
-    PaymentMethod.card => 'Card',
-    PaymentMethod.applePay => 'Apple Pay',
-  };
 }
 
 class _DateButton extends StatelessWidget {

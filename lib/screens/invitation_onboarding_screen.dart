@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/models/invitation.dart';
 import 'package:myapp/controllers/project_controller.dart';
 
@@ -65,13 +66,14 @@ class _InvitationOnboardingScreenState
   }
 
   void _goForward(Invitation invitation) {
+    final loc = context.l10n;
     if (_currentStep == 0) {
       if (_accountFormKey.currentState?.validate() != true) {
         return;
       }
       if (!_acceptedTerms) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please accept the terms to continue.')),
+          SnackBar(content: Text(loc.invitationOnboardingAcceptTermsError)),
         );
         return;
       }
@@ -90,13 +92,16 @@ class _InvitationOnboardingScreenState
     Invitation invitation,
     ProjectController controller,
   ) async {
+    final loc = context.l10n;
     if (_submitting) return;
     setState(() => _submitting = true);
     controller.acceptInvitation(invitation.id);
     setState(() => _submitting = false);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Welcome aboard, ${invitation.inviteeName}!')),
+      SnackBar(
+        content: Text(loc.invitationOnboardingWelcome(invitation.inviteeName)),
+      ),
     );
     context.goNamed(
       'projectDetail',
@@ -108,6 +113,7 @@ class _InvitationOnboardingScreenState
   Widget build(BuildContext context) {
     final controller = context.watch<ProjectController>();
     final invitation = controller.invitationById(widget.invitationId);
+    final loc = context.l10n;
 
     if (invitation == null) {
       return Scaffold(
@@ -123,10 +129,10 @@ class _InvitationOnboardingScreenState
             onPressed: () => context.pop(),
           ),
         ),
-        body: const Center(
+        body: Center(
           child: Text(
-            'Invitation not found or expired.',
-            style: TextStyle(
+            loc.invitationOnboardingMissing,
+            style: const TextStyle(
               color: AppColors.hintTextfiled,
               fontWeight: FontWeight.w600,
             ),
@@ -148,9 +154,9 @@ class _InvitationOnboardingScreenState
             ),
             onPressed: () => context.pop(),
           ),
-          title: const Text(
-            'Invitation complete',
-            style: TextStyle(
+          title: Text(
+            loc.invitationOnboardingCompleteTitle,
+            style: const TextStyle(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
             ),
@@ -162,7 +168,7 @@ class _InvitationOnboardingScreenState
               'projectDetail',
               pathParameters: {'id': invitation.projectId},
             ),
-            text: 'View project',
+            text: loc.invitationNotificationsViewProject,
             height: 52,
             width: 220,
           ),
@@ -171,9 +177,9 @@ class _InvitationOnboardingScreenState
     }
 
     final stepTitle = <String>[
-      'Create your account',
-      'Complete your profile',
-      'Review & join project',
+      loc.invitationOnboardingStepAccount,
+      loc.invitationOnboardingStepProfile,
+      loc.invitationOnboardingStepReview,
     ][_currentStep];
 
     return Scaffold(
@@ -231,7 +237,7 @@ class _InvitationOnboardingScreenState
               if (_currentStep < 2)
                 GradientButton(
                   onPressed: () => _goForward(invitation),
-                  text: 'Continue',
+                  text: loc.invitationOnboardingContinueButton,
                   height: 52,
                   width: double.infinity,
                 )
@@ -243,7 +249,7 @@ class _InvitationOnboardingScreenState
                     }
                     _complete(invitation, controller);
                   },
-                  text: 'Join project',
+                  text: loc.invitationOnboardingJoinButton,
                   isLoading: _submitting,
                   height: 52,
                   width: double.infinity,
@@ -276,13 +282,14 @@ class _AccountStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Form(
       key: formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome! Create a password to activate access.',
+            loc.invitationOnboardingAccountIntro,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.w600,
@@ -292,8 +299,8 @@ class _AccountStep extends StatelessWidget {
           TextFormField(
             initialValue: email,
             readOnly: true,
-            decoration: const InputDecoration(
-              labelText: 'Work email',
+            decoration: InputDecoration(
+              labelText: loc.invitationOnboardingWorkEmail,
               filled: true,
               fillColor: AppColors.textfieldBackground,
             ),
@@ -302,10 +309,12 @@ class _AccountStep extends StatelessWidget {
           TextFormField(
             controller: passwordController,
             obscureText: true,
-            decoration: const InputDecoration(labelText: 'Create password'),
+            decoration: InputDecoration(
+              labelText: loc.invitationOnboardingCreatePassword,
+            ),
             validator: (value) {
               if (value == null || value.length < 8) {
-                return 'Use at least 8 characters.';
+                return loc.invitationOnboardingPasswordHint;
               }
               return null;
             },
@@ -314,10 +323,12 @@ class _AccountStep extends StatelessWidget {
           TextFormField(
             controller: confirmPasswordController,
             obscureText: true,
-            decoration: const InputDecoration(labelText: 'Confirm password'),
+            decoration: InputDecoration(
+              labelText: loc.invitationOnboardingConfirmPassword,
+            ),
             validator: (value) {
               if (value != passwordController.text) {
-                return 'Passwords do not match.';
+                return loc.invitationOnboardingPasswordMismatch;
               }
               return null;
             },
@@ -328,7 +339,7 @@ class _AccountStep extends StatelessWidget {
             value: acceptedTerms,
             onChanged: (value) => onTermsChanged(value ?? false),
             title: Text(
-              'I agree to the Rush Manage collaboration terms.',
+              loc.invitationOnboardingTermsAgreement,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.secondaryText,
                 fontWeight: FontWeight.w600,
@@ -357,13 +368,14 @@ class _ProfileStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Form(
       key: formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tell everyone how to reach you and what you do.',
+            loc.invitationOnboardingProfileIntro,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.w600,
@@ -372,10 +384,12 @@ class _ProfileStep extends StatelessWidget {
           const SizedBox(height: 24),
           TextFormField(
             controller: fullNameController,
-            decoration: const InputDecoration(labelText: 'Full name'),
+            decoration: InputDecoration(
+              labelText: loc.invitationOnboardingFullName,
+            ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Enter your full name.';
+                return loc.invitationOnboardingFullNameError;
               }
               return null;
             },
@@ -383,10 +397,12 @@ class _ProfileStep extends StatelessWidget {
           const SizedBox(height: 18),
           TextFormField(
             controller: roleController,
-            decoration: const InputDecoration(labelText: 'Role / Title'),
+            decoration: InputDecoration(
+              labelText: loc.invitationOnboardingRoleLabel,
+            ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Enter your role for this project.';
+                return loc.invitationOnboardingRoleError;
               }
               return null;
             },
@@ -394,7 +410,9 @@ class _ProfileStep extends StatelessWidget {
           const SizedBox(height: 18),
           TextFormField(
             controller: locationController,
-            decoration: const InputDecoration(labelText: 'Location (optional)'),
+            decoration: InputDecoration(
+              labelText: loc.invitationOnboardingLocationLabel,
+            ),
           ),
         ],
       ),
@@ -410,11 +428,12 @@ class _ReviewStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'You\'re almost set! Review the project details before joining.',
+          loc.invitationOnboardingReviewIntro,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.w600,
@@ -459,7 +478,7 @@ class _ReviewStep extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'You will join as ${invitation.role}.',
+                      loc.invitationOnboardingReviewRole(invitation.role),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.hintTextfiled,
                         fontWeight: FontWeight.w600,

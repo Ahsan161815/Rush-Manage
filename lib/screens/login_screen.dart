@@ -4,14 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 import 'package:myapp/app/app_theme.dart';
-import 'package:myapp/widgets/custom_text_field.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/widgets/custom_text_field.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -24,29 +26,29 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 50),
                   Text(
-                    'Login Now',
+                    loc.loginTitle,
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Enter your email and password to login',
+                  Text(
+                    loc.loginSubtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       color: AppColors.secondaryText,
                     ),
                   ),
                   const SizedBox(height: 69),
                   CustomTextField(
-                    hintText: 'Email Address',
+                    hintText: loc.commonEmailAddress,
                     iconPath: 'assets/images/emailAdress.svg',
                   ),
                   const SizedBox(height: 14),
                   CustomTextField(
-                    hintText: 'Enter Password',
+                    hintText: loc.commonEnterPassword,
                     iconPath: 'assets/images/Password.svg',
                     isPassword: true,
                   ),
@@ -57,8 +59,8 @@ class LoginScreen extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 10.0),
                       child: Row(
                         children: [
-                          const Text(
-                            'Forgot Password? ',
+                          Text(
+                            '${loc.loginForgotPrompt} ',
                             style: TextStyle(
                               fontSize: 11,
                               color: AppColors.secondaryText,
@@ -70,7 +72,7 @@ class LoginScreen extends StatelessWidget {
                             child: Opacity(
                               opacity: 0.5,
                               child: GradientText(
-                                'Reset now',
+                                loc.loginResetLink,
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w900,
@@ -89,7 +91,7 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   GradientButton(
                     onPressed: () => context.goNamed('home'),
-                    text: 'Log in',
+                    text: loc.loginButton,
                     isLoading: false,
                   ),
                   const SizedBox(height: 20),
@@ -105,7 +107,7 @@ class LoginScreen extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
-                          'OR',
+                          loc.commonOr,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: AppColors.secondaryText),
                         ),
@@ -122,7 +124,7 @@ class LoginScreen extends StatelessWidget {
                   _buildSocialButton(
                     context,
                     'assets/images/Clip_path_group.svg',
-                    'Continue with Google',
+                    loc.loginSocialGoogle,
                     AppColors.lightGrey,
                     AppColors.black,
                   ),
@@ -130,7 +132,7 @@ class LoginScreen extends StatelessWidget {
                   _buildSocialButton(
                     context,
                     'assets/images/AppleWhite.svg',
-                    'Continue with Apple',
+                    loc.loginSocialApple,
                     AppColors.black,
                     AppColors.white,
                   ),
@@ -138,8 +140,8 @@ class LoginScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Don\'t have an account? ',
+                      Text(
+                        '${loc.loginNoAccountPrompt} ',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.secondaryText,
@@ -151,7 +153,7 @@ class LoginScreen extends StatelessWidget {
                         child: Opacity(
                           opacity: 0.5,
                           child: GradientText(
-                            'Create Now',
+                            loc.loginCreateNow,
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,

@@ -3,6 +3,8 @@ import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 
 class RolesPermissionsScreen extends StatefulWidget {
   const RolesPermissionsScreen({super.key});
@@ -36,6 +38,7 @@ class _RolesPermissionsScreenState extends State<RolesPermissionsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -50,7 +53,7 @@ class _RolesPermissionsScreenState extends State<RolesPermissionsScreen> {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
-          'Roles & permissions',
+          loc.rolesPermissionsTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -177,6 +180,7 @@ class _RoleDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -193,7 +197,7 @@ class _RoleDropdown extends StatelessWidget {
                 (role) => DropdownMenuItem(
                   value: role,
                   child: Text(
-                    role,
+                    _rolesPermissionsLabel(loc, role),
                     style: theme.textTheme.labelLarge?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
@@ -206,6 +210,19 @@ class _RoleDropdown extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _rolesPermissionsLabel(AppLocalizations loc, String role) {
+  switch (role.toLowerCase()) {
+    case 'admin':
+      return loc.rolesPermissionsRoleAdmin;
+    case 'collaborator':
+      return loc.rolesPermissionsRoleCollaborator;
+    case 'viewer':
+      return loc.rolesPermissionsRoleViewer;
+    default:
+      return role;
   }
 }
 

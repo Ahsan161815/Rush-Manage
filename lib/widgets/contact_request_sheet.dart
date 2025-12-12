@@ -3,19 +3,29 @@ import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/app/widgets/app_form_fields.dart';
+import 'package:myapp/common/models/contact_form_models.dart';
 
 class ContactRequestSheet extends StatefulWidget {
   const ContactRequestSheet({
     super.key,
     required this.nameController,
     required this.emailController,
-    required this.messageController,
+    required this.phoneController,
+    required this.addressController,
+    required this.typeController,
+    required this.notesController,
+    this.mode = ContactFormMode.create,
     this.bottomInset = 0,
   });
 
   final TextEditingController nameController;
   final TextEditingController emailController;
-  final TextEditingController messageController;
+  final TextEditingController phoneController;
+  final TextEditingController addressController;
+  final TextEditingController typeController;
+  final TextEditingController notesController;
+  final ContactFormMode mode;
   final double bottomInset;
 
   @override
@@ -23,14 +33,40 @@ class ContactRequestSheet extends StatefulWidget {
 }
 
 class _ContactRequestSheetState extends State<ContactRequestSheet> {
+  static const List<String> _contactTypeOptions = [
+    'Client',
+    'Collaborator',
+    'Vendor',
+    'Partner',
+  ];
+
+  String? _selectedType;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialType = widget.typeController.text.trim();
+    _selectedType = initialType.isEmpty ? null : initialType;
+  }
+
   void _onSubmit() {
     FocusScope.of(context).unfocus();
     Navigator.of(context).pop();
   }
 
+  void _handleTypeChanged(String? value) {
+    setState(() {
+      _selectedType = value;
+      widget.typeController.text = value ?? '';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isEdit = widget.mode == ContactFormMode.edit;
+    final titleText = isEdit ? 'Edit contact' : 'Add contact';
+    final buttonLabel = isEdit ? 'Save changes' : 'Save contact';
 
     return Material(
       color: Colors.transparent,
@@ -59,7 +95,7 @@ class _ContactRequestSheetState extends State<ContactRequestSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Send contact request',
+                      titleText,
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: AppColors.secondaryText,
                         fontWeight: FontWeight.bold,
@@ -77,7 +113,7 @@ class _ContactRequestSheetState extends State<ContactRequestSheet> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Share a quick note so this contact knows why you want to connect.',
+                'Log context so future teammates know who this person is and how to reach them.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.hintTextfiled,
                   fontWeight: FontWeight.w600,
@@ -88,6 +124,7 @@ class _ContactRequestSheetState extends State<ContactRequestSheet> {
                 label: 'Full name',
                 hintText: 'e.g. Sarah Collins',
                 controller: widget.nameController,
+                textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 18),
               _ContactSheetField(
@@ -96,17 +133,46 @@ class _ContactRequestSheetState extends State<ContactRequestSheet> {
                 controller: widget.emailController,
                 keyboardType: TextInputType.emailAddress,
               ),
+              const SizedBox(height: 18),
+              _ContactSheetField(
+                label: 'Phone number',
+                hintText: '+1 (555) 123-9800',
+                controller: widget.phoneController,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 18),
+              _ContactSheetField(
+                label: 'Address / Region',
+                hintText: 'City, state or country',
+                controller: widget.addressController,
+                textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Contact type',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColors.secondaryText,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              AppDropdownField<String>(
+                items: _contactTypeOptions,
+                value: _selectedType,
+                hintText: 'Select type',
+                onChanged: _handleTypeChanged,
+              ),
               const SizedBox(height: 22),
               _ContactSheetField(
-                label: 'Personal message (optional)',
-                hintText: 'Add context for your contact request',
-                controller: widget.messageController,
+                label: 'Notes',
+                hintText: 'Reminders, relationship details, availability…',
+                controller: widget.notesController,
                 maxLines: 4,
               ),
               const SizedBox(height: 28),
               GradientButton(
                 onPressed: _onSubmit,
-                text: 'Send contact request',
+                text: buttonLabel,
                 height: 52,
                 width: double.infinity,
               ),
@@ -125,6 +191,7 @@ class _ContactSheetField extends StatelessWidget {
     required this.controller,
     this.keyboardType,
     this.maxLines = 1,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   final String label;
@@ -132,6 +199,7 @@ class _ContactSheetField extends StatelessWidget {
   final TextEditingController controller;
   final TextInputType? keyboardType;
   final int maxLines;
+  final TextCapitalization textCapitalization;
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +218,7 @@ class _ContactSheetField extends StatelessWidget {
         const SizedBox(height: 10),
         TextField(
           controller: controller,
+          textCapitalization: textCapitalization,
           keyboardType: keyboardType,
           maxLines: maxLines,
           decoration: InputDecoration(

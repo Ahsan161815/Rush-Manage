@@ -4,64 +4,69 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 
 class CheckoutScreen extends StatelessWidget {
   const CheckoutScreen({super.key});
 
-  static const _featureDetails = [
+  static List<_UpcomingFeature> _buildFeatures(AppLocalizations loc) => [
     _UpcomingFeature(
-      title: 'Tap to Pay',
-      description: 'Instant contactless payments from any Rush device.',
+      title: loc.checkoutFeatureTapTitle,
+      description: loc.checkoutFeatureTapDescription,
       icon: FeatherIcons.smartphone,
     ),
     _UpcomingFeature(
-      title: 'Card payments',
-      description: 'Accept major debit & credit cards with adaptive fees.',
+      title: loc.checkoutFeatureCardTitle,
+      description: loc.checkoutFeatureCardDescription,
       icon: FeatherIcons.creditCard,
     ),
     _UpcomingFeature(
-      title: 'QR payments',
-      description: 'Share payable QR codes in-person or on screen.',
+      title: loc.checkoutFeatureQrTitle,
+      description: loc.checkoutFeatureQrDescription,
       icon: FeatherIcons.layers,
     ),
     _UpcomingFeature(
-      title: 'Payment links',
-      description: 'Send branded links that confirm payment automatically.',
+      title: loc.checkoutFeatureLinksTitle,
+      description: loc.checkoutFeatureLinksDescription,
       icon: FeatherIcons.link,
     ),
     _UpcomingFeature(
-      title: 'Quick catalog',
-      description: 'Create saved services and bundles for fast checkout.',
+      title: loc.checkoutFeatureCatalogTitle,
+      description: loc.checkoutFeatureCatalogDescription,
       icon: FeatherIcons.grid,
     ),
     _UpcomingFeature(
-      title: 'Automatic receipt',
-      description: 'Email or text confirmations without leaving the screen.',
+      title: loc.checkoutFeatureReceiptTitle,
+      description: loc.checkoutFeatureReceiptDescription,
       icon: FeatherIcons.mail,
     ),
   ];
 
-  static const _roadmap = [
+  static List<_RoadmapMilestone> _buildRoadmap(AppLocalizations loc) => [
     _RoadmapMilestone(
-      quarter: 'Step 1',
-      title: 'Unified checkout shell',
-      description: 'Centralize quotes, invoices, and payment orchestration.',
+      quarter: loc.checkoutRoadmapStep1Label,
+      title: loc.checkoutRoadmapStep1Title,
+      description: loc.checkoutRoadmapStep1Description,
     ),
     _RoadmapMilestone(
-      quarter: 'Step 2',
-      title: 'Payment method rollout',
-      description: 'Launch Tap to Pay, QR, and payment links sequentially.',
+      quarter: loc.checkoutRoadmapStep2Label,
+      title: loc.checkoutRoadmapStep2Title,
+      description: loc.checkoutRoadmapStep2Description,
     ),
     _RoadmapMilestone(
-      quarter: 'Step 3',
-      title: 'Automation & insights',
-      description: 'Activate receipts, reminders, and live settlement reports.',
+      quarter: loc.checkoutRoadmapStep3Label,
+      title: loc.checkoutRoadmapStep3Title,
+      description: loc.checkoutRoadmapStep3Description,
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
+    final features = _buildFeatures(loc);
+    final roadmap = _buildRoadmap(loc);
 
     return Scaffold(
       backgroundColor: AppColors.primaryBackground,
@@ -80,13 +85,13 @@ class CheckoutScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _CheckoutHeroBanner(theme: theme),
+                    _CheckoutHeroBanner(theme: theme, loc: loc),
                     const SizedBox(height: 24),
-                    _FeatureGrid(features: _featureDetails),
+                    _FeatureGrid(features: features),
                     const SizedBox(height: 28),
-                    _RoadmapTimeline(milestones: _roadmap),
+                    _RoadmapTimeline(milestones: roadmap, loc: loc),
                     const SizedBox(height: 24),
-                    const _StayInformedCard(),
+                    _StayInformedCard(loc: loc),
                   ],
                 ),
               ),
@@ -105,9 +110,10 @@ class CheckoutScreen extends StatelessWidget {
 }
 
 class _CheckoutHeroBanner extends StatelessWidget {
-  const _CheckoutHeroBanner({required this.theme});
+  const _CheckoutHeroBanner({required this.theme, required this.loc});
 
   final ThemeData theme;
+  final AppLocalizations loc;
 
   @override
   Widget build(BuildContext context) {
@@ -139,12 +145,16 @@ class _CheckoutHeroBanner extends StatelessWidget {
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(FeatherIcons.activity, size: 16, color: Colors.white),
-                SizedBox(width: 6),
+              children: [
+                const Icon(
+                  FeatherIcons.activity,
+                  size: 16,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 6),
                 Text(
-                  'Checkout is brewing',
-                  style: TextStyle(
+                  loc.checkoutHeroPill,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.2,
@@ -155,7 +165,7 @@ class _CheckoutHeroBanner extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            'Payments without the patchwork.',
+            loc.checkoutHeroHeadline,
             style: theme.textTheme.headlineSmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
@@ -164,7 +174,7 @@ class _CheckoutHeroBanner extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Tap, scan, or share a link. Checkout unifies every payment action inside Rush.',
+            loc.checkoutHeroBody,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: Colors.white.withValues(alpha: 0.85),
               height: 1.5,
@@ -202,19 +212,19 @@ class _CheckoutHeroBanner extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        'Now building',
-                        style: TextStyle(
+                        loc.checkoutHeroBadgeTitle,
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 13,
                           letterSpacing: 0.4,
                         ),
                       ),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(
-                        'Seamless checkout journeys for Rush teams and clients.',
-                        style: TextStyle(
+                        loc.checkoutHeroBadgeSubtitle,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                         ),
@@ -319,9 +329,10 @@ class _FeatureCard extends StatelessWidget {
 }
 
 class _RoadmapTimeline extends StatelessWidget {
-  const _RoadmapTimeline({required this.milestones});
+  const _RoadmapTimeline({required this.milestones, required this.loc});
 
   final List<_RoadmapMilestone> milestones;
+  final AppLocalizations loc;
 
   @override
   Widget build(BuildContext context) {
@@ -343,7 +354,7 @@ class _RoadmapTimeline extends StatelessWidget {
               const Icon(FeatherIcons.map, color: AppColors.primary, size: 20),
               const SizedBox(width: 10),
               Text(
-                'Rollout timeline',
+                loc.checkoutRoadmapTitle,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: AppColors.secondaryText,
                   fontWeight: FontWeight.bold,
@@ -455,7 +466,9 @@ class _RoadmapTile extends StatelessWidget {
 }
 
 class _StayInformedCard extends StatelessWidget {
-  const _StayInformedCard();
+  const _StayInformedCard({required this.loc});
+
+  final AppLocalizations loc;
 
   @override
   Widget build(BuildContext context) {
@@ -473,7 +486,7 @@ class _StayInformedCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Want early access?',
+            loc.checkoutEarlyAccessTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.w800,
@@ -481,7 +494,7 @@ class _StayInformedCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'We will invite a small crew to pilot Checkout features before the public launch.',
+            loc.checkoutEarlyAccessBody,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.hintTextfiled,
               height: 1.5,
@@ -498,13 +511,17 @@ class _StayInformedCard extends StatelessWidget {
               ),
             ),
             child: Row(
-              children: const [
-                Icon(FeatherIcons.mail, size: 18, color: AppColors.primary),
-                SizedBox(width: 12),
+              children: [
+                const Icon(
+                  FeatherIcons.mail,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Reach out to your Rush partner manager to reserve a slot.',
-                    style: TextStyle(
+                    loc.checkoutEarlyAccessContact,
+                    style: const TextStyle(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.w600,
                     ),

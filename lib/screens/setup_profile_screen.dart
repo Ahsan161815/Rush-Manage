@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 import 'package:myapp/widgets/custom_text_field.dart';
 
 class SetupProfileScreen extends StatefulWidget {
@@ -17,14 +19,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
   late final TextEditingController _fullNameController;
   late final TextEditingController _roleController;
   late final TextEditingController _locationController;
-  String? _selectedFocusArea;
-
-  static const List<String> _focusAreaSuggestions = <String>[
-    'Planning',
-    'Engineering',
-    'Finance',
-    'Logistics',
-  ];
+  _FocusArea? _selectedFocusArea;
 
   @override
   void initState() {
@@ -42,14 +37,24 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
     super.dispose();
   }
 
-  void _selectFocusArea(String value) {
+  void _selectFocusArea(_FocusArea value) {
     setState(() {
       _selectedFocusArea = _selectedFocusArea == value ? null : value;
     });
   }
 
+  String _focusAreaLabel(AppLocalizations loc, _FocusArea area) {
+    return switch (area) {
+      _FocusArea.planning => loc.commonFocusPlanning,
+      _FocusArea.engineering => loc.commonFocusEngineering,
+      _FocusArea.finance => loc.commonFocusFinance,
+      _FocusArea.logistics => loc.commonFocusLogistics,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -60,7 +65,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Set up profile',
+          loc.setupTitle,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -75,7 +80,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Personalise your workspace',
+                loc.setupHeadline,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: AppColors.secondaryText,
@@ -84,7 +89,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Add a face, role, and focus areas so teammates know who you are.',
+                loc.setupSubtitle,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.hintTextfiled,
@@ -94,26 +99,27 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
               const SizedBox(height: 32),
               _AvatarPicker(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Image picker coming soon.')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(loc.commonComingSoon)));
                 },
+                label: loc.commonUploadPhoto,
               ),
               const SizedBox(height: 32),
               CustomTextField(
-                hintText: 'Full Name',
+                hintText: loc.commonFullName,
                 iconPath: 'assets/images/fullname.svg',
                 controller: _fullNameController,
               ),
               const SizedBox(height: 16),
               CustomTextField(
-                hintText: 'Role / Title',
+                hintText: loc.commonRoleTitle,
                 iconPath: 'assets/images/user_profile.svg',
                 controller: _roleController,
               ),
               const SizedBox(height: 16),
               CustomTextField(
-                hintText: 'Location',
+                hintText: loc.commonLocation,
                 iconPath: 'assets/images/calendar_2.svg',
                 controller: _locationController,
               ),
@@ -121,7 +127,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Focus areas',
+                  loc.commonFocusAreas,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: AppColors.secondaryText,
                     fontWeight: FontWeight.bold,
@@ -132,12 +138,12 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
-                children: _focusAreaSuggestions
+                children: _FocusArea.values
                     .map(
-                      (suggestion) => _FocusChip(
-                        label: suggestion,
-                        selected: _selectedFocusArea == suggestion,
-                        onSelected: () => _selectFocusArea(suggestion),
+                      (area) => _FocusChip(
+                        label: _focusAreaLabel(loc, area),
+                        selected: _selectedFocusArea == area,
+                        onSelected: () => _selectFocusArea(area),
                       ),
                     )
                     .toList(),
@@ -145,7 +151,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
               const SizedBox(height: 36),
               GradientButton(
                 onPressed: () => context.goNamed('home'),
-                text: 'Finish Setup',
+                text: loc.setupFinish,
                 width: double.infinity,
                 height: 52,
               ),
@@ -153,7 +159,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
               TextButton(
                 onPressed: () => context.goNamed('home'),
                 child: Text(
-                  'Skip for now',
+                  loc.commonSkip,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.hintTextfiled,
                     fontWeight: FontWeight.w700,
@@ -169,9 +175,10 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
 }
 
 class _AvatarPicker extends StatelessWidget {
-  const _AvatarPicker({required this.onTap});
+  const _AvatarPicker({required this.onTap, required this.label});
 
   final VoidCallback onTap;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -199,16 +206,16 @@ class _AvatarPicker extends StatelessWidget {
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(
+            children: [
+              const Icon(
                 Icons.camera_alt_outlined,
                 color: AppColors.hintTextfiled,
                 size: 28,
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
-                'Upload photo',
-                style: TextStyle(
+                label,
+                style: const TextStyle(
                   color: AppColors.hintTextfiled,
                   fontWeight: FontWeight.w600,
                 ),
@@ -220,6 +227,8 @@ class _AvatarPicker extends StatelessWidget {
     );
   }
 }
+
+enum _FocusArea { planning, engineering, finance, logistics }
 
 class _FocusChip extends StatelessWidget {
   const _FocusChip({

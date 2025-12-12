@@ -7,11 +7,15 @@ import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/app/widgets/app_form_fields.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:myapp/common/models/contact_detail_args.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/models/project.dart';
 
 class CreateProjectScreen extends StatefulWidget {
-  const CreateProjectScreen({super.key});
+  const CreateProjectScreen({super.key, this.seed});
+
+  final ContactProjectSeed? seed;
 
   @override
   State<CreateProjectScreen> createState() => _CreateProjectScreenState();
@@ -27,20 +31,34 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   String? _selectedCategory;
-  static const List<String> _rolePresets = ['Owner', 'Editor', 'Viewer'];
+  static const String _categoryEventManagement = 'eventManagement';
+  static const String _categoryPhotography = 'photography';
+  static const String _categoryMarketing = 'marketing';
+  static const String _categoryLogistics = 'logistics';
+  static const String _categoryOther = 'other';
+  static const List<String> _categories = [
+    _categoryEventManagement,
+    _categoryPhotography,
+    _categoryMarketing,
+    _categoryLogistics,
+    _categoryOther,
+  ];
+
+  static const String _roleOwnerKey = 'owner';
+  static const String _roleEditorKey = 'editor';
+  static const String _roleViewerKey = 'viewer';
+  static const List<String> _rolePresets = [
+    _roleOwnerKey,
+    _roleEditorKey,
+    _roleViewerKey,
+  ];
   final List<String> _customRoles = [];
   String _selectedRole = _rolePresets.first;
   final TextEditingController _customRoleController = TextEditingController();
   bool _inviteExternal = false;
   bool _isLoading = false;
 
-  final List<String> _categories = const [
-    'Event Management',
-    'Photography',
-    'Marketing',
-    'Logistics',
-    'Other',
-  ];
+  List<String> get _availableRoles => [..._rolePresets, ..._customRoles];
 
   Future<void> _pickDate({required bool isStart}) async {
     final initialDate = isStart
@@ -67,11 +85,43 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     }
   }
 
-  String _formatDate(DateTime? date) {
-    if (date == null) return 'Select date';
+  String _formatDate(BuildContext context, DateTime? date) {
+    if (date == null) return context.l10n.createProjectSelectDate;
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     return '${date.year}-$month-$day';
+  }
+
+  String _categoryLabel(BuildContext context, String category) {
+    final loc = context.l10n;
+    switch (category) {
+      case _categoryEventManagement:
+        return loc.createProjectCategoryEventManagement;
+      case _categoryPhotography:
+        return loc.createProjectCategoryPhotography;
+      case _categoryMarketing:
+        return loc.createProjectCategoryMarketing;
+      case _categoryLogistics:
+        return loc.createProjectCategoryLogistics;
+      case _categoryOther:
+        return loc.createProjectCategoryOther;
+      default:
+        return category;
+    }
+  }
+
+  String _roleLabel(BuildContext context, String role) {
+    final loc = context.l10n;
+    switch (role) {
+      case _roleOwnerKey:
+        return loc.createProjectRoleOwner;
+      case _roleEditorKey:
+        return loc.createProjectRoleEditor;
+      case _roleViewerKey:
+        return loc.createProjectRoleViewer;
+      default:
+        return role;
+    }
   }
 
   void _addInvitee() {
@@ -82,8 +132,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       _inviteController.clear();
     });
   }
-
-  List<String> get _availableRoles => [..._rolePresets, ..._customRoles];
 
   void _addCustomRole() {
     final raw = _customRoleController.text.trim();
@@ -120,8 +168,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         _endDate != null &&
         _endDate!.isBefore(_startDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('End date cannot be before start date'),
+        SnackBar(
+          content: Text(context.l10n.createProjectDateError),
           backgroundColor: AppColors.error,
         ),
       );
@@ -131,6 +179,20 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     setState(() => _isLoading = true);
 
     await Future.delayed(const Duration(milliseconds: 800));
+
+    final seedMembers = widget.seed;
+    final members = _inviteesAsMembers();
+    if (seedMembers != null) {
+      final alreadyIncluded = members.any(
+        (member) => member.id == seedMembers.contactId,
+      );
+      if (!alreadyIncluded) {
+        members.insert(
+          0,
+          Member(id: seedMembers.contactId, name: seedMembers.clientName),
+        );
+      }
+    }
 
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     controller.addProject(
@@ -142,12 +204,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         status: ProjectStatus.inPreparation,
         startDate: _startDate,
         endDate: _endDate,
-        members: _invitees
-            .map(
-              (invite) =>
-                  Member(id: invite.email, name: invite.email.split('@').first),
-            )
-            .toList(),
+        members: members,
       ),
     );
 
@@ -156,9 +213,30 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     context.goNamed('projectDetail', pathParameters: {'id': id});
   }
 
+  List<Member> _inviteesAsMembers() {
+    return _invitees
+        .map(
+          (invite) =>
+              Member(id: invite.email, name: invite.email.split('@').first),
+        )
+        .toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final seed = widget.seed;
+    if (seed != null) {
+      _clientController.text = seed.clientName;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ProjectController>();
+    final loc = context.l10n;
+    final previewLink =
+        'https://rush.manage/invite/${DateTime.now().millisecondsSinceEpoch}';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -207,7 +285,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'New Project',
+                                  loc.createProjectTitle,
                                   style: Theme.of(context)
                                       .textTheme
                                       .displaySmall
@@ -218,7 +296,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'Set up the essentials in a few quick steps.',
+                                  loc.createProjectSubtitle,
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
                                         color: AppColors.hintTextfiled,
@@ -232,31 +310,33 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                       ),
                       const SizedBox(height: 28),
                       _LabeledField(
-                        label: 'Project name',
+                        label: loc.createProjectFieldNameLabel,
                         child: AppFormTextField(
                           controller: _nameController,
-                          hintText: 'e.g. Dupont Wedding',
+                          hintText: loc.createProjectFieldNameHint,
                           validator: (value) =>
                               (value == null || value.trim().isEmpty)
-                              ? 'Project name is required'
+                              ? loc.createProjectFieldNameRequired
                               : null,
                         ),
                       ),
                       const SizedBox(height: 18),
                       _LabeledField(
-                        label: 'Client',
+                        label: loc.createProjectFieldClientLabel,
                         child: AppFormTextField(
                           controller: _clientController,
-                          hintText: 'Client or company name',
+                          hintText: loc.createProjectFieldClientHint,
                         ),
                       ),
                       const SizedBox(height: 18),
                       _LabeledField(
-                        label: 'Category',
+                        label: loc.createProjectFieldCategoryLabel,
                         child: AppDropdownField<String>(
                           value: _selectedCategory,
                           items: _categories,
-                          hintText: 'Select category',
+                          hintText: loc.createProjectFieldCategoryHint,
+                          labelBuilder: (value) =>
+                              _categoryLabel(context, value),
                           onChanged: (value) =>
                               setState(() => _selectedCategory = value),
                         ),
@@ -266,9 +346,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                         children: [
                           Expanded(
                             child: _LabeledField(
-                              label: 'Start date',
+                              label: loc.createProjectFieldStartDate,
                               child: AppDateField(
-                                label: _formatDate(_startDate),
+                                label: _formatDate(context, _startDate),
                                 hasValue: _startDate != null,
                                 onTap: () => _pickDate(isStart: true),
                                 leading: SvgPicture.asset(
@@ -286,9 +366,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           const SizedBox(width: 16),
                           Expanded(
                             child: _LabeledField(
-                              label: 'End date',
+                              label: loc.createProjectFieldEndDate,
                               child: AppDateField(
-                                label: _formatDate(_endDate),
+                                label: _formatDate(context, _endDate),
                                 hasValue: _endDate != null,
                                 onTap: () => _pickDate(isStart: false),
                                 leading: SvgPicture.asset(
@@ -307,22 +387,22 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                       ),
                       const SizedBox(height: 18),
                       _LabeledField(
-                        label: 'Description (optional)',
+                        label: loc.createProjectFieldDescriptionLabel,
                         child: AppFormTextField(
                           controller: _descriptionController,
-                          hintText: 'Add a short brief for your team...',
+                          hintText: loc.createProjectFieldDescriptionHint,
                           maxLines: 4,
                         ),
                       ),
                       const SizedBox(height: 24),
                       _SectionHeader(
-                        title: 'Invite team members',
-                        description: 'Assign roles to control access.',
+                        title: loc.createProjectInviteTitle,
+                        description: loc.createProjectInviteDescription,
                       ),
                       const SizedBox(height: 14),
                       AppFormTextField(
                         controller: _inviteController,
-                        hintText: 'Email address',
+                        hintText: loc.commonEmailAddress,
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 12),
@@ -332,7 +412,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                         children: _availableRoles
                             .map(
                               (role) => _RoleChip(
-                                label: role,
+                                label: _roleLabel(context, role),
                                 selected: _selectedRole == role,
                                 onTap: () =>
                                     setState(() => _selectedRole = role),
@@ -347,14 +427,14 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           Expanded(
                             child: AppFormTextField(
                               controller: _customRoleController,
-                              hintText: 'Custom role (e.g. Coordinator)',
+                              hintText: loc.createProjectCustomRolePlaceholder,
                               textInputAction: TextInputAction.done,
                             ),
                           ),
                           const SizedBox(width: 12),
                           GradientButton(
                             onPressed: _addCustomRole,
-                            text: 'Add role',
+                            text: loc.createProjectAddRole,
                             width: 140,
                             height: 48,
                           ),
@@ -365,7 +445,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                         alignment: Alignment.centerRight,
                         child: GradientButton(
                           onPressed: _addInvitee,
-                          text: 'Add member',
+                          text: loc.createProjectAddMember,
                           width: 160,
                           height: 48,
                         ),
@@ -381,7 +461,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                   backgroundColor:
                                       AppColors.textfieldBackground,
                                   label: Text(
-                                    '${invite.email} • ${invite.role}',
+                                    '${invite.email} • ${_roleLabel(context, invite.role)}',
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: AppColors.secondaryText,
@@ -435,7 +515,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Invite external collaborator',
+                                          loc.createProjectInviteExternalTitle,
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyLarge
@@ -446,7 +526,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                                         ),
                                         const SizedBox(height: 6),
                                         Text(
-                                          'Send a secure link via email or WhatsApp for limited access.',
+                                          loc.createProjectInviteExternalDescription,
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodySmall
@@ -533,7 +613,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             ),
                           ),
                           child: Text(
-                            'Preview link: https://rush.manage/invite/${DateTime.now().millisecondsSinceEpoch}',
+                            loc.createProjectPreviewLink(previewLink),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: AppColors.secondaryText,
@@ -550,7 +630,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                               if (_isLoading) return;
                               _submit(controller);
                             },
-                            text: 'Create project',
+                            text: loc.createProjectPrimaryCta,
                             isLoading: _isLoading,
                             width: double.infinity,
                           ),

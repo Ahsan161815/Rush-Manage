@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.8
   google_fonts: ^6.3.2
@@ -24,6 +26,8 @@ dependencies:
   syncfusion_flutter_calendar: ^31.2.12
   table_calendar: ^3.0.9
   flutter_gantt: ^1.1.1
+  intl: ^0.20.2
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +37,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   assets:
     - assets/images/

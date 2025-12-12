@@ -7,6 +7,8 @@ import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/controllers/finance_controller.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/widgets/section_hero_header.dart';
 
 class FinanceScreen extends StatelessWidget {
   const FinanceScreen({super.key});
@@ -14,30 +16,11 @@ class FinanceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final finance = context.watch<FinanceController>();
-    final theme = Theme.of(context);
     final isMobile = MediaQuery.of(context).size.width < 600;
+    final loc = context.l10n;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'Finance',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: AppColors.secondaryText,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'New Quote',
-            onPressed: () => context.push('/finance/create-quote'),
-            icon: const Icon(FeatherIcons.plus, color: AppColors.secondaryText),
-          ),
-        ],
-      ),
       body: Stack(
         children: [
           Positioned.fill(
@@ -53,6 +36,12 @@ class FinanceScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    SectionHeroHeader(
+                      title: loc.navFinance,
+                      actionTooltip: loc.financeNewQuoteTooltip,
+                      onActionTap: () => context.push('/finance/create-quote'),
+                    ),
+                    const SizedBox(height: 24),
                     _BalanceCard(
                       balance: finance.globalBalance,
                       variation: finance.monthVariationPercent,
@@ -82,7 +71,7 @@ class FinanceScreen extends StatelessWidget {
                     Center(
                       child: GradientButton(
                         onPressed: () => context.push('/finance/create-quote'),
-                        text: 'Create a Quote / Invoice',
+                        text: loc.financePrimaryCta,
                         height: 56,
                         width: double.infinity,
                       ),
@@ -120,6 +109,7 @@ class _BalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -146,7 +136,7 @@ class _BalanceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Global Balance',
+                      loc.financeBalanceTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: AppColors.secondaryText,
                         fontWeight: FontWeight.bold,
@@ -266,6 +256,7 @@ class _UnpaidInvoicesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -282,7 +273,7 @@ class _UnpaidInvoicesCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Unpaid Invoices',
+                  loc.financeUnpaidTitle,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: AppColors.secondaryText,
                     fontWeight: FontWeight.bold,
@@ -290,7 +281,10 @@ class _UnpaidInvoicesCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '$unpaidCount invoices · €${unpaidTotal.toStringAsFixed(2)}',
+                  loc.financeUnpaidMeta(
+                    unpaidCount,
+                    '€${unpaidTotal.toStringAsFixed(2)}',
+                  ),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.hintTextfiled,
                     fontWeight: FontWeight.w600,
@@ -309,7 +303,7 @@ class _UnpaidInvoicesCard extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Send Reminder',
+              loc.financeUnpaidReminderCta,
               style: theme.textTheme.labelLarge?.copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.bold,
@@ -328,6 +322,7 @@ class _LatestDocumentsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
       decoration: BoxDecoration(
@@ -341,7 +336,7 @@ class _LatestDocumentsList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Latest Documents',
+            loc.financeLatestDocumentsTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -382,6 +377,7 @@ class _QuickAccessCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -395,7 +391,7 @@ class _QuickAccessCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Quick Access',
+            loc.financeQuickAccessTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -407,20 +403,23 @@ class _QuickAccessCard extends StatelessWidget {
             runSpacing: 12,
             children: [
               _QuickLinkButton(
-                label: 'Create Quote',
+                label: loc.financeQuickAccessCreateQuote,
                 route: '/finance/create-quote',
               ),
-              _QuickLinkButton(label: 'Reporting', route: '/finance/reporting'),
               _QuickLinkButton(
-                label: 'Preview (temp)',
+                label: loc.financeQuickAccessReporting,
+                route: '/finance/reporting',
+              ),
+              _QuickLinkButton(
+                label: loc.financeQuickAccessPreview,
                 route: '/finance/quote/temp/preview',
               ),
               _QuickLinkButton(
-                label: 'Signature (temp)',
+                label: loc.financeQuickAccessSignature,
                 route: '/finance/quote/temp/signature',
               ),
               _QuickLinkButton(
-                label: 'Invoice (temp)',
+                label: loc.financeQuickAccessInvoice,
                 route: '/finance/invoice/temp',
               ),
             ],
@@ -438,6 +437,7 @@ class _MetricsGrid extends StatelessWidget {
   const _MetricsGrid({required this.quotes, required this.invoices});
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     // Compute counts
     int drafts = quotes
         .where((q) => q.status.toString().contains('draft'))
@@ -460,27 +460,35 @@ class _MetricsGrid extends StatelessWidget {
     final theme = Theme.of(context);
     final List<Map<String, Object>> items = [
       {
-        'label': 'Draft Quotes',
+        'label': loc.financeMetricDraftQuotes,
         'value': drafts,
         'color': AppColors.hintTextfiled,
       },
       {
-        'label': 'Pending Signatures',
+        'label': loc.financeMetricPendingSignatures,
         'value': pending,
         'color': const Color(0xFF2FBF71),
       },
-      {'label': 'Signed Quotes', 'value': signed, 'color': AppColors.secondary},
       {
-        'label': 'Declined Quotes',
+        'label': loc.financeMetricSignedQuotes,
+        'value': signed,
+        'color': AppColors.secondary,
+      },
+      {
+        'label': loc.financeMetricDeclinedQuotes,
         'value': declined,
         'color': const Color(0xFFE55454),
       },
       {
-        'label': 'Unpaid Invoices',
+        'label': loc.financeMetricUnpaidInvoices,
         'value': unpaid,
         'color': const Color(0xFFE55454),
       },
-      {'label': 'Paid Invoices', 'value': paid, 'color': AppColors.secondary},
+      {
+        'label': loc.financeMetricPaidInvoices,
+        'value': paid,
+        'color': AppColors.secondary,
+      },
     ];
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
@@ -495,7 +503,7 @@ class _MetricsGrid extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Pipeline Overview',
+            loc.financePipelineTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -581,6 +589,7 @@ class _UpcomingDueInvoicesCard extends StatelessWidget {
   const _UpcomingDueInvoicesCard({required this.invoices});
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     final upcoming =
         invoices
             .where(
@@ -604,7 +613,7 @@ class _UpcomingDueInvoicesCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Upcoming / Overdue Invoices',
+            loc.financeUpcomingTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -613,7 +622,7 @@ class _UpcomingDueInvoicesCard extends StatelessWidget {
           const SizedBox(height: 16),
           if (sliced.isEmpty)
             Text(
-              'No unpaid invoices with due dates',
+              loc.financeUpcomingEmpty,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.hintTextfiled,
                 fontWeight: FontWeight.w600,
@@ -623,22 +632,32 @@ class _UpcomingDueInvoicesCard extends StatelessWidget {
             ...sliced.map((inv) {
               final daysDiff = DateTime.now().difference(inv.dueDate!).inDays;
               final overdue = daysDiff > 0;
-              final dueSoon = !overdue && daysDiff >= -3; // within next 3 days
+              final dueSoon = !overdue && daysDiff < 0 && daysDiff >= -3;
+              final isDueToday = daysDiff == 0;
               final badgeColor = overdue
                   ? const Color(0xFFE55454)
-                  : (dueSoon
-                        ? const Color(0xFFFFA331)
-                        : const Color(0xFF2FBF71));
+                  : (isDueToday
+                        ? const Color(0xFFE55454)
+                        : (dueSoon
+                              ? const Color(0xFFFFA331)
+                              : const Color(0xFF2FBF71)));
               final label = overdue
-                  ? 'Overdue ${daysDiff}d'
-                  : (dueSoon ? 'Due soon' : 'Due in ${-daysDiff}d');
+                  ? loc.financeUpcomingBadgeOverdue(daysDiff)
+                  : (isDueToday
+                        ? loc.financeUpcomingBadgeDueToday
+                        : (dueSoon
+                              ? loc.financeUpcomingBadgeDueSoon
+                              : loc.financeUpcomingBadgeDueIn(-daysDiff)));
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
-                        'Invoice #${inv.id.substring(3)} · €${inv.amount.toStringAsFixed(2)}',
+                        loc.financeUpcomingInvoiceLabel(
+                          inv.id.substring(3),
+                          '€${inv.amount.toStringAsFixed(2)}',
+                        ),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.secondaryText,
                           fontWeight: FontWeight.w600,
@@ -687,17 +706,26 @@ class _RecentActivityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     final items = <String>[];
     items.addAll(
       quotes
           .take(3)
-          .map((q) => 'Quote ${q.id} → ${q.status.toString().split('.').last}'),
+          .map(
+            (q) => loc.financeRecentQuote(
+              q.id,
+              q.status.toString().split('.').last,
+            ),
+          ),
     );
     items.addAll(
       invoices
           .take(3)
           .map(
-            (i) => 'Invoice ${i.id} → ${i.status.toString().split('.').last}',
+            (i) => loc.financeRecentInvoice(
+              i.id,
+              i.status.toString().split('.').last,
+            ),
           ),
     );
     return Container(
@@ -713,7 +741,7 @@ class _RecentActivityCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Recent Activity',
+            loc.financeRecentTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -746,7 +774,7 @@ class _RecentActivityCard extends StatelessWidget {
           ),
           if (items.isEmpty)
             Text(
-              'No recent activity',
+              loc.financeRecentEmpty,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.hintTextfiled,
                 fontWeight: FontWeight.w600,

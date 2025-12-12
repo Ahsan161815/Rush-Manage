@@ -4,6 +4,9 @@ import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+
+enum _PaymentTerm { dueOnReceipt, due15Days, due30Days }
 
 class CreateQuoteScreen extends StatefulWidget {
   const CreateQuoteScreen({super.key});
@@ -13,27 +16,19 @@ class CreateQuoteScreen extends StatefulWidget {
 }
 
 class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
-  final TextEditingController _projectController = TextEditingController(
-    text: 'Dupont Wedding',
-  );
-  final TextEditingController _serviceController = TextEditingController(
-    text: 'Event photography and same-day selects',
-  );
-  final TextEditingController _amountController = TextEditingController(
-    text: '2 850',
-  );
-  final TextEditingController _notesController = TextEditingController(
-    text: 'Includes 8 hours coverage, assistant, and equipment rental fees.',
-  );
+  final TextEditingController _projectController = TextEditingController();
+  final TextEditingController _serviceController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
 
   String _selectedCurrency = 'EUR';
-  String _selectedPaymentTerm = 'Due within 15 days';
+  _PaymentTerm _selectedPaymentTerm = _PaymentTerm.due15Days;
 
   static const List<String> _currencies = ['EUR', 'USD', 'GBP'];
-  static const List<String> _paymentTerms = [
-    'Due on receipt',
-    'Due within 15 days',
-    'Due within 30 days',
+  static const List<_PaymentTerm> _paymentTerms = [
+    _PaymentTerm.dueOnReceipt,
+    _PaymentTerm.due15Days,
+    _PaymentTerm.due30Days,
   ];
 
   @override
@@ -48,6 +43,7 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -62,7 +58,7 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
-          'Create quote',
+          loc.financeCreateQuoteTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -85,24 +81,26 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _SectionCard(
-                      title: 'Project details',
+                      title: loc.financeCreateQuoteSectionProject,
                       child: Column(
                         children: [
                           _LabeledField(
-                            label: 'Project name',
+                            label: loc.financeCreateQuoteFieldProjectNameLabel,
                             child: TextField(
                               controller: _projectController,
-                              decoration: _inputDecoration('Add project name'),
+                              decoration: _inputDecoration(
+                                loc.financeCreateQuoteFieldProjectNameHint,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),
                           _LabeledField(
-                            label: 'Scope of work',
+                            label: loc.financeCreateQuoteFieldScopeLabel,
                             child: TextField(
                               controller: _serviceController,
                               maxLines: 3,
                               decoration: _inputDecoration(
-                                'Describe the services provided',
+                                loc.financeCreateQuoteFieldScopeHint,
                               ),
                             ),
                           ),
@@ -111,7 +109,7 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                     ),
                     const SizedBox(height: 20),
                     _SectionCard(
-                      title: 'Pricing',
+                      title: loc.financeCreateQuoteSectionPricing,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -119,18 +117,21 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                             children: [
                               Expanded(
                                 child: _LabeledField(
-                                  label: 'Amount',
+                                  label: loc.financeCreateQuoteFieldAmountLabel,
                                   child: TextField(
                                     controller: _amountController,
                                     keyboardType: TextInputType.number,
-                                    decoration: _inputDecoration('0.00'),
+                                    decoration: _inputDecoration(
+                                      loc.financeCreateQuoteFieldAmountHint,
+                                    ),
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _LabeledField(
-                                  label: 'Currency',
+                                  label:
+                                      loc.financeCreateQuoteFieldCurrencyLabel,
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 16,
@@ -179,7 +180,7 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                           ),
                           const SizedBox(height: 16),
                           _LabeledField(
-                            label: 'Payment terms',
+                            label: loc.financeCreateQuoteFieldPaymentTermsLabel,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -192,14 +193,16 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                                 ),
                               ),
                               child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
+                                child: DropdownButton<_PaymentTerm>(
                                   value: _selectedPaymentTerm,
                                   items: _paymentTerms
                                       .map(
-                                        (term) => DropdownMenuItem(
+                                        (
+                                          term,
+                                        ) => DropdownMenuItem<_PaymentTerm>(
                                           value: term,
                                           child: Text(
-                                            term,
+                                            _paymentTermLabel(context, term),
                                             style: theme.textTheme.labelLarge
                                                 ?.copyWith(
                                                   color:
@@ -225,37 +228,39 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                     ),
                     const SizedBox(height: 20),
                     _SectionCard(
-                      title: 'Deliverables',
+                      title: loc.financeCreateQuoteSectionDeliverables,
                       child: Column(
-                        children: const [
+                        children: [
                           _DeliverableTile(
-                            title: 'High-resolution photos',
-                            subtitle:
-                                'Delivery via shared folder within 48 hours',
+                            title: loc.financeCreateQuoteDeliverablePhotosTitle,
+                            subtitle: loc
+                                .financeCreateQuoteDeliverablePhotosDescription,
                           ),
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           _DeliverableTile(
-                            title: 'Same-day selects',
-                            subtitle: '15 edits for social media use',
+                            title:
+                                loc.financeCreateQuoteDeliverableSelectsTitle,
+                            subtitle: loc
+                                .financeCreateQuoteDeliverableSelectsDescription,
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 20),
                     _SectionCard(
-                      title: 'Additional notes',
+                      title: loc.financeCreateQuoteSectionNotes,
                       child: TextField(
                         controller: _notesController,
                         maxLines: 4,
                         decoration: _inputDecoration(
-                          'Any special considerations or add-ons',
+                          loc.financeCreateQuoteNotesHint,
                         ),
                       ),
                     ),
                     const SizedBox(height: 28),
                     GradientButton(
                       onPressed: () {},
-                      text: 'Send quote',
+                      text: loc.financeCreateQuotePrimaryCta,
                       width: double.infinity,
                       height: 52,
                     ),
@@ -293,6 +298,18 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
         borderSide: const BorderSide(color: AppColors.secondary, width: 1.4),
       ),
     );
+  }
+
+  String _paymentTermLabel(BuildContext context, _PaymentTerm term) {
+    final loc = context.l10n;
+    switch (term) {
+      case _PaymentTerm.dueOnReceipt:
+        return loc.financeCreateQuotePaymentDueReceipt;
+      case _PaymentTerm.due15Days:
+        return loc.financeCreateQuotePaymentDue15;
+      case _PaymentTerm.due30Days:
+        return loc.financeCreateQuotePaymentDue30;
+    }
   }
 }
 

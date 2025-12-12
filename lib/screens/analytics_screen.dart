@@ -3,7 +3,9 @@ import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/controllers/project_controller.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 import 'package:myapp/models/project.dart';
 
 class AnalyticsScreen extends StatelessWidget {
@@ -11,6 +13,8 @@ class AnalyticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final loc = context.l10n;
     final projects = context.watch<ProjectController>().projects;
     final now = DateTime.now();
 
@@ -46,8 +50,8 @@ class AnalyticsScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Analytics',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          loc.analyticsTitle,
+          style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
           ),
@@ -62,48 +66,52 @@ class AnalyticsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _UpdatedBadge(date: now),
+              _UpdatedBadge(date: now, loc: loc),
               const SizedBox(height: 16),
               _MetricGrid(
                 isMobile: isMobile,
                 children: [
                   _MetricCard(
                     icon: FeatherIcons.checkCircle,
-                    label: 'Completed this month',
+                    label: loc.analyticsMetricCompleted,
                     value: completedThisMonth.toString(),
                     accent: AppColors.primary,
                   ),
                   _MetricCard(
                     icon: FeatherIcons.activity,
-                    label: 'Avg duration per project',
+                    label: loc.analyticsMetricAvgDuration,
                     value: avgDurationDays == null
                         ? '—'
-                        : '${avgDurationDays.toStringAsFixed(1)} days',
+                        : loc.analyticsAvgDurationValue(
+                            avgDurationDays.toStringAsFixed(1),
+                          ),
                     accent: AppColors.secondary,
                     sublabel: durations.isEmpty
-                        ? 'No completed ranges yet'
+                        ? loc.analyticsAvgDurationEmpty
                         : null,
                   ),
                   _MetricCard(
                     icon: FeatherIcons.trendingUp,
-                    label: 'On-time delivery rate',
+                    label: loc.analyticsMetricOnTime,
                     value: onTimeRate == null
-                        ? 'N/A'
-                        : '${onTimeRate.toStringAsFixed(0)}%',
+                        ? loc.analyticsValueNotAvailable
+                        : loc.analyticsPercentValue(
+                            onTimeRate.toStringAsFixed(0),
+                          ),
                     accent: const Color(0xFF5C7CFA),
-                    sublabel: 'Needs deadlines + completion times',
+                    sublabel: loc.analyticsOnTimeHint,
                   ),
                   _MetricCard(
                     icon: FeatherIcons.dollarSign,
-                    label: 'Total revenue',
+                    label: loc.analyticsMetricRevenue,
                     value: '—',
                     accent: const Color(0xFF2FBF71),
-                    sublabel: 'Sync with Finance module',
+                    sublabel: loc.analyticsRevenueHint,
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              _InsightsSection(projects: projects),
+              _InsightsSection(projects: projects, loc: loc),
             ],
           ),
         ),
@@ -113,8 +121,9 @@ class AnalyticsScreen extends StatelessWidget {
 }
 
 class _UpdatedBadge extends StatelessWidget {
-  const _UpdatedBadge({required this.date});
+  const _UpdatedBadge({required this.date, required this.loc});
   final DateTime date;
+  final AppLocalizations loc;
   @override
   Widget build(BuildContext context) {
     final text =
@@ -128,7 +137,7 @@ class _UpdatedBadge extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          'Updated $text',
+          loc.analyticsUpdatedLabel(text),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: AppColors.hintTextfiled,
             fontWeight: FontWeight.w600,
@@ -243,8 +252,9 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _InsightsSection extends StatelessWidget {
-  const _InsightsSection({required this.projects});
+  const _InsightsSection({required this.projects, required this.loc});
   final List<Project> projects;
+  final AppLocalizations loc;
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -269,7 +279,7 @@ class _InsightsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Quick Insights',
+            loc.analyticsInsightsTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -278,17 +288,17 @@ class _InsightsSection extends StatelessWidget {
           const SizedBox(height: 12),
           _InsightRow(
             icon: FeatherIcons.folder,
-            label: 'Total projects',
+            label: loc.analyticsInsightTotalProjects,
             value: '$total',
           ),
           _InsightRow(
             icon: FeatherIcons.check,
-            label: 'Completed projects',
+            label: loc.analyticsInsightCompletedProjects,
             value: '$completed',
           ),
           _InsightRow(
             icon: FeatherIcons.playCircle,
-            label: 'In progress',
+            label: loc.analyticsInsightInProgress,
             value: '$inProgress',
           ),
         ],

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import '../controllers/finance_controller.dart';
 
 class FinanceCreateQuoteScreen extends StatefulWidget {
@@ -29,13 +30,14 @@ class _FinanceCreateQuoteScreenState extends State<FinanceCreateQuoteScreen> {
   Widget build(BuildContext context) {
     final finance = context.watch<FinanceController>();
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          'Create Quote',
+          loc.financeCreateQuoteTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -56,13 +58,13 @@ class _FinanceCreateQuoteScreenState extends State<FinanceCreateQuoteScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _CardSection(
-                  title: 'Client & Project',
+                  title: loc.financeQuoteClientSectionTitle,
                   child: Column(
                     children: [
                       TextField(
                         controller: _clientController,
                         decoration: InputDecoration(
-                          labelText: 'Client Name',
+                          labelText: loc.financeQuoteClientNameLabel,
                           prefixIcon: const Icon(Icons.search),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -73,7 +75,7 @@ class _FinanceCreateQuoteScreenState extends State<FinanceCreateQuoteScreen> {
                       TextField(
                         controller: _referenceController,
                         decoration: InputDecoration(
-                          labelText: 'Project / Reference (optional)',
+                          labelText: loc.financeQuoteReferenceLabel,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -84,16 +86,16 @@ class _FinanceCreateQuoteScreenState extends State<FinanceCreateQuoteScreen> {
                 ),
                 const SizedBox(height: 24),
                 _CardSection(
-                  title: 'Line Items',
+                  title: loc.financeQuoteLineItemsTitle,
                   child: _LineItemsEditor(key: _lineItemsKey),
                 ),
                 const SizedBox(height: 24),
                 _CardSection(
-                  title: 'Conditions & Validity',
+                  title: loc.financeQuoteConditionsTitle,
                   child: TextField(
                     maxLines: 4,
                     decoration: InputDecoration(
-                      hintText: 'Payment terms, delivery schedule, notes...',
+                      hintText: loc.financeQuoteConditionsHint,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -102,13 +104,13 @@ class _FinanceCreateQuoteScreenState extends State<FinanceCreateQuoteScreen> {
                 ),
                 const SizedBox(height: 24),
                 _CardSection(
-                  title: 'Options',
+                  title: loc.financeQuoteOptionsTitle,
                   child: Row(
                     children: [
                       Switch(value: true, onChanged: (_) {}),
                       const SizedBox(width: 8),
                       Text(
-                        'Require e-Signature',
+                        loc.financeQuoteRequireSignature,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppColors.secondaryText,
                           fontWeight: FontWeight.w600,
@@ -123,22 +125,22 @@ class _FinanceCreateQuoteScreenState extends State<FinanceCreateQuoteScreen> {
                     final subtotal = _lineItemsKey.currentState?._total ?? 0.0;
                     final quote = finance.createDraftQuote(
                       clientName: _clientController.text.trim().isEmpty
-                          ? 'Unnamed Client'
+                          ? loc.financeQuoteFallbackClient
                           : _clientController.text.trim(),
                       description: _referenceController.text.trim().isEmpty
-                          ? 'Quote draft'
+                          ? loc.financeQuoteFallbackDescription
                           : _referenceController.text.trim(),
                       subtotal: subtotal,
                     );
                     context.push('/finance/quote/${quote.id}/preview');
                   },
-                  text: 'Generate Quote',
+                  text: loc.financeQuoteGenerateCta,
                   height: 56,
                   width: double.infinity,
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'Existing Quotes: ${finance.quotes.length}',
+                  loc.financeQuoteExistingCount(finance.quotes.length),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.hintTextfiled,
                     fontWeight: FontWeight.w600,
@@ -171,6 +173,7 @@ class _LineItemsEditorState extends State<_LineItemsEditor> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -182,7 +185,7 @@ class _LineItemsEditorState extends State<_LineItemsEditor> {
         OutlinedButton.icon(
           onPressed: _addItem,
           icon: const Icon(Icons.add),
-          label: const Text('Add Line Item'),
+          label: Text(loc.financeQuoteAddLineItem),
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: AppColors.secondary, width: 2),
             shape: RoundedRectangleBorder(
@@ -192,7 +195,7 @@ class _LineItemsEditorState extends State<_LineItemsEditor> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Subtotal: €${_total.toStringAsFixed(2)}',
+          loc.financeQuoteSubtotalLabel('€${_total.toStringAsFixed(2)}'),
           style: theme.textTheme.bodyMedium?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.w700,
@@ -216,6 +219,7 @@ class _LineItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -233,7 +237,7 @@ class _LineItemRow extends StatelessWidget {
             child: TextField(
               onChanged: (v) => item.description = v,
               decoration: InputDecoration(
-                hintText: 'Description',
+                hintText: loc.financeQuoteDescriptionHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -247,7 +251,7 @@ class _LineItemRow extends StatelessWidget {
               keyboardType: TextInputType.number,
               onChanged: (v) => item.quantity = int.tryParse(v) ?? 1,
               decoration: InputDecoration(
-                hintText: 'Qty',
+                hintText: loc.financeQuoteQuantityHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -261,7 +265,7 @@ class _LineItemRow extends StatelessWidget {
               keyboardType: TextInputType.number,
               onChanged: (v) => item.unitPrice = double.tryParse(v) ?? 0,
               decoration: InputDecoration(
-                hintText: 'Unit Price',
+                hintText: loc.financeQuoteUnitPriceHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -273,7 +277,7 @@ class _LineItemRow extends StatelessWidget {
             onPressed: onRemove,
             icon: const Icon(Icons.delete_outline),
             color: Colors.redAccent,
-            tooltip: 'Remove',
+            tooltip: loc.financeQuoteRemoveTooltip,
           ),
         ],
       ),

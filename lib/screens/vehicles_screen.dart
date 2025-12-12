@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 
 class VehiclesScreen extends StatelessWidget {
   const VehiclesScreen({super.key});
@@ -9,6 +10,7 @@ class VehiclesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -20,7 +22,7 @@ class VehiclesScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
-          'Vehicles',
+          loc.vehiclesTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -34,7 +36,7 @@ class VehiclesScreen extends StatelessWidget {
               bottom: false,
               child: Center(
                 child: Text(
-                  'Vehicles Screen',
+                  loc.vehiclesPlaceholder,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: AppColors.secondaryText,
                     fontWeight: FontWeight.bold,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 
 class FinanceReportingScreen extends StatelessWidget {
   const FinanceReportingScreen({super.key});
@@ -8,21 +9,24 @@ class FinanceReportingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     final width = MediaQuery.of(context).size.width;
     final isMobile = width < 600;
+
     final cards = [
-      _ReportCard(title: 'Revenue by Month'),
-      _ReportCard(title: 'Outstanding Invoices'),
-      _ReportCard(title: 'Quote Conversion Rate'),
-      _ReportCard(title: 'Top Clients'),
+      _ReportCard(title: loc.financeReportingCardRevenue),
+      _ReportCard(title: loc.financeReportingCardOutstanding),
+      _ReportCard(title: loc.financeReportingCardConversion),
+      _ReportCard(title: loc.financeReportingCardTopClients),
     ];
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          'Financial Reporting',
+          loc.financeReportingTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -39,7 +43,7 @@ class FinanceReportingScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _FilterBar(),
+            const _FilterBar(),
             const SizedBox(height: 24),
             Expanded(
               child: GridView.count(
@@ -53,7 +57,7 @@ class FinanceReportingScreen extends StatelessWidget {
             const SizedBox(height: 24),
             GradientButton(
               onPressed: () {},
-              text: 'Export PDF Summary',
+              text: loc.financeReportingExportCta,
               height: 56,
               width: double.infinity,
             ),
@@ -65,11 +69,14 @@ class FinanceReportingScreen extends StatelessWidget {
 }
 
 class _ReportCard extends StatelessWidget {
-  final String title;
   const _ReportCard({required this.title});
+
+  final String title;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: BoxDecoration(
@@ -100,7 +107,7 @@ class _ReportCard extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Text(
-                'Chart placeholder',
+                loc.financeReportingChartPlaceholder,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.hintTextfiled,
                   fontWeight: FontWeight.w600,
@@ -114,17 +121,25 @@ class _ReportCard extends StatelessWidget {
   }
 }
 
+enum _ReportRange { last7Days, last30Days, quarterToDate, yearToDate }
+
+enum _ReportGranularity { daily, weekly, monthly }
+
 class _FilterBar extends StatefulWidget {
+  const _FilterBar();
+
   @override
   State<_FilterBar> createState() => _FilterBarState();
 }
 
 class _FilterBarState extends State<_FilterBar> {
-  String range = 'Last 30 Days';
-  String granularity = 'Monthly';
+  _ReportRange range = _ReportRange.last30Days;
+  _ReportGranularity granularity = _ReportGranularity.monthly;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -138,7 +153,7 @@ class _FilterBarState extends State<_FilterBar> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Reports',
+            loc.financeReportingFiltersTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -149,22 +164,47 @@ class _FilterBarState extends State<_FilterBar> {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _ChipSelect<String>(
-                label: 'Range',
+              _ChipSelect<_ReportRange>(
+                heading: loc.financeReportingFilterRange,
                 value: range,
                 options: const [
-                  'Last 7 Days',
-                  'Last 30 Days',
-                  'Quarter to Date',
-                  'Year to Date',
+                  _ReportRange.last7Days,
+                  _ReportRange.last30Days,
+                  _ReportRange.quarterToDate,
+                  _ReportRange.yearToDate,
                 ],
-                onChanged: (v) => setState(() => range = v),
+                labelBuilder: (ctx, option) {
+                  final l = ctx.l10n;
+                  return switch (option) {
+                    _ReportRange.last7Days => l.financeReportingRange7Days,
+                    _ReportRange.last30Days => l.financeReportingRange30Days,
+                    _ReportRange.quarterToDate =>
+                      l.financeReportingRangeQuarter,
+                    _ReportRange.yearToDate => l.financeReportingRangeYear,
+                  };
+                },
+                onChanged: (value) => setState(() => range = value),
               ),
-              _ChipSelect<String>(
-                label: 'Granularity',
+              _ChipSelect<_ReportGranularity>(
+                heading: loc.financeReportingFilterGranularity,
                 value: granularity,
-                options: const ['Daily', 'Weekly', 'Monthly'],
-                onChanged: (v) => setState(() => granularity = v),
+                options: const [
+                  _ReportGranularity.daily,
+                  _ReportGranularity.weekly,
+                  _ReportGranularity.monthly,
+                ],
+                labelBuilder: (ctx, option) {
+                  final l = ctx.l10n;
+                  return switch (option) {
+                    _ReportGranularity.daily =>
+                      l.financeReportingGranularityDaily,
+                    _ReportGranularity.weekly =>
+                      l.financeReportingGranularityWeekly,
+                    _ReportGranularity.monthly =>
+                      l.financeReportingGranularityMonthly,
+                  };
+                },
+                onChanged: (value) => setState(() => granularity = value),
               ),
             ],
           ),
@@ -175,16 +215,20 @@ class _FilterBarState extends State<_FilterBar> {
 }
 
 class _ChipSelect<T> extends StatelessWidget {
-  final String label;
-  final T value;
-  final List<T> options;
-  final ValueChanged<T> onChanged;
   const _ChipSelect({
-    required this.label,
+    required this.heading,
     required this.value,
     required this.options,
     required this.onChanged,
+    required this.labelBuilder,
   });
+
+  final String heading;
+  final T value;
+  final List<T> options;
+  final ValueChanged<T> onChanged;
+  final String Function(BuildContext, T) labelBuilder;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -192,7 +236,7 @@ class _ChipSelect<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          heading,
           style: theme.textTheme.bodySmall?.copyWith(
             color: AppColors.hintTextfiled,
             fontWeight: FontWeight.w600,
@@ -203,11 +247,11 @@ class _ChipSelect<T> extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            for (final opt in options)
+            for (final option in options)
               _ReportChip(
-                label: opt.toString(),
-                selected: opt == value,
-                onTap: () => onChanged(opt),
+                label: labelBuilder(context, option),
+                selected: option == value,
+                onTap: () => onChanged(option),
               ),
           ],
         ),
@@ -217,14 +261,16 @@ class _ChipSelect<T> extends StatelessWidget {
 }
 
 class _ReportChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
   const _ReportChip({
     required this.label,
     required this.selected,
     required this.onTap,
   });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

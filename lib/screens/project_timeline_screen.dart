@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/utils/project_ui.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/models/project.dart';
@@ -38,6 +39,7 @@ class _ProjectTimelineScreenState extends State<ProjectTimelineScreen> {
   Widget build(BuildContext context) {
     final controller = context.watch<ProjectController>();
     final project = controller.getById(widget.projectId);
+    final loc = context.l10n;
 
     if (project == null) {
       return Scaffold(
@@ -54,7 +56,7 @@ class _ProjectTimelineScreenState extends State<ProjectTimelineScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Project not found',
+                  loc.projectNotFoundTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: AppColors.secondaryText,
                     fontWeight: FontWeight.bold,
@@ -70,7 +72,7 @@ class _ProjectTimelineScreenState extends State<ProjectTimelineScreen> {
                       router.goNamed('management');
                     }
                   },
-                  child: const Text('Back'),
+                  child: Text(loc.commonBack),
                 ),
               ],
             ),
@@ -324,7 +326,7 @@ class _ProjectTimelineScreenState extends State<ProjectTimelineScreen> {
               ),
               const SizedBox(width: 6),
               Text(
-                meta.label,
+                _taskStatusLabel(context, task.status),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: meta.color,
                   fontWeight: FontWeight.bold,
@@ -423,6 +425,7 @@ class _TimelineHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     return Row(
       children: [
         Container(
@@ -465,7 +468,7 @@ class _TimelineHeader extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Drag tasks on the timeline to reschedule',
+                loc.projectTimelineHeaderSubtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.hintTextfiled,
                   fontWeight: FontWeight.w600,
@@ -510,7 +513,7 @@ class _StatusLegend extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    meta.label,
+                    _taskStatusLabel(context, status),
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.w600,
@@ -534,12 +537,13 @@ class _UnscheduledTasks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Needs scheduling',
+          loc.projectTimelineUnscheduledTitle,
           style: theme.textTheme.titleMedium?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -594,7 +598,7 @@ class _UnscheduledTasks extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            meta.label,
+                            _taskStatusLabel(context, task.status),
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: AppColors.hintTextfiled,
                               fontWeight: FontWeight.w600,
@@ -623,7 +627,7 @@ class _UnscheduledTasks extends StatelessWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Set start and due dates to place this task on the timeline.',
+                              loc.projectTimelineUnscheduledHint,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: AppColors.hintTextfiled,
                                 fontWeight: FontWeight.w600,
@@ -684,4 +688,18 @@ class _TaskAppointment extends Appointment {
 
   final Task task;
   final String? assigneeName;
+}
+
+String _taskStatusLabel(BuildContext context, TaskStatus status) {
+  final loc = context.l10n;
+  switch (status) {
+    case TaskStatus.planned:
+      return loc.taskStatusPlanned;
+    case TaskStatus.inProgress:
+      return loc.taskStatusInProgress;
+    case TaskStatus.completed:
+      return loc.taskStatusCompleted;
+    case TaskStatus.deferred:
+      return loc.taskStatusDeferred;
+  }
 }

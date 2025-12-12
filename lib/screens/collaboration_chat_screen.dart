@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/emoji_reaction_picker.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/models/collaborator_contact.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/models/project.dart';
@@ -122,11 +123,13 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     final controller = context.watch<ProjectController>();
     final threadContact = _resolveThreadContact(controller);
-    final threadName = threadContact?.name ?? 'Collaboration chat';
+    final threadName =
+        threadContact?.name ?? loc.collaborationChatTitleFallback;
     final threadSubtitle =
-        threadContact?.profession ?? 'Tap to view contact detail';
+        threadContact?.profession ?? loc.collaborationChatSubtitleFallback;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -173,7 +176,7 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Shared files',
+            tooltip: loc.collaborationChatSharedFilesTooltip,
             icon: const Icon(
               FeatherIcons.folder,
               color: AppColors.secondaryText,
@@ -196,7 +199,7 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
                       itemBuilder: (context, index) {
                         final message = _messages[index];
                         final authorName = message.isMine
-                            ? 'You'
+                            ? loc.homeAuthorYou
                             : threadContact?.name ?? message.sender;
                         return _MessageBubble(
                           message: message,
@@ -227,7 +230,7 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: CustomNavBar(currentRouteName: 'chats'),
+            child: CustomNavBar(currentRouteName: 'crm'),
           ),
         ],
       ),
@@ -294,6 +297,7 @@ class _MessageComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return SafeArea(
       top: false,
@@ -322,7 +326,7 @@ class _MessageComposer extends StatelessWidget {
                 children: [
                   _ComposerActionIcon(
                     icon: FeatherIcons.paperclip,
-                    tooltip: 'Add attachment',
+                    tooltip: loc.collaborationChatAddAttachment,
                     onTap: () => _showAttachmentOptions(context),
                   ),
                   const SizedBox(width: 12),
@@ -332,7 +336,7 @@ class _MessageComposer extends StatelessWidget {
                       minLines: 1,
                       maxLines: 6,
                       decoration: InputDecoration(
-                        hintText: 'Write a message…',
+                        hintText: loc.collaborationChatComposerHint,
                         hintStyle: theme.textTheme.bodyMedium?.copyWith(
                           color: AppColors.hintTextfiled,
                           fontWeight: FontWeight.w600,
@@ -357,7 +361,7 @@ class _MessageComposer extends StatelessWidget {
                   const SizedBox(width: 12),
                   _ComposerActionIcon(
                     icon: FeatherIcons.send,
-                    tooltip: 'Send message',
+                    tooltip: loc.collaborationChatSendMessage,
                     onTap: canSend ? onSend : null,
                     enabled: canSend,
                     variant: _ComposerButtonVariant.primary,
@@ -445,6 +449,7 @@ class _ComposerActionIcon extends StatelessWidget {
 }
 
 void _showAttachmentOptions(BuildContext context) {
+  final loc = context.l10n;
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
@@ -476,7 +481,7 @@ void _showAttachmentOptions(BuildContext context) {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Attach from',
+                    loc.collaborationChatAttachTitle,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
@@ -486,22 +491,22 @@ void _showAttachmentOptions(BuildContext context) {
                 const SizedBox(height: 20),
                 _AttachmentOption(
                   icon: FeatherIcons.image,
-                  label: 'Photo or image',
+                  label: loc.collaborationChatAttachPhoto,
                   onTap: () => Navigator.of(sheetContext).pop(),
                 ),
                 _AttachmentOption(
                   icon: FeatherIcons.fileText,
-                  label: 'Document',
+                  label: loc.collaborationChatAttachDocument,
                   onTap: () => Navigator.of(sheetContext).pop(),
                 ),
                 _AttachmentOption(
                   icon: FeatherIcons.file,
-                  label: 'PDF',
+                  label: loc.collaborationChatAttachPdf,
                   onTap: () => Navigator.of(sheetContext).pop(),
                 ),
                 _AttachmentOption(
                   icon: FeatherIcons.camera,
-                  label: 'Capture from camera',
+                  label: loc.collaborationChatAttachCamera,
                   onTap: () => Navigator.of(sheetContext).pop(),
                 ),
               ],
@@ -769,7 +774,7 @@ class _BubbleActionButton extends StatelessWidget {
     final iconColor = highlight ? AppColors.secondary : AppColors.hintTextfiled;
 
     return Tooltip(
-      message: 'React to message',
+      message: context.l10n.collaborationChatReactTooltip,
       child: Material(
         color: Colors.transparent,
         shape: const CircleBorder(),

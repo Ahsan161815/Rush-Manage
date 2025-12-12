@@ -11,6 +11,8 @@ import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/app/widgets/gradient_progress_bar.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/common/models/message.dart';
+import 'package:myapp/common/localization/formatters.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/utils/project_ui.dart';
 import 'package:myapp/models/project.dart';
 
@@ -23,6 +25,7 @@ class ProjectDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<ProjectController>();
     final project = controller.getById(projectId);
+    final loc = context.l10n;
 
     if (project == null) {
       return Scaffold(
@@ -39,7 +42,7 @@ class ProjectDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Project not found',
+                  loc.projectNotFoundTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: AppColors.secondaryText,
                     fontWeight: FontWeight.bold,
@@ -48,7 +51,7 @@ class ProjectDetailScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 GradientButton(
                   onPressed: () => context.goNamed('management'),
-                  text: 'Back to Projects',
+                  text: loc.projectDetailBackToProjects,
                   width: 200,
                   height: 46,
                 ),
@@ -121,7 +124,7 @@ class ProjectDetailScreen extends StatelessWidget {
                               const SizedBox(height: 6),
                               Text(
                                 project.client.isEmpty
-                                    ? 'Client TBD'
+                                    ? loc.projectDetailClientPlaceholder
                                     : project.client,
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
@@ -136,35 +139,39 @@ class ProjectDetailScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          itemBuilder: (context) => const [
+                          itemBuilder: (context) => [
                             PopupMenuItem(
                               value: 'projectChat',
-                              child: Text('Project chat'),
+                              child: Text(loc.projectDetailMenuProjectChat),
                             ),
                             PopupMenuItem(
                               value: 'sharedFiles',
-                              child: Text('Shared files'),
+                              child: Text(loc.sharedFilesTitle),
                             ),
                             PopupMenuItem(
                               value: 'inviteCollaborator',
-                              child: Text('Invite collaborator'),
+                              child: Text(
+                                loc.projectDetailMenuInviteCollaborator,
+                              ),
                             ),
                             PopupMenuItem(
                               value: 'rolesPermissions',
-                              child: Text('Roles & permissions'),
+                              child: Text(
+                                loc.projectDetailMenuRolesPermissions,
+                              ),
                             ),
-                            PopupMenuDivider(),
+                            const PopupMenuDivider(),
                             PopupMenuItem(
                               value: 'archive',
-                              child: Text('Archive project'),
+                              child: Text(loc.projectDetailMenuArchive),
                             ),
                             PopupMenuItem(
                               value: 'duplicate',
-                              child: Text('Duplicate'),
+                              child: Text(loc.projectDetailMenuDuplicate),
                             ),
                             PopupMenuItem(
                               value: 'delete',
-                              child: Text('Delete'),
+                              child: Text(loc.projectDetailMenuDelete),
                             ),
                           ],
                           onSelected: (value) {
@@ -219,22 +226,22 @@ class ProjectDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     _SectionCard(
-                      title: 'Schedule',
+                      title: loc.projectDetailScheduleTitle,
                       child: GradientButton(
                         onPressed: () => context.pushNamed(
                           'projectSchedule',
                           pathParameters: {'id': project.id},
                         ),
-                        text: 'Open Calendar & Timeline',
+                        text: loc.projectDetailScheduleCta,
                         width: double.infinity,
                         height: 48,
                       ),
                     ),
                     const SizedBox(height: 24),
                     _SectionCard(
-                      title: 'Team',
+                      title: loc.projectDetailTeamTitle,
                       trailing: Text(
-                        '${project.members.length} members',
+                        loc.projectDetailTeamCount(project.members.length),
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: AppColors.hintTextfiled,
                           fontWeight: FontWeight.w600,
@@ -252,7 +259,7 @@ class ProjectDetailScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: Text(
-                                'No members assigned yet.',
+                                loc.projectDetailTeamEmpty,
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: AppColors.hintTextfiled,
@@ -273,11 +280,11 @@ class ProjectDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     _SectionCard(
-                      title: 'Tasks',
+                      title: loc.projectDetailTasksTitle,
                       trailing: GradientButton(
                         onPressed: () =>
                             _showAddTaskDialog(context, controller, project),
-                        text: '+ Add Task',
+                        text: loc.projectDetailTasksAddCta,
                         width: 140,
                         height: 44,
                       ),
@@ -289,7 +296,7 @@ class ProjectDetailScreen extends StatelessWidget {
                                     vertical: 24.0,
                                   ),
                                   child: Text(
-                                    'No tasks yet. Create the first milestone.',
+                                    loc.projectDetailTasksEmpty,
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodyMedium
@@ -326,7 +333,7 @@ class ProjectDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     _SectionCard(
-                      title: 'Discussion',
+                      title: loc.projectDetailDiscussionTitle,
                       child: _DiscussionPreview(
                         project: project,
                         messages: messages,
@@ -338,23 +345,32 @@ class ProjectDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     _SectionCard(
-                      title: 'Finance overview',
+                      title: loc.homeFinanceOverviewTitle,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            children: const [
-                              _FinanceTile(label: 'Billed', value: '€850'),
-                              SizedBox(width: 16),
-                              _FinanceTile(label: 'Paid', value: '€0'),
-                              SizedBox(width: 16),
-                              _FinanceTile(label: 'Remaining', value: '€850'),
+                            children: [
+                              _FinanceTile(
+                                label: loc.projectDetailFinanceBilled,
+                                value: '€850',
+                              ),
+                              const SizedBox(width: 16),
+                              _FinanceTile(
+                                label: loc.projectDetailFinancePaid,
+                                value: '€0',
+                              ),
+                              const SizedBox(width: 16),
+                              _FinanceTile(
+                                label: loc.projectDetailFinanceRemaining,
+                                value: '€850',
+                              ),
                             ],
                           ),
                           const SizedBox(height: 16),
                           GradientButton(
                             onPressed: () => context.pushNamed('createQuote'),
-                            text: 'Create quote for this project',
+                            text: loc.projectDetailFinanceCreateQuote,
                             width: double.infinity,
                             height: 48,
                           ),
@@ -363,7 +379,7 @@ class ProjectDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     _SectionCard(
-                      title: 'Files',
+                      title: loc.projectDetailFilesTitle,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -371,7 +387,7 @@ class ProjectDetailScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           GradientButton(
                             onPressed: () {},
-                            text: '+ Add a file',
+                            text: loc.projectDetailFilesAdd,
                             width: double.infinity,
                             height: 48,
                           ),
@@ -642,6 +658,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
+    final loc = context.l10n;
 
     return Padding(
       padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
@@ -676,7 +693,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                     children: [
                       Expanded(
                         child: Text(
-                          'Create task',
+                          loc.projectDetailTaskCreateTitle,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: AppColors.secondaryText,
@@ -697,20 +714,20 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   const SizedBox(height: 18),
                   AppFormTextField(
                     controller: _titleController,
-                    hintText: 'Task title',
+                    hintText: loc.projectDetailTaskTitleHint,
                     textInputAction: TextInputAction.next,
                     validator: (value) =>
                         (value == null || value.trim().isEmpty)
-                        ? 'Please add a title'
+                        ? loc.projectDetailTaskTitleError
                         : null,
                   ),
                   const SizedBox(height: 16),
                   _SheetFieldGroup(
-                    label: 'Status',
+                    label: loc.projectDetailTaskStatusLabel,
                     child: AppDropdownField<TaskStatus>(
                       items: TaskStatus.values,
                       value: _status,
-                      hintText: 'Select status',
+                      hintText: loc.projectDetailTaskStatusHint,
                       labelBuilder: (status) => taskStatusMeta(status).label,
                       onChanged: (status) {
                         if (status == null) return;
@@ -720,14 +737,14 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   ),
                   const SizedBox(height: 16),
                   _SheetFieldGroup(
-                    label: 'Schedule',
+                    label: loc.projectDetailTaskScheduleLabel,
                     child: Row(
                       children: [
                         Expanded(
                           child: AppDateField(
                             label: _formatDate(
                               _startDate,
-                              placeholder: 'Start date',
+                              placeholder: loc.projectDetailTaskStartDate,
                             ),
                             hasValue: _startDate != null,
                             onTap: _pickStartDate,
@@ -743,7 +760,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                           child: AppDateField(
                             label: _formatDate(
                               _endDate,
-                              placeholder: 'Due date',
+                              placeholder: loc.projectDetailTaskDueDate,
                             ),
                             hasValue: _endDate != null,
                             onTap: _pickEndDate,
@@ -760,11 +777,11 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   const SizedBox(height: 16),
                   if (widget.members.isNotEmpty)
                     _SheetFieldGroup(
-                      label: 'Assignee',
+                      label: loc.projectDetailTaskAssigneeLabel,
                       child: AppDropdownField<Member>(
                         items: widget.members,
                         value: _selectedMember,
-                        hintText: 'Assign a teammate',
+                        hintText: loc.projectDetailTaskAssigneeHint,
                         labelBuilder: (member) => member.name,
                         onChanged: (member) =>
                             setState(() => _selectedMember = member),
@@ -783,7 +800,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                         border: Border.all(color: AppColors.textfieldBorder),
                       ),
                       child: Text(
-                        'Invite teammates to assign this task.',
+                        loc.projectDetailTaskAssigneeEmpty,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.hintTextfiled,
                           fontWeight: FontWeight.w600,
@@ -792,23 +809,23 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                     ),
                   const SizedBox(height: 16),
                   _SheetFieldGroup(
-                    label: 'Details',
+                    label: loc.projectDetailTaskDetailsLabel,
                     child: AppFormTextField(
                       controller: _descriptionController,
-                      hintText: 'Share context or checklist items',
+                      hintText: loc.projectDetailTaskDetailsHint,
                       maxLines: 3,
                       textInputAction: TextInputAction.newline,
                     ),
                   ),
                   const SizedBox(height: 16),
                   _SheetFieldGroup(
-                    label: 'Attachments',
+                    label: loc.projectDetailTaskAttachmentsLabel,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         AppFormTextField(
                           controller: _attachmentController,
-                          hintText: 'Paste a link or filename',
+                          hintText: loc.projectDetailTaskAttachmentHint,
                           textInputAction: TextInputAction.done,
                         ),
                         const SizedBox(height: 10),
@@ -816,7 +833,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                           alignment: Alignment.centerRight,
                           child: GradientButton(
                             onPressed: _addAttachment,
-                            text: 'Add attachment',
+                            text: loc.projectDetailTaskAddAttachment,
                             width: 230,
                             height: 42,
                           ),
@@ -842,7 +859,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   const SizedBox(height: 24),
                   GradientButton(
                     onPressed: _submit,
-                    text: 'Create task',
+                    text: loc.projectDetailTaskCreateTitle,
                     width: double.infinity,
                     height: 50,
                   ),
@@ -894,6 +911,7 @@ class _ScheduleBadge extends StatelessWidget {
     final meta = taskStatusMeta(status);
     final start = startDate;
     final end = endDate;
+    final loc = context.l10n;
 
     if (start == null && end == null) {
       return const SizedBox.shrink();
@@ -921,33 +939,38 @@ class _ScheduleBadge extends StatelessWidget {
 
     if (status == TaskStatus.completed) {
       color = meta.color;
-      label = 'Completed · $rangeLabel';
+      label = loc.projectDetailBadgeCompleted(rangeLabel);
     } else if (status == TaskStatus.deferred) {
       color = meta.color;
-      label = 'Deferred · $rangeLabel';
+      label = loc.projectDetailBadgeDeferred(rangeLabel);
     } else if (normalizedEnd != null) {
       final diff = normalizedEnd.difference(today).inDays;
+      final dueLabel = loc.projectDetailBadgeDueOn(
+        _formatFullDate(normalizedEnd),
+      );
 
       if (diff < 0) {
         color = AppColors.error;
-        label = 'Overdue · $rangeLabel';
+        label = loc.projectDetailBadgeOverdue(rangeLabel);
       } else if (diff == 0) {
         color = AppColors.error;
-        label = hasRange ? 'Due today · $rangeLabel' : 'Due today';
+        label = hasRange
+            ? loc.projectDetailBadgeDueTodayRange(rangeLabel)
+            : loc.projectDetailBadgeDueToday;
       } else if (diff <= 2) {
         color = AppColors.orange;
         label = hasRange
-            ? 'Upcoming · $rangeLabel'
-            : 'Due ${_formatFullDate(normalizedEnd)}';
+            ? loc.projectDetailBadgeUpcoming(rangeLabel)
+            : dueLabel;
       } else {
         color = meta.color;
         label = hasRange
-            ? 'Timeline · $rangeLabel'
-            : 'Due ${_formatFullDate(normalizedEnd)}';
+            ? loc.projectDetailBadgeTimeline(rangeLabel)
+            : dueLabel;
       }
     } else if (start != null) {
       color = meta.color;
-      label = 'Starts ${_formatFullDate(start)}';
+      label = loc.projectDetailBadgeStarts(_formatFullDate(start));
     } else {
       return const SizedBox.shrink();
     }
@@ -1089,6 +1112,7 @@ class _ProgressOverview extends StatelessWidget {
         .length;
     final total = project.tasks.length;
     final remaining = (total - completed).clamp(0, total);
+    final loc = context.l10n;
 
     return Container(
       padding: const EdgeInsets.all(2),
@@ -1117,7 +1141,7 @@ class _ProgressOverview extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Progress overview',
+                        loc.projectDetailProgressTitle,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               color: AppColors.secondaryText,
@@ -1127,8 +1151,11 @@ class _ProgressOverview extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         total == 0
-                            ? 'No tasks added yet'
-                            : '$completed of $total tasks completed',
+                            ? loc.projectDetailProgressEmpty
+                            : loc.projectDetailProgressSummary(
+                                completed,
+                                total,
+                              ),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.hintTextfiled,
                           fontWeight: FontWeight.w600,
@@ -1149,18 +1176,18 @@ class _ProgressOverview extends StatelessWidget {
             Row(
               children: [
                 _ProgressMetric(
-                  label: 'In progress',
+                  label: loc.projectDetailProgressMetricInProgress,
                   value: '${project.progress}%',
                   accent: statusMeta.color,
                 ),
                 const SizedBox(width: 12),
                 _ProgressMetric(
-                  label: 'Completed',
+                  label: loc.projectDetailProgressMetricCompleted,
                   value: total == 0 ? '0' : '$completed',
                 ),
                 const SizedBox(width: 12),
                 _ProgressMetric(
-                  label: 'Remaining',
+                  label: loc.projectDetailProgressMetricRemaining,
                   value: total == 0 ? '-' : '$remaining',
                 ),
               ],
@@ -1338,6 +1365,7 @@ class _DiscussionPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     if (messages.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1350,7 +1378,7 @@ class _DiscussionPreview extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
             ),
             child: Text(
-              'No messages yet. Start a conversation with your team.',
+              loc.projectDetailDiscussionEmpty,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.hintTextfiled,
                 fontWeight: FontWeight.w600,
@@ -1360,7 +1388,7 @@ class _DiscussionPreview extends StatelessWidget {
           const SizedBox(height: 18),
           GradientButton(
             onPressed: onOpenChat,
-            text: 'Send Message',
+            text: loc.projectDetailDiscussionSend,
             width: double.infinity,
             height: 48,
           ),
@@ -1384,7 +1412,7 @@ class _DiscussionPreview extends StatelessWidget {
           ),
         GradientButton(
           onPressed: onOpenChat,
-          text: 'Send Message',
+          text: loc.projectDetailDiscussionSend,
           width: double.infinity,
           height: 48,
         ),
@@ -1401,9 +1429,10 @@ class _MessagePreviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     final authorName = message.authorId == 'me'
-        ? 'You'
-        : (author?.name ?? 'Team member');
+        ? loc.homeAuthorYou
+        : (author?.name ?? loc.homeCollaboratorFallback);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1438,7 +1467,7 @@ class _MessagePreviewTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      _relativeTimeLabel(message.sentAt),
+                      _relativeTimeLabel(context, message.sentAt),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.hintTextfiled,
                         fontWeight: FontWeight.w600,
@@ -1512,7 +1541,12 @@ class _TaskDetailsSheet extends StatelessWidget {
     final media = MediaQuery.of(context);
     final status = task.status;
     final statusMeta = taskStatusMeta(status);
-    final scheduleSummary = _taskScheduleSummary(task.startDate, task.endDate);
+    final scheduleSummary = _taskScheduleSummary(
+      context,
+      task.startDate,
+      task.endDate,
+    );
+    final loc = context.l10n;
 
     return Padding(
       padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
@@ -1562,15 +1596,15 @@ class _TaskDetailsSheet extends StatelessWidget {
                   children: [
                     _DetailsBadge(
                       icon: FeatherIcons.user,
-                      label: 'Assignee',
+                      label: loc.projectDetailTaskAssigneeLabel,
                       value: assignee.name.isEmpty
-                          ? 'Unassigned'
+                          ? loc.projectDetailTaskAssigneeUnassigned
                           : assignee.name,
                     ),
                     const SizedBox(width: 12),
                     _DetailsBadge(
                       icon: FeatherIcons.calendar,
-                      label: 'Schedule',
+                      label: loc.projectDetailTaskScheduleLabel,
                       value: scheduleSummary,
                     ),
                   ],
@@ -1595,7 +1629,7 @@ class _TaskDetailsSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Status',
+                              loc.projectDetailTaskStatusLabel,
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(
                                     color: AppColors.hintTextfiled,
@@ -1658,7 +1692,7 @@ class _TaskDetailsSheet extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Change',
+                                loc.projectDetailTaskStatusChange,
                                 style: Theme.of(context).textTheme.labelMedium
                                     ?.copyWith(
                                       color: AppColors.secondaryText,
@@ -1681,7 +1715,7 @@ class _TaskDetailsSheet extends StatelessWidget {
                 if ((task.description ?? '').isNotEmpty) ...[
                   const SizedBox(height: 18),
                   Text(
-                    'Details',
+                    loc.projectDetailTaskDetailsLabel,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
@@ -1699,7 +1733,7 @@ class _TaskDetailsSheet extends StatelessWidget {
                 if (task.attachments.isNotEmpty) ...[
                   const SizedBox(height: 18),
                   Text(
-                    'Attachments',
+                    loc.projectDetailTaskAttachmentsLabel,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
@@ -1723,7 +1757,7 @@ class _TaskDetailsSheet extends StatelessWidget {
                     onCycleStatus();
                     Navigator.of(context).pop();
                   },
-                  text: _statusActionLabel(status),
+                  text: _statusActionLabel(context, status),
                   width: double.infinity,
                   height: 50,
                 ),
@@ -1792,24 +1826,14 @@ class _DetailsBadge extends StatelessWidget {
   }
 }
 
-String _relativeTimeLabel(DateTime timestamp) {
-  final now = DateTime.now();
-  final difference = now.difference(timestamp);
+String _relativeTimeLabel(BuildContext context, DateTime timestamp) {
+  final difference = DateTime.now().difference(timestamp);
 
-  if (difference.inMinutes < 1) {
-    return 'Just now';
-  }
-  if (difference.inMinutes < 60) {
-    return '${difference.inMinutes}m ago';
-  }
-  if (difference.inHours < 24) {
-    return '${difference.inHours}h ago';
-  }
-  if (difference.inDays < 7) {
-    return '${difference.inDays}d ago';
+  if (difference.inDays >= 7) {
+    return _formatFullDate(timestamp);
   }
 
-  return _formatFullDate(timestamp);
+  return formatRelativeTime(context, timestamp);
 }
 
 String _formatFullDate(DateTime date) {
@@ -1833,29 +1857,35 @@ String _formatFullDate(DateTime date) {
   return '$month $day, ${date.year}';
 }
 
-String _taskScheduleSummary(DateTime? start, DateTime? end) {
+String _taskScheduleSummary(
+  BuildContext context,
+  DateTime? start,
+  DateTime? end,
+) {
+  final loc = context.l10n;
   if (start != null && end != null) {
     return '${_formatFullDate(start)} → ${_formatFullDate(end)}';
   }
   if (start != null) {
-    return 'Starts ${_formatFullDate(start)}';
+    return loc.projectDetailBadgeStarts(_formatFullDate(start));
   }
   if (end != null) {
-    return 'Due ${_formatFullDate(end)}';
+    return loc.projectDetailBadgeDueOn(_formatFullDate(end));
   }
-  return 'No dates set';
+  return loc.projectDetailTaskScheduleEmpty;
 }
 
-String _statusActionLabel(TaskStatus status) {
+String _statusActionLabel(BuildContext context, TaskStatus status) {
+  final loc = context.l10n;
   switch (status) {
     case TaskStatus.planned:
-      return 'Mark as in progress';
+      return loc.projectDetailStatusActionPlanned;
     case TaskStatus.inProgress:
-      return 'Mark as completed';
+      return loc.projectDetailStatusActionInProgress;
     case TaskStatus.completed:
-      return 'Reopen task';
+      return loc.projectDetailStatusActionCompleted;
     case TaskStatus.deferred:
-      return 'Resume planning';
+      return loc.projectDetailStatusActionDeferred;
   }
 }
 
@@ -1980,6 +2010,10 @@ class _TaskTile extends StatelessWidget {
     final status = task.status;
     final startDate = task.startDate;
     final endDate = task.endDate;
+    final loc = context.l10n;
+    final assigneeName = assignee.name.isEmpty
+        ? loc.projectDetailTaskAssigneeUnassigned
+        : assignee.name;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -2028,7 +2062,7 @@ class _TaskTile extends StatelessWidget {
                   ],
                   const SizedBox(height: 6),
                   Text(
-                    'Assigned to ${assignee.name.isEmpty ? 'Unassigned' : assignee.name}',
+                    loc.projectDetailTaskAssignedTo(assigneeName),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.hintTextfiled,
                       fontWeight: FontWeight.w600,

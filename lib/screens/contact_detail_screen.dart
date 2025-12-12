@@ -4,7 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 import 'package:myapp/common/models/contact_detail_args.dart';
+import 'package:myapp/common/models/contact_form_models.dart';
+import 'package:myapp/common/utils/contact_form_launcher.dart';
 
 class ContactDetailScreen extends StatelessWidget {
   const ContactDetailScreen({super.key, required this.args});
@@ -14,6 +18,7 @@ class ContactDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -28,7 +33,7 @@ class ContactDetailScreen extends StatelessWidget {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Contact detail',
+          loc.contactDetailTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -36,7 +41,7 @@ class ContactDetailScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'Start chat',
+            tooltip: loc.contactDetailStartChat,
             icon: const Icon(
               FeatherIcons.messageCircle,
               color: AppColors.secondaryText,
@@ -53,26 +58,41 @@ class ContactDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _ContactHero(args: args),
+              const SizedBox(height: 16),
+              _ContactActionPanel(
+                loc: loc,
+                isClient: args.isClient,
+                onEditContact: () => _openContactEditor(context),
+                onCreateProject: args.isClient
+                    ? () => _openProjectCreation(context)
+                    : null,
+                onCreateQuote: args.isClient
+                    ? () => _openQuoteCreation(context)
+                    : null,
+                onCreateInvoice: args.isClient
+                    ? () => _openInvoiceCreation(context)
+                    : null,
+              ),
               const SizedBox(height: 20),
               _InfoCard(
-                title: 'Contact',
+                title: loc.contactDetailSectionContact,
                 children: [
                   if (args.email != null)
                     _InfoRow(
                       icon: FeatherIcons.mail,
-                      label: 'Email',
+                      label: loc.profileEmailLabel,
                       value: args.email!,
                     ),
                   if (args.phone != null)
                     _InfoRow(
                       icon: FeatherIcons.phone,
-                      label: 'Phone',
+                      label: loc.profilePhoneLabel,
                       value: args.phone!,
                     ),
                   if (args.location != null)
                     _InfoRow(
                       icon: FeatherIcons.mapPin,
-                      label: 'Location',
+                      label: loc.profileLocationLabel,
                       value: args.location!,
                     ),
                 ],
@@ -80,7 +100,7 @@ class ContactDetailScreen extends StatelessWidget {
               if (args.tags.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 _InfoCard(
-                  title: 'Expertise',
+                  title: loc.contactDetailSectionExpertise,
                   children: [
                     Wrap(
                       spacing: 10,
@@ -95,7 +115,7 @@ class ContactDetailScreen extends StatelessWidget {
               if (args.projects.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 _InfoCard(
-                  title: 'Projects together',
+                  title: loc.contactDetailSectionProjects,
                   children: args.projects
                       .map((project) => _ProjectTile(summary: project))
                       .toList(growable: false),
@@ -104,7 +124,7 @@ class ContactDetailScreen extends StatelessWidget {
               if (args.note != null && args.note!.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 _InfoCard(
-                  title: 'Notes',
+                  title: loc.contactDetailSectionNotes,
                   children: [
                     Text(
                       args.note!,
@@ -119,7 +139,7 @@ class ContactDetailScreen extends StatelessWidget {
               const SizedBox(height: 24),
               GradientButton(
                 onPressed: () => context.pushNamed('collaborationChat'),
-                text: 'Send Message',
+                text: loc.collaboratorSendMessage,
                 width: double.infinity,
                 height: 52,
               ),
@@ -128,6 +148,40 @@ class ContactDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _openContactEditor(BuildContext context) {
+    return ContactFormLauncher.show(
+      context,
+      mode: ContactFormMode.edit,
+      data: ContactFormData(
+        name: args.name,
+        email: args.email,
+        phone: args.phone,
+        address: args.location,
+        type: args.title,
+        notes: args.note,
+      ),
+    );
+  }
+
+  void _openProjectCreation(BuildContext context) {
+    context.pushNamed(
+      'projectsCreate',
+      extra: ContactProjectSeed(
+        contactId: args.contactId,
+        clientName: args.name,
+        clientEmail: args.email,
+      ),
+    );
+  }
+
+  void _openQuoteCreation(BuildContext context) {
+    context.pushNamed('financeCreateQuote');
+  }
+
+  void _openInvoiceCreation(BuildContext context) {
+    context.goNamed('finance');
   }
 }
 
@@ -244,6 +298,100 @@ class _InfoCard extends StatelessWidget {
           const SizedBox(height: 16),
           ...children,
         ],
+      ),
+    );
+  }
+}
+
+class _ContactActionPanel extends StatelessWidget {
+  const _ContactActionPanel({
+    required this.loc,
+    required this.isClient,
+    required this.onEditContact,
+    this.onCreateProject,
+    this.onCreateQuote,
+    this.onCreateInvoice,
+  });
+
+  final AppLocalizations loc;
+  final bool isClient;
+  final VoidCallback onEditContact;
+  final VoidCallback? onCreateProject;
+  final VoidCallback? onCreateQuote;
+  final VoidCallback? onCreateInvoice;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: _ContactActionButton(
+            icon: FeatherIcons.edit3,
+            label: loc.contactDetailEditContact,
+            onTap: onEditContact,
+          ),
+        ),
+        if (isClient && onCreateProject != null) ...[
+          const SizedBox(height: 12),
+          GradientButton(
+            onPressed: onCreateProject!,
+            text: loc.contactDetailCreateProject,
+            width: double.infinity,
+            height: 48,
+          ),
+        ],
+        if (isClient && onCreateQuote != null && onCreateInvoice != null) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _ContactActionButton(
+                  icon: FeatherIcons.fileText,
+                  label: loc.contactDetailSendQuote,
+                  onTap: onCreateQuote!,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ContactActionButton(
+                  icon: FeatherIcons.creditCard,
+                  label: loc.contactDetailCreateInvoice,
+                  onTap: onCreateInvoice!,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ContactActionButton extends StatelessWidget {
+  const _ContactActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16, color: AppColors.secondaryText),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        side: const BorderSide(color: AppColors.textfieldBorder),
+        foregroundColor: AppColors.secondaryText,
+        textStyle: const TextStyle(fontWeight: FontWeight.w700),
       ),
     );
   }

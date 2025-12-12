@@ -1,0 +1,817 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Rush Manage",
+  "contactsTitle": "Contacts",
+  "contactsSubtitle": "Centralisez clients et collaborateurs au même endroit.",
+  "contactsAdd": "Ajouter un contact",
+  "collaboratorsTitle": "Mes collaborateurs",
+  "collaboratorsInvitationsButton": "Invitations",
+  "collaboratorsInviteCta": "+ Inviter",
+  "collaboratorsNoHistory": "Aucune collaboration précédente enregistrée",
+  "collaboratorsLastProject": "Dernière collaboration sur {project}",
+  "@collaboratorsLastProject": {
+    "placeholders": {
+      "project": {}
+    }
+  },
+  "collaboratorsActionViewProfile": "Voir le profil",
+  "collaboratorsActionConversation": "Démarrer une conversation",
+  "collaboratorsActionInvite": "Inviter au projet",
+  "collaboratorsActionSendQuote": "Envoyer un devis",
+  "collaboratorsActionManagePermissions": "Gérer les autorisations",
+  "collaboratorsActionViewFiles": "Voir les fichiers partagés",
+  "collaboratorsStatusOnline": "En ligne",
+  "collaboratorsStatusBusy": "Occupé",
+  "collaboratorsStatusOffline": "Hors ligne",
+  "collaboratorInviteTooltip": "Inviter au projet",
+  "collaboratorStartChatTooltip": "Démarrer une discussion",
+  "collaboratorSectionSkills": "Compétences clés",
+  "collaboratorSectionAbout": "À propos",
+  "collaboratorSectionHistory": "Historique de collaboration",
+  "collaboratorSendMessage": "Envoyer un message",
+  "collaboratorReviewsMeta": "{rating} • {count} avis",
+  "@collaboratorReviewsMeta": {
+    "placeholders": {
+      "rating": {},
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "languageLabel": "Langue",
+  "languageDescription": "S'adapte automatiquement à votre pays sauf si vous choisissez une langue ci-dessous.",
+  "languageSystemDefault": "Utiliser la langue de l'appareil",
+  "languageEnglish": "Anglais",
+  "languageFrench": "Français",
+  "languageDropdownHint": "Sélectionnez une langue",
+  "profileTitle": "Profil",
+  "profileEditTooltip": "Modifier le profil",
+  "profileEditButton": "Modifier le profil",
+  "profileViewAnalytics": "Voir les analyses",
+  "profileInvitationNotifications": "Notifications d'invitation",
+  "profileContactSection": "Contact",
+  "profileFocusAreaSection": "Domaine d'expertise",
+  "profileEmailLabel": "E-mail",
+  "profilePhoneLabel": "Téléphone",
+  "profileLocationLabel": "Localisation",
+  "commonOr": "OU",
+  "commonEmailAddress": "Adresse e-mail",
+  "commonPassword": "Mot de passe",
+  "commonEnterPassword": "Saisissez le mot de passe",
+  "commonNewPassword": "Nouveau mot de passe",
+  "commonConfirmPassword": "Confirmez le mot de passe",
+  "commonName": "Nom",
+  "commonFullName": "Nom complet",
+  "commonRoleTitle": "Rôle / Titre",
+  "commonLocation": "Localisation",
+  "commonFocusAreas": "Domaines d'expertise",
+  "commonUploadPhoto": "Télécharger une photo",
+  "commonSkip": "Ignorer pour l'instant",
+  "commonSearchContacts": "Rechercher des contacts par nom ou projet",
+  "commonSearchThreads": "Rechercher des fils ou des contacts",
+  "commonAllFilter": "Tous",
+  "commonClientsFilter": "Clients",
+  "commonCollaboratorsFilter": "Collaborateurs",
+  "commonProjectsFilter": "Projets",
+  "commonContactsFilter": "Contacts",
+  "commonAddContact": "Ajouter un contact",
+  "commonComingSoon": "Sélecteur d'image bientôt disponible.",
+  "commonFocusPlanning": "Planification",
+  "commonFocusEngineering": "Ingénierie",
+  "commonFocusFinance": "Finance",
+  "commonFocusLogistics": "Logistique",
+  "welcomeSubtitle": "La meilleure façon de gérer vos projets.",
+  "welcomeCreateAccount": "Créer un nouveau compte",
+  "welcomeLogin": "Se connecter",
+  "loginTitle": "Connectez-vous",
+  "loginSubtitle": "Saisissez votre e-mail et votre mot de passe pour vous connecter",
+  "loginForgotPrompt": "Mot de passe oublié ?",
+  "loginResetLink": "Réinitialiser",
+  "loginButton": "Se connecter",
+  "loginSocialGoogle": "Continuer avec Google",
+  "loginSocialApple": "Continuer avec Apple",
+  "loginNoAccountPrompt": "Pas encore de compte ?",
+  "loginCreateNow": "Créer maintenant",
+  "registrationTitle": "Créez votre compte",
+  "registrationSubtitle": "Veuillez remplir vos informations pour créer un compte",
+  "registrationButton": "Enregistrer et suivant",
+  "registrationAlreadyPrompt": "Déjà inscrit ?",
+  "registrationLoginNow": "Se connecter",
+  "forgotTitle": "Réinitialiser le mot de passe",
+  "forgotSubtitle": "Saisissez votre e-mail pour réinitialiser votre mot de passe",
+  "forgotButton": "Demander le code OTP",
+  "verifyTitle": "Vérifier l'e-mail par OTP",
+  "verifySubtitle": "Un code de vérification a été envoyé sur votre e-mail",
+  "verifyConfirm": "Confirmer",
+  "verifyNoCode": "Vous n'avez pas reçu de code ?",
+  "verifyResendIn": "Renvoyer dans {time}",
+  "@verifyResendIn": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "verifyResendNow": "Renvoyer maintenant",
+  "resetTitle": "Saisissez un nouveau mot de passe",
+  "resetSubtitle": "Saisissez le nouveau mot de passe que vous souhaitez utiliser",
+  "resetButton": "Modifier le mot de passe",
+  "setupTitle": "Configurer le profil",
+  "setupHeadline": "Personnalisez votre espace de travail",
+  "setupSubtitle": "Ajoutez un visage, un rôle et des domaines d'expertise pour que l'équipe sache qui vous êtes.",
+  "setupFinish": "Terminer la configuration",
+  "navHome": "Accueil",
+  "navFinance": "Finance",
+  "navCrm": "CRM",
+  "navCheckout": "Caisse",
+  "navManagement": "Management",
+  "chatsTitle": "Discussions projets",
+  "chatsBadgeProject": "Projet",
+  "chatsBadgeContact": "Contact",
+  "homeGreeting": "Salut, {name}",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "homePulseSubtitle": "Voici la pulsation de votre espace de travail pour aujourd'hui.",
+  "homePulseDescription": "Gardez vos projets, finances et signaux d'équipe alignés.",
+  "homeFinanceOverviewTitle": "Vue d'ensemble financière",
+  "homeFinanceCollected": "Collecté sur cette période",
+  "homeFinanceUnpaid": "Factures impayées",
+  "homeFinanceCreateInvoice": "Créer une facture",
+  "homeFinanceOpenWorkspace": "Ouvrir l'espace Finance",
+  "homeProjectsHealth": "Santé des projets",
+  "homeProjectsActiveLabel": "Actifs",
+  "homeProjectsActiveSubtitle": "en cours",
+  "homeProjectsLateLabel": "En retard",
+  "homeProjectsLateSubtitle": "nécessite une attention",
+  "homeProjectsCompletedLabel": "Terminés",
+  "homeProjectsCompletedSubtitle": "ce mois-ci",
+  "homeCreateProject": "Créer un projet",
+  "homeOpenProjects": "Ouvrir le tableau de bord Projets",
+  "homeMessagesTitle": "Messages et activité",
+  "homeMessagesEmpty": "Aucune activité récente. Les nouvelles réponses apparaîtront ici.",
+  "homeOpenMessages": "Ouvrir les messages",
+  "homeVariationLabel": "{value} % vs le mois dernier",
+  "@homeVariationLabel": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "homeUnpaidWaiting": "{count, plural, one {# facture en attente} other {# factures en attente}}",
+  "@homeUnpaidWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeUnreadCount": "{count, plural, one {# non lu} other {# non lus}}",
+  "@homeUnreadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeAuthorYou": "Vous",
+  "homeCollaboratorFallback": "Collaborateur",
+  "relativeTimeJustNow": "À l'instant",
+  "relativeTimeMinutes": "{minutes, plural, one {il y a # minute} other {il y a # minutes}}",
+  "@relativeTimeMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeHours": "{hours, plural, one {il y a # heure} other {il y a # heures}}",
+  "@relativeTimeHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeDays": "{days, plural, one {il y a # jour} other {il y a # jours}}",
+  "@relativeTimeDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "crmTitle": "Contacts",
+  "crmSubtitle": "Centralisez clients et collaborateurs en un seul endroit.",
+  "calendarPlaceholder": "Écran calendrier",
+  "vehiclesTitle": "Véhicules",
+  "vehiclesPlaceholder": "Écran véhicules",
+  "sharedFilesTitle": "Fichiers partagés",
+  "sharedFilesFilterAll": "Tous",
+  "sharedFilesFilterPdf": "PDF",
+  "sharedFilesFilterImage": "Image",
+  "sharedFilesFilterSpreadsheet": "Tableur",
+  "sharedFilesUploadCta": "+ Télécharger un fichier",
+  "sharedFilesFileMeta": "{type} • {size}",
+  "@sharedFilesFileMeta": {
+    "placeholders": {
+      "type": {},
+      "size": {}
+    }
+  },
+  "sharedFilesUploadedMeta": "Ajouté par {uploader} · {timestamp}",
+  "@sharedFilesUploadedMeta": {
+    "placeholders": {
+      "uploader": {},
+      "timestamp": {}
+    }
+  },
+  "analyticsTitle": "Analyses",
+  "analyticsUpdatedLabel": "Mis à jour le {date}",
+  "@analyticsUpdatedLabel": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "analyticsMetricCompleted": "Terminés ce mois-ci",
+  "analyticsMetricAvgDuration": "Durée moyenne par projet",
+  "analyticsAvgDurationValue": "{days} jours",
+  "@analyticsAvgDurationValue": {
+    "placeholders": {
+      "days": {}
+    }
+  },
+  "analyticsAvgDurationEmpty": "Aucune plage terminée pour l'instant",
+  "analyticsMetricOnTime": "Taux de livraison à temps",
+  "analyticsValueNotAvailable": "N/D",
+  "analyticsPercentValue": "{percent} %",
+  "@analyticsPercentValue": {
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "analyticsOnTimeHint": "Nécessite des échéances et des temps de livraison",
+  "analyticsMetricRevenue": "Revenu total",
+  "analyticsRevenueHint": "Synchronisez avec le module Finance",
+  "analyticsInsightsTitle": "Aperçus rapides",
+  "analyticsInsightTotalProjects": "Total des projets",
+  "analyticsInsightCompletedProjects": "Projets terminés",
+  "analyticsInsightInProgress": "En cours",
+  "checkoutFeatureTapTitle": "Tap to Pay",
+  "checkoutFeatureTapDescription": "Paiements sans contact instantanés depuis tout appareil Rush.",
+  "checkoutFeatureCardTitle": "Paiements par carte",
+  "checkoutFeatureCardDescription": "Acceptez les principales cartes de débit et crédit avec des frais adaptés.",
+  "checkoutFeatureQrTitle": "Paiements QR",
+  "checkoutFeatureQrDescription": "Partagez des QR codes payables en personne ou à l'écran.",
+  "checkoutFeatureLinksTitle": "Liens de paiement",
+  "checkoutFeatureLinksDescription": "Envoyez des liens personnalisés qui confirment le paiement automatiquement.",
+  "checkoutFeatureCatalogTitle": "Catalogue rapide",
+  "checkoutFeatureCatalogDescription": "Créez des services et forfaits enregistrés pour des encaissements rapides.",
+  "checkoutFeatureReceiptTitle": "Reçu automatique",
+  "checkoutFeatureReceiptDescription": "Envoyez des confirmations par e-mail ou SMS sans quitter l'écran.",
+  "checkoutRoadmapStep1Label": "Étape 1",
+  "checkoutRoadmapStep1Title": "Shell de caisse unifiée",
+  "checkoutRoadmapStep1Description": "Centralisez devis, factures et orchestration des paiements.",
+  "checkoutRoadmapStep2Label": "Étape 2",
+  "checkoutRoadmapStep2Title": "Déploiement des méthodes de paiement",
+  "checkoutRoadmapStep2Description": "Lancez Tap to Pay, QR et liens de paiement progressivement.",
+  "checkoutRoadmapStep3Label": "Étape 3",
+  "checkoutRoadmapStep3Title": "Automatisation et insights",
+  "checkoutRoadmapStep3Description": "Activez reçus, rappels et rapports de règlement en direct.",
+  "checkoutHeroPill": "Checkout en préparation",
+  "checkoutHeroHeadline": "Des paiements sans patchwork.",
+  "checkoutHeroBody": "Tap, scan ou lien partagé. Checkout unifie chaque action de paiement dans Rush.",
+  "checkoutHeroBadgeTitle": "En cours de construction",
+  "checkoutHeroBadgeSubtitle": "Des parcours de paiement fluides pour les équipes Rush et leurs clients.",
+  "checkoutRoadmapTitle": "Feuille de route",
+  "checkoutEarlyAccessTitle": "Envie d'un accès anticipé ?",
+  "checkoutEarlyAccessBody": "Nous inviterons une petite équipe à piloter Checkout avant le lancement public.",
+  "checkoutEarlyAccessContact": "Contactez votre responsable Rush pour réserver un créneau.",
+  "collaborationChatTitleFallback": "Discussion de collaboration",
+  "collaborationChatSubtitleFallback": "Touchez pour voir le contact",
+  "collaborationChatSharedFilesTooltip": "Fichiers partagés",
+  "collaborationChatAddAttachment": "Ajouter une pièce jointe",
+  "collaborationChatComposerHint": "Écrire un message…",
+  "collaborationChatSendMessage": "Envoyer le message",
+  "collaborationChatAttachTitle": "Ajouter depuis",
+  "collaborationChatAttachPhoto": "Photo ou image",
+  "collaborationChatAttachDocument": "Document",
+  "collaborationChatAttachPdf": "PDF",
+  "collaborationChatAttachCamera": "Prendre avec l'appareil photo",
+  "collaborationChatReactTooltip": "Réagir au message",
+  "contactDetailTitle": "Fiche contact",
+  "contactDetailStartChat": "Démarrer une discussion",
+  "contactDetailSectionContact": "Contact",
+  "contactDetailSectionExpertise": "Expertise",
+  "contactDetailSectionProjects": "Projets ensemble",
+  "contactDetailSectionNotes": "Notes",
+  "contactDetailEditContact": "Modifier le contact",
+  "contactDetailCreateProject": "Créer un projet",
+  "contactDetailSendQuote": "Envoyer un devis",
+  "contactDetailCreateInvoice": "Créer une facture",
+  "createProjectSelectDate": "Sélectionner une date",
+  "createProjectCategoryEventManagement": "Gestion d'événements",
+  "createProjectCategoryPhotography": "Photographie",
+  "createProjectCategoryMarketing": "Marketing",
+  "createProjectCategoryLogistics": "Logistique",
+  "createProjectCategoryOther": "Autre",
+  "createProjectRoleOwner": "Propriétaire",
+  "createProjectRoleEditor": "Éditeur",
+  "createProjectRoleViewer": "Lecteur",
+  "createProjectDateError": "La date de fin ne peut pas être antérieure à la date de début",
+  "createProjectTitle": "Nouveau projet",
+  "createProjectSubtitle": "Configurez l'essentiel en quelques étapes.",
+  "createProjectFieldNameLabel": "Nom du projet",
+  "createProjectFieldNameHint": "ex. Mariage Dupont",
+  "createProjectFieldNameRequired": "Le nom du projet est requis",
+  "createProjectFieldClientLabel": "Client",
+  "createProjectFieldClientHint": "Nom du client ou de l'entreprise",
+  "createProjectFieldCategoryLabel": "Catégorie",
+  "createProjectFieldCategoryHint": "Sélectionnez une catégorie",
+  "createProjectFieldStartDate": "Date de début",
+  "createProjectFieldEndDate": "Date de fin",
+  "createProjectFieldDescriptionLabel": "Description (optionnel)",
+  "createProjectFieldDescriptionHint": "Ajoutez un bref résumé pour votre équipe...",
+  "createProjectInviteTitle": "Inviter des membres de l'équipe",
+  "createProjectInviteDescription": "Attribuez des rôles pour contrôler l'accès.",
+  "createProjectCustomRolePlaceholder": "Rôle personnalisé (ex. Coordinateur)",
+  "createProjectAddRole": "Ajouter un rôle",
+  "createProjectAddMember": "Ajouter un membre",
+  "createProjectInviteExternalTitle": "Inviter un collaborateur externe",
+  "createProjectInviteExternalDescription": "Envoyez un lien sécurisé par e-mail ou WhatsApp pour un accès limité.",
+  "createProjectPreviewLink": "Lien de prévisualisation : {link}",
+  "@createProjectPreviewLink": {
+    "placeholders": {
+      "link": {}
+    }
+  },
+  "createProjectPrimaryCta": "Créer le projet",
+  "financeNewQuoteTooltip": "Nouveau devis",
+  "financePrimaryCta": "Créer un devis / facture",
+  "financeBalanceTitle": "Solde global",
+  "financeUnpaidTitle": "Factures impayées",
+  "financeUnpaidMeta": "{count, plural, one {# facture} other {# factures}} · {amount}",
+  "@financeUnpaidMeta": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {}
+    }
+  },
+  "financeUnpaidReminderCta": "Relancer",
+  "financeLatestDocumentsTitle": "Derniers documents",
+  "financeQuickAccessTitle": "Accès rapide",
+  "financeQuickAccessCreateQuote": "Créer un devis",
+  "financeQuickAccessReporting": "Reporting",
+  "financeQuickAccessPreview": "Aperçu (temp)",
+  "financeQuickAccessSignature": "Signature (temp)",
+  "financeQuickAccessInvoice": "Facture (temp)",
+  "financeMetricDraftQuotes": "Devis brouillons",
+  "financeMetricPendingSignatures": "Signatures en attente",
+  "financeMetricSignedQuotes": "Devis signés",
+  "financeMetricDeclinedQuotes": "Devis refusés",
+  "financeMetricUnpaidInvoices": "Factures impayées",
+  "financeMetricPaidInvoices": "Factures payées",
+  "financePipelineTitle": "Vue pipeline",
+  "financeUpcomingTitle": "Factures à venir / en retard",
+  "financeUpcomingEmpty": "Aucune facture impayée avec date d'échéance",
+  "financeUpcomingBadgeOverdue": "En retard de {days} j",
+  "@financeUpcomingBadgeOverdue": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financeUpcomingBadgeDueSoon": "Bientôt dû",
+  "financeUpcomingBadgeDueIn": "Dû dans {days} j",
+  "@financeUpcomingBadgeDueIn": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "financeUpcomingBadgeDueToday": "Échéance aujourd'hui",
+  "financeUpcomingInvoiceLabel": "Facture n°{id} · {amount}",
+  "@financeUpcomingInvoiceLabel": {
+    "placeholders": {
+      "id": {},
+      "amount": {}
+    }
+  },
+  "financeRecentTitle": "Activité récente",
+  "financeRecentQuote": "Devis {id} → {status}",
+  "@financeRecentQuote": {
+    "placeholders": {
+      "id": {},
+      "status": {}
+    }
+  },
+  "financeRecentInvoice": "Facture {id} → {status}",
+  "@financeRecentInvoice": {
+    "placeholders": {
+      "id": {},
+      "status": {}
+    }
+  },
+  "financeRecentEmpty": "Aucune activité récente",
+  "projectNotFoundTitle": "Projet introuvable",
+  "commonBack": "Retour",
+  "projectTimelineHeaderSubtitle": "Faites glisser les tâches sur la frise pour replanifier",
+  "projectTimelineUnscheduledTitle": "À planifier",
+  "projectTimelineUnscheduledHint": "Définissez des dates de début et de fin pour placer cette tâche sur la frise.",
+  "taskStatusPlanned": "Planifiée",
+  "taskStatusInProgress": "En cours",
+  "taskStatusCompleted": "Terminés",
+  "taskStatusDeferred": "Reportés",
+  "invitationOnboardingMissing": "Invitation introuvable ou expirée.",
+  "invitationOnboardingCompleteTitle": "Vous êtes prêt",
+  "invitationNotificationsViewProject": "Voir le projet",
+  "invitationOnboardingStepAccount": "Créez votre compte",
+  "invitationOnboardingStepProfile": "Complétez votre profil",
+  "invitationOnboardingStepReview": "Revoyez et rejoignez",
+  "invitationOnboardingAcceptTermsError": "Veuillez accepter les conditions pour continuer.",
+  "invitationOnboardingWelcome": "Bienvenue à bord, {name} !",
+  "@invitationOnboardingWelcome": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "invitationOnboardingContinueButton": "Continuer",
+  "invitationOnboardingJoinButton": "Rejoindre le projet",
+  "invitationOnboardingAccountIntro": "Bienvenue ! Créez un mot de passe pour activer l'accès.",
+  "invitationOnboardingWorkEmail": "E-mail professionnel",
+  "invitationOnboardingCreatePassword": "Créer un mot de passe",
+  "invitationOnboardingPasswordHint": "Utilisez au moins 8 caractères.",
+  "invitationOnboardingConfirmPassword": "Confirmez le mot de passe",
+  "invitationOnboardingPasswordMismatch": "Les mots de passe ne correspondent pas.",
+  "invitationOnboardingTermsAgreement": "J'accepte les conditions de collaboration Rush Manage.",
+  "invitationOnboardingProfileIntro": "Indiquez comment vous contacter et ce que vous faites.",
+  "invitationOnboardingFullName": "Nom complet",
+  "invitationOnboardingFullNameError": "Indiquez votre nom complet.",
+  "invitationOnboardingRoleLabel": "Rôle / Titre",
+  "invitationOnboardingRoleError": "Indiquez votre rôle pour ce projet.",
+  "invitationOnboardingLocationLabel": "Localisation (optionnel)",
+  "invitationOnboardingReviewIntro": "Vous y êtes presque ! Revoyez les détails du projet avant de rejoindre.",
+  "invitationOnboardingReviewRole": "Vous rejoindrez en tant que {role}.",
+  "@invitationOnboardingReviewRole": {
+    "placeholders": {
+      "role": {}
+    }
+  },
+  "financeCreateQuoteTitle": "Créer un devis",
+  "financeCreateQuoteSectionProject": "Informations projet",
+  "financeCreateQuoteFieldProjectNameLabel": "Nom du projet",
+  "financeCreateQuoteFieldProjectNameHint": "Nom ou référence pour ce devis",
+  "financeCreateQuoteFieldScopeLabel": "Portée & services",
+  "financeCreateQuoteFieldScopeHint": "Décrivez les services, livrables ou le contexte",
+  "financeCreateQuoteSectionPricing": "Tarification",
+  "financeCreateQuoteFieldAmountLabel": "Montant",
+  "financeCreateQuoteFieldAmountHint": "Saisissez le montant total",
+  "financeCreateQuoteFieldCurrencyLabel": "Devise",
+  "financeCreateQuoteFieldPaymentTermsLabel": "Conditions de paiement",
+  "financeCreateQuoteSectionDeliverables": "Livrables",
+  "financeCreateQuoteDeliverablePhotosTitle": "Galerie photo retouchée",
+  "financeCreateQuoteDeliverablePhotosDescription": "Sélection adaptée avec retouches globales.",
+  "financeCreateQuoteDeliverableSelectsTitle": "Sélections premium",
+  "financeCreateQuoteDeliverableSelectsDescription": "Jusqu'à 20 retouches avancées.",
+  "financeCreateQuoteSectionNotes": "Notes au client",
+  "financeCreateQuoteNotesHint": "Ajoutez des précisions, délais ou conditions",
+  "financeCreateQuotePrimaryCta": "Envoyer le devis",
+  "financeCreateQuotePaymentDueReceipt": "Payable à réception",
+  "financeCreateQuotePaymentDue15": "Échéance à 15 jours",
+  "financeCreateQuotePaymentDue30": "Échéance à 30 jours",
+  "invitationNotificationsTitle": "Notifications d'invitation",
+  "invitationNotificationsRole": "Invité en tant que {role}",
+  "@invitationNotificationsRole": {
+    "placeholders": {
+      "role": {}
+    }
+  },
+  "invitationNotificationsMarkRead": "Marquer comme lu",
+  "invitationNotificationsStatusPending": "En attente",
+  "invitationNotificationsStatusAccepted": "Acceptée",
+  "invitationNotificationsStatusDeclined": "Refusée",
+  "invitationNotificationsAcceptCta": "Accepter",
+  "invitationNotificationsDeclineCta": "Refuser",
+  "invitationNotificationsInviteAgain": "Inviter à nouveau",
+  "invitationNotificationsEmptyAll": "Aucune invitation à afficher.",
+  "invitationNotificationsEmptyPending": "Tout est à jour : aucune invitation en attente.",
+  "invitationNotificationsEmptyResponded": "Personne n'a encore répondu.",
+  "invitationNotificationsFilterAll": "Toutes",
+  "invitationNotificationsFilterPending": "En attente",
+  "invitationNotificationsFilterResponded": "Répondues",
+  "projectChatCollaboratorsTitle": "Collaborateurs du projet",
+  "projectChatCollaboratorsEmpty": "Aucun collaborateur ajouté pour l'instant.",
+  "projectChatCollaboratorRoleFallback": "Collaborateur",
+  "projectChatViewCollaboratorsHint": "Touchez pour voir les collaborateurs",
+  "projectChatReceiptRead": "Lu",
+  "projectChatReceiptReceived": "Reçu",
+  "projectChatReceiptUnread": "Non lu",
+  "projectChatReceiptSent": "Envoyé",
+  "projectDetailBackToProjects": "Retour aux projets",
+  "projectDetailClientPlaceholder": "Client non renseigné",
+  "projectDetailMenuProjectChat": "Discussion projet",
+  "projectDetailMenuInviteCollaborator": "Inviter un collaborateur",
+  "projectDetailMenuRolesPermissions": "Rôles & autorisations",
+  "projectDetailMenuArchive": "Archiver le projet",
+  "projectDetailMenuDuplicate": "Dupliquer le projet",
+  "projectDetailMenuDelete": "Supprimer le projet",
+  "projectDetailScheduleTitle": "Planning",
+  "projectDetailScheduleCta": "Ouvrir le planning",
+  "projectDetailTeamTitle": "Équipe",
+  "projectDetailTeamCount": "{count, plural, one {# membre} other {# membres}}",
+  "@projectDetailTeamCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectDetailTeamEmpty": "Invitez des collaborateurs pour constituer l'équipe.",
+  "projectDetailTasksTitle": "Tâches",
+  "projectDetailTasksAddCta": "Ajouter une tâche",
+  "projectDetailTasksEmpty": "Aucune tâche pour l'instant.",
+  "projectDetailDiscussionTitle": "Discussion",
+  "projectDetailFinanceBilled": "Facturé",
+  "projectDetailFinancePaid": "Payé",
+  "projectDetailFinanceRemaining": "Restant",
+  "projectDetailFinanceCreateQuote": "Créer un devis",
+  "projectDetailFilesTitle": "Fichiers",
+  "projectDetailFilesAdd": "Ajouter un fichier",
+  "projectDetailTaskCreateTitle": "Créer une tâche",
+  "projectDetailTaskTitleHint": "Titre de la tâche",
+  "projectDetailTaskTitleError": "Veuillez saisir un titre de tâche.",
+  "projectDetailTaskStatusLabel": "Statut",
+  "projectDetailTaskStatusHint": "Sélectionner un statut",
+  "projectDetailTaskScheduleLabel": "Planification",
+  "projectDetailTaskStartDate": "Date de début",
+  "projectDetailTaskDueDate": "Date d'échéance",
+  "projectDetailTaskAssigneeLabel": "Assigné à",
+  "projectDetailTaskAssigneeHint": "Choisir un membre",
+  "projectDetailTaskAssigneeEmpty": "Invitez des collaborateurs pour assigner des tâches.",
+  "projectDetailTaskDetailsLabel": "Détails",
+  "projectDetailTaskDetailsHint": "Décrivez la tâche",
+  "projectDetailTaskAttachmentsLabel": "Pièces jointes",
+  "projectDetailTaskAttachmentHint": "Collez un lien ou un nom de fichier",
+  "projectDetailTaskAddAttachment": "Ajouter une pièce jointe",
+  "projectDetailTaskStatusChange": "Changer le statut",
+  "projectDetailBadgeCompleted": "Terminé {range}",
+  "@projectDetailBadgeCompleted": {
+    "placeholders": {
+      "range": {}
+    }
+  },
+  "projectDetailBadgeDeferred": "Reporté {range}",
+  "@projectDetailBadgeDeferred": {
+    "placeholders": {
+      "range": {}
+    }
+  },
+  "projectDetailBadgeDueOn": "Échéance le {date}",
+  "@projectDetailBadgeDueOn": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "projectDetailBadgeOverdue": "En retard {range}",
+  "@projectDetailBadgeOverdue": {
+    "placeholders": {
+      "range": {}
+    }
+  },
+  "projectDetailBadgeDueTodayRange": "Échéance aujourd'hui • {range}",
+  "@projectDetailBadgeDueTodayRange": {
+    "placeholders": {
+      "range": {}
+    }
+  },
+  "projectDetailBadgeDueToday": "Échéance aujourd'hui",
+  "projectDetailBadgeUpcoming": "À venir • {range}",
+  "@projectDetailBadgeUpcoming": {
+    "placeholders": {
+      "range": {}
+    }
+  },
+  "projectDetailBadgeTimeline": "Période • {range}",
+  "@projectDetailBadgeTimeline": {
+    "placeholders": {
+      "range": {}
+    }
+  },
+  "projectDetailBadgeStarts": "Début {date}",
+  "@projectDetailBadgeStarts": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "projectDetailProgressTitle": "Progression du projet",
+  "projectDetailProgressEmpty": "Aucune tâche suivie pour l'instant.",
+  "projectDetailProgressSummary": "{completed} sur {total} tâches terminées",
+  "@projectDetailProgressSummary": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "projectDetailProgressMetricInProgress": "En cours",
+  "projectDetailProgressMetricCompleted": "Terminées",
+  "projectDetailProgressMetricRemaining": "Restantes",
+  "projectDetailDiscussionEmpty": "Aucun message pour le moment.",
+  "projectDetailDiscussionSend": "Ouvrir la discussion",
+  "projectDetailTaskAssigneeUnassigned": "Non assignée",
+  "projectDetailTaskScheduleEmpty": "Aucun planning défini",
+  "projectDetailStatusActionPlanned": "Marquer en cours",
+  "projectDetailStatusActionInProgress": "Marquer terminé",
+  "projectDetailStatusActionCompleted": "Rouvrir la tâche",
+  "projectDetailStatusActionDeferred": "Réactiver la tâche",
+  "projectDetailTaskAssignedTo": "Assigné à {name}",
+  "@projectDetailTaskAssignedTo": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "inviteCollaboratorTitle": "Inviter un collaborateur",
+  "inviteCollaboratorSelectProject": "Sélectionner un projet",
+  "inviteCollaboratorChooseProject": "Choisir un projet",
+  "inviteCollaboratorInfoText": "Envoyez une invitation directe par e-mail ou depuis votre liste de contacts.",
+  "inviteCollaboratorEmailSection": "Inviter par e-mail",
+  "inviteCollaboratorEmailHint": "nom@entreprise.com",
+  "inviteCollaboratorFromContacts": "Depuis mes contacts",
+  "inviteCollaboratorRoleSection": "Rôle dans le projet",
+  "inviteCollaboratorRoleOwner": "Propriétaire",
+  "inviteCollaboratorRoleEditor": "Éditeur",
+  "inviteCollaboratorRoleViewer": "Lecteur",
+  "inviteCollaboratorCustomRoleHint": "Ajouter un rôle personnalisé",
+  "inviteCollaboratorAddRole": "Ajouter un rôle",
+  "inviteCollaboratorMessageSection": "Message personnel",
+  "inviteCollaboratorMessageHint": "Message facultatif pour donner du contexte",
+  "inviteCollaboratorShareLinkTitle": "Générer un lien partageable",
+  "inviteCollaboratorShareLinkSubtitle": "Toute personne avec ce lien peut demander l'accès avec le rôle sélectionné ci-dessus.",
+  "inviteCollaboratorCopyLink": "Copier",
+  "inviteCollaboratorPrimaryCta": "Envoyer l'invitation",
+  "inviteCollaboratorSnackbarSelectProject": "Choisissez un projet avant d'envoyer une invitation.",
+  "inviteCollaboratorSnackbarEmailRequired": "Ajoutez d'abord l'e-mail du collaborateur.",
+  "inviteCollaboratorSnackbarSent": "Invitation envoyée à {name}.",
+  "@inviteCollaboratorSnackbarSent": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "inviteCollaboratorSnackbarSelectProjectContacts": "Choisissez d'abord un projet pour inviter des contacts existants.",
+  "inviteCollaboratorSnackbarContactsQueued": "{count, plural, one {# invitation planifiée.} other {# invitations planifiées.}}",
+  "@inviteCollaboratorSnackbarContactsQueued": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteCollaboratorFallbackName": "Nouveau collaborateur",
+  "inviteCollaboratorInviteSheetTitle": "Inviter depuis les contacts",
+  "inviteCollaboratorInviteSheetRoleLabel": "Rôle appliqué à la sélection",
+  "inviteCollaboratorInviteSheetNoteLabel": "Ajouter une note (optionnel)",
+  "inviteCollaboratorInviteSheetSelectContactError": "Sélectionnez au moins un contact.",
+  "inviteCollaboratorInviteSheetPrimaryCta": "Inviter les contacts",
+  "inviteCollaboratorAvailabilityAvailable": "Disponible",
+  "inviteCollaboratorAvailabilityBusy": "Occupé",
+  "inviteCollaboratorAvailabilityOffline": "Hors ligne",
+  "rolesPermissionsTitle": "Rôles & autorisations",
+  "rolesPermissionsRoleAdmin": "Administrateur",
+  "rolesPermissionsRoleCollaborator": "Collaborateur",
+  "rolesPermissionsRoleViewer": "Lecteur",
+  "managementTitle": "Gestion",
+  "managementSubtitle": "Projets, staffing et blocages dans une seule vue.",
+  "managementEmptyTitle": "Aucun projet pour l'instant",
+  "managementEmptySubtitle": "Créez votre premier projet pour suivre l'avancement.",
+  "managementFilterOngoing": "En cours",
+  "managementFilterUpcoming": "À venir",
+  "managementFilterCompleted": "Terminés",
+  "managementProjectsHeading": "Projets ({count})",
+  "@managementProjectsHeading": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "managementCreateProjectTooltip": "Créer un projet",
+  "crmContactTypeClient": "Client",
+  "crmContactTypeCollaborator": "Collaborateur",
+  "crmRowInsights": "Aperçus",
+  "crmRowEditContact": "Modifier le contact",
+  "crmSectionLinkedProjects": "Projets liés",
+  "crmSectionFinanceHistory": "Historique financier",
+  "crmSectionDocuments": "Documents",
+  "crmActionCreateProject": "Créer un projet pour le client",
+  "crmActionSendQuote": "Envoyer un devis",
+  "crmActionCreateInvoice": "Créer une facture",
+  "crmActionOpenDetail": "Ouvrir la fiche contact",
+  "financeQuoteClientSectionTitle": "Client & projet",
+  "financeQuoteClientNameLabel": "Nom du client",
+  "financeQuoteReferenceLabel": "Projet / Référence (optionnel)",
+  "financeQuoteLineItemsTitle": "Lignes",
+  "financeQuoteConditionsTitle": "Conditions & validité",
+  "financeQuoteConditionsHint": "Conditions de paiement, calendrier de livraison, notes...",
+  "financeQuoteOptionsTitle": "Options",
+  "financeQuoteRequireSignature": "Exiger une signature électronique",
+  "financeQuoteGenerateCta": "Générer le devis",
+  "financeQuoteExistingCount": "Devis existants : {count}",
+  "@financeQuoteExistingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "financeQuoteAddLineItem": "Ajouter une ligne",
+  "financeQuoteDescriptionHint": "Description",
+  "financeQuoteQuantityHint": "Qté",
+  "financeQuoteUnitPriceHint": "Prix unitaire",
+  "financeQuoteRemoveTooltip": "Supprimer",
+  "financeQuoteSubtotalLabel": "Sous-total : {amount}",
+  "@financeQuoteSubtotalLabel": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "financeQuoteFallbackClient": "Client sans nom",
+  "financeQuoteFallbackDescription": "Brouillon de devis",
+  "financeInvoiceTitle": "Facture n°{number}",
+  "@financeInvoiceTitle": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "financeInvoiceUnknownClient": "Client inconnu",
+  "financeInvoiceAmountLabel": "Montant : {amount}",
+  "@financeInvoiceAmountLabel": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "financeInvoiceStatusDraft": "Brouillon",
+  "financeInvoiceStatusUnpaid": "Impayée",
+  "financeInvoiceStatusPaid": "Payée",
+  "financeInvoiceFieldsTitle": "Champs de facture",
+  "financeInvoiceIssueLabel": "Date d'émission",
+  "financeInvoiceDueLabel": "Échéance",
+  "financeInvoiceDatePlaceholder": "Sélectionner une date",
+  "financeInvoiceMethodLabel": "Mode de paiement",
+  "financeInvoiceMethodBankTransfer": "Virement bancaire",
+  "financeInvoiceMethodCard": "Carte",
+  "financeInvoiceMethodApplePay": "Apple Pay",
+  "financeInvoiceButtonAlreadyPaid": "Déjà payée",
+  "financeInvoiceButtonMarkPaid": "Marquer comme payée",
+  "financeInvoiceButtonSendReminder": "Envoyer un rappel",
+  "financeQuotePreviewTitle": "Aperçu du devis n°{id}",
+  "@financeQuotePreviewTitle": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "financeQuotePreviewSendTooltip": "Envoyer le devis",
+  "financeQuotePreviewSendSnack": "Devis envoyé pour signature",
+  "financeQuotePreviewTrackCta": "Suivre la signature",
+  "financeQuotePreviewTotalLabel": "Total (TVA incluse)",
+  "financeQuoteStatusDraft": "Brouillon",
+  "financeQuoteStatusPending": "En attente de signature",
+  "financeQuoteStatusSigned": "Signé",
+  "financeQuoteStatusDeclined": "Refusé",
+  "financeQuotePreviewDocumentPlaceholder": "Aperçu du PDF du devis",
+  "financeReportingTitle": "Rapports financiers",
+  "financeReportingCardRevenue": "Revenus par mois",
+  "financeReportingCardOutstanding": "Factures impayées",
+  "financeReportingCardConversion": "Taux de conversion des devis",
+  "financeReportingCardTopClients": "Meilleurs clients",
+  "financeReportingExportCta": "Exporter le résumé en PDF",
+  "financeReportingFiltersTitle": "Rapports",
+  "financeReportingFilterRange": "Période",
+  "financeReportingFilterGranularity": "Granularité",
+  "financeReportingRange7Days": "7 derniers jours",
+  "financeReportingRange30Days": "30 derniers jours",
+  "financeReportingRangeQuarter": "Depuis le début du trimestre",
+  "financeReportingRangeYear": "Depuis le début de l'année",
+  "financeReportingGranularityDaily": "Quotidien",
+  "financeReportingGranularityWeekly": "Hebdomadaire",
+  "financeReportingGranularityMonthly": "Mensuel",
+  "financeReportingChartPlaceholder": "Graphique à venir",
+  "financeSignatureTrackingTitle": "Suivi des signatures",
+  "financeSignatureTrackingQuoteLabel": "Devis n°{id}",
+  "@financeSignatureTrackingQuoteLabel": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "financeSignatureStepWaiting": "En attente de lecture",
+  "financeSignatureStepOpened": "Ouvert",
+  "financeSignatureStepSigned": "Signé",
+  "financeSignatureStepDeclined": "Refusé",
+  "financeSignatureAdvanceButton": "Avancer le statut",
+  "financeSignatureSignedSnack": "Devis signé – brouillon de facture créé"
+}

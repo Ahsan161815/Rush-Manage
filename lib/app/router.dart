@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:myapp/common/models/contact_detail_args.dart';
 import 'package:myapp/screens/calendar_screen.dart';
 import 'package:myapp/screens/crm_screen.dart';
+import 'package:myapp/screens/chats_screen.dart';
 import 'package:myapp/screens/collaboration_chat_screen.dart';
 import 'package:myapp/screens/collaborator_profile_screen.dart';
 import 'package:myapp/screens/collaborators_screen.dart';
@@ -91,10 +92,15 @@ final router = GoRouter(
           const NoTransitionPage(child: ManagementScreen()),
     ),
     GoRoute(
-      path: '/chats',
-      name: 'chats',
+      path: '/crm',
+      name: 'crm',
       pageBuilder: (context, state) =>
           const NoTransitionPage(child: CRMScreen()),
+    ),
+    GoRoute(
+      path: '/chats',
+      name: 'chats',
+      builder: (context, state) => const ChatsScreen(),
     ),
     GoRoute(
       path: '/calendar',
@@ -183,6 +189,7 @@ final router = GoRouter(
               contactId: 'contact-fallback',
               name: 'Unknown collaborator',
               title: 'Contributor',
+              category: ContactCategory.collaborator,
             ),
           );
         }
@@ -220,8 +227,10 @@ final router = GoRouter(
     GoRoute(
       path: '/projects/create',
       name: 'projectsCreate',
-      pageBuilder: (context, state) =>
-          const NoTransitionPage(child: CreateProjectScreen()),
+      pageBuilder: (context, state) {
+        final seed = state.extra as ContactProjectSeed?;
+        return NoTransitionPage(child: CreateProjectScreen(seed: seed));
+      },
     ),
     GoRoute(
       path: '/projects/:id',

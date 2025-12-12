@@ -1,5 +1,11 @@
 import 'package:equatable/equatable.dart';
 
+enum ContactCategory { client, collaborator }
+
+extension ContactCategoryX on ContactCategory {
+  bool get isClient => this == ContactCategory.client;
+}
+
 class ContactProjectSummary extends Equatable {
   const ContactProjectSummary({
     required this.id,
@@ -22,6 +28,7 @@ class ContactDetailArgs extends Equatable {
     required this.contactId,
     required this.name,
     required this.title,
+    this.category = ContactCategory.collaborator,
     this.email,
     this.phone,
     this.location,
@@ -33,6 +40,7 @@ class ContactDetailArgs extends Equatable {
   final String contactId;
   final String name;
   final String title;
+  final ContactCategory category;
   final String? email;
   final String? phone;
   final String? location;
@@ -59,6 +67,7 @@ class ContactDetailArgs extends Equatable {
     String? contactId,
     String? name,
     String? title,
+    ContactCategory? category,
     String? email,
     String? phone,
     String? location,
@@ -70,6 +79,7 @@ class ContactDetailArgs extends Equatable {
       contactId: contactId ?? this.contactId,
       name: name ?? this.name,
       title: title ?? this.title,
+      category: category ?? this.category,
       email: email ?? this.email,
       phone: phone ?? this.phone,
       location: location ?? this.location,
@@ -84,6 +94,7 @@ class ContactDetailArgs extends Equatable {
     contactId,
     name,
     title,
+    category,
     email,
     phone,
     location,
@@ -91,4 +102,21 @@ class ContactDetailArgs extends Equatable {
     tags,
     projects,
   ];
+
+  bool get isClient => category.isClient;
+}
+
+class ContactProjectSeed extends Equatable {
+  const ContactProjectSeed({
+    required this.contactId,
+    required this.clientName,
+    this.clientEmail,
+  });
+
+  final String contactId;
+  final String clientName;
+  final String? clientEmail;
+
+  @override
+  List<Object?> get props => [contactId, clientName, clientEmail];
 }

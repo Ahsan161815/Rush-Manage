@@ -380,6 +380,7 @@ class ProjectController extends ChangeNotifier {
           'contact-${displayName.hashCode}',
       name: displayName,
       title: title,
+      category: ContactCategory.collaborator,
       email: resolvedContact?.email,
       phone: resolvedContact?.phone,
       location: resolvedContact?.location,

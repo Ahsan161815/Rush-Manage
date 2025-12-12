@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/formatters.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/models/invitation.dart';
 import 'package:myapp/controllers/project_controller.dart';
 
@@ -29,6 +31,7 @@ class _InvitationNotificationsScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final controller = context.watch<ProjectController>();
+    final loc = context.l10n;
     final invitations = controller.invitations
         .where((invitation) {
           switch (_filter) {
@@ -56,7 +59,7 @@ class _InvitationNotificationsScreenState
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Invitations',
+          loc.invitationNotificationsTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -122,21 +125,12 @@ class _InvitationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final controller = context.read<ProjectController>();
+    final loc = context.l10n;
 
-    final statusChip = _statusChipFor(invitation.status);
+    final statusChip = _statusChipFor(context, invitation.status);
 
-    String timeLabel;
     final updatedAt = invitation.updatedAt ?? invitation.sentAt;
-    final difference = DateTime.now().difference(updatedAt);
-    if (difference.inDays >= 1) {
-      timeLabel = '${difference.inDays}d ago';
-    } else if (difference.inHours >= 1) {
-      timeLabel = '${difference.inHours}h ago';
-    } else if (difference.inMinutes >= 1) {
-      timeLabel = '${difference.inMinutes}m ago';
-    } else {
-      timeLabel = 'Just now';
-    }
+    final timeLabel = formatRelativeTime(context, updatedAt);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -197,7 +191,7 @@ class _InvitationCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      statusChip.label,
+                      statusChip.label(context),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: statusChip.foregroundColor,
                         fontWeight: FontWeight.bold,
@@ -248,7 +242,7 @@ class _InvitationCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Role: ${invitation.role}',
+                        loc.invitationNotificationsRole(invitation.role),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.hintTextfiled,
                           fontWeight: FontWeight.w600,
@@ -298,7 +292,7 @@ class _InvitationCard extends StatelessWidget {
               if (!invitation.readByInvitee)
                 TextButton(
                   onPressed: () => controller.markInvitationRead(invitation.id),
-                  child: const Text('Mark read'),
+                  child: Text(loc.invitationNotificationsMarkRead),
                 ),
             ],
           ),
@@ -321,25 +315,25 @@ Widget _buildAction(Invitation invitation) {
   }
 }
 
-_StatusChipStyle _statusChipFor(InvitationStatus status) {
+_StatusChipStyle _statusChipFor(BuildContext context, InvitationStatus status) {
   switch (status) {
     case InvitationStatus.pending:
       return const _StatusChipStyle(
-        label: 'Awaiting response',
+        labelKey: _StatusLabel.pending,
         icon: FeatherIcons.clock,
         backgroundColor: Color(0x3323A6FF),
         foregroundColor: AppColors.secondary,
       );
     case InvitationStatus.accepted:
       return const _StatusChipStyle(
-        label: 'Accepted',
+        labelKey: _StatusLabel.accepted,
         icon: FeatherIcons.checkCircle,
         backgroundColor: Color(0x3342C97B), // brighter green tint
         foregroundColor: Color(0xFF2FBF71),
       );
     case InvitationStatus.declined:
       return const _StatusChipStyle(
-        label: 'Declined',
+        labelKey: _StatusLabel.declined,
         icon: FeatherIcons.xCircle,
         backgroundColor: Color(0x33F17D7D), // brighter red tint
         foregroundColor: Color(0xFFE55454),
@@ -349,17 +343,28 @@ _StatusChipStyle _statusChipFor(InvitationStatus status) {
 
 class _StatusChipStyle {
   const _StatusChipStyle({
-    required this.label,
+    required this.labelKey,
     required this.icon,
     required this.backgroundColor,
     required this.foregroundColor,
   });
 
-  final String label;
+  final _StatusLabel labelKey;
   final IconData icon;
   final Color backgroundColor;
   final Color foregroundColor;
+
+  String label(BuildContext context) {
+    final loc = context.l10n;
+    return switch (labelKey) {
+      _StatusLabel.pending => loc.invitationNotificationsStatusPending,
+      _StatusLabel.accepted => loc.invitationNotificationsStatusAccepted,
+      _StatusLabel.declined => loc.invitationNotificationsStatusDeclined,
+    };
+  }
 }
+
+enum _StatusLabel { pending, accepted, declined }
 
 class _PendingActions extends StatelessWidget {
   const _PendingActions({required this.invitation});
@@ -369,6 +374,7 @@ class _PendingActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.read<ProjectController>();
+    final loc = context.l10n;
 
     void decline() => controller.declineInvitation(invitation.id);
 
@@ -387,7 +393,7 @@ class _PendingActions extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Text(
-              'Accept Request',
+              loc.invitationNotificationsAcceptCta,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: AppColors.primaryText,
                 fontWeight: FontWeight.bold,
@@ -414,7 +420,7 @@ class _PendingActions extends StatelessWidget {
                 context,
               ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            child: const Text('Decline'),
+            child: Text(loc.invitationNotificationsDeclineCta),
           ),
         ),
       ],
@@ -429,12 +435,13 @@ class _AcceptedActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     return GradientButton(
       onPressed: () => context.goNamed(
         'projectDetail',
         pathParameters: {'id': invitation.projectId},
       ),
-      text: 'View project',
+      text: loc.invitationNotificationsViewProject,
       height: 48,
     );
   }
@@ -447,6 +454,7 @@ class _DeclinedActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     return OutlinedButton(
       onPressed: () {},
       style: OutlinedButton.styleFrom(
@@ -459,7 +467,7 @@ class _DeclinedActions extends StatelessWidget {
           context,
         ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
       ),
-      child: const Text('Invite again later'),
+      child: Text(loc.invitationNotificationsInviteAgain),
     );
   }
 }
@@ -502,7 +510,7 @@ class _FilterChips extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    filter.label,
+                    filter.label(context),
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: selected
                           ? AppColors.primaryText
@@ -543,12 +551,13 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     final message = switch (filter) {
-      _InvitationStatusFilter.all => 'No invitations to show right now.',
+      _InvitationStatusFilter.all => loc.invitationNotificationsEmptyAll,
       _InvitationStatusFilter.pending =>
-        'No pending invitations. You\'re caught up!',
+        loc.invitationNotificationsEmptyPending,
       _InvitationStatusFilter.responded =>
-        'No recent responses yet. Check back soon.',
+        loc.invitationNotificationsEmptyResponded,
     };
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -574,11 +583,14 @@ class _EmptyState extends StatelessWidget {
 enum _InvitationStatusFilter { all, pending, responded }
 
 extension on _InvitationStatusFilter {
-  String get label {
+  String label(BuildContext context) {
+    final loc = context.l10n;
     return switch (this) {
-      _InvitationStatusFilter.all => 'All',
-      _InvitationStatusFilter.pending => 'Pending',
-      _InvitationStatusFilter.responded => 'Responded',
+      _InvitationStatusFilter.all => loc.invitationNotificationsFilterAll,
+      _InvitationStatusFilter.pending =>
+        loc.invitationNotificationsFilterPending,
+      _InvitationStatusFilter.responded =>
+        loc.invitationNotificationsFilterResponded,
     };
   }
 }

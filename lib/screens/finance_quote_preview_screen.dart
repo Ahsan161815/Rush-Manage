@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/controllers/finance_controller.dart';
 import 'package:myapp/models/finance.dart';
 
@@ -15,13 +16,14 @@ class FinanceQuotePreviewScreen extends StatelessWidget {
     final finance = context.watch<FinanceController>();
     final quote = finance.getQuote(quoteId);
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          'Quote #${quote?.id.substring(1) ?? '—'} Preview',
+          loc.financeQuotePreviewTitle(quote?.id.substring(1) ?? '—'),
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -30,14 +32,14 @@ class FinanceQuotePreviewScreen extends StatelessWidget {
         actions: [
           if (quote?.status == QuoteStatus.draft)
             IconButton(
-              tooltip: 'Send Quote',
+              tooltip: loc.financeQuotePreviewSendTooltip,
               onPressed: () {
                 finance.updateQuoteStatus(
                   quote!.id,
                   QuoteStatus.pendingSignature,
                 );
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Quote sent for signature')),
+                  SnackBar(content: Text(loc.financeQuotePreviewSendSnack)),
                 );
               },
               icon: const Icon(Icons.send, color: AppColors.secondaryText),
@@ -56,7 +58,7 @@ class FinanceQuotePreviewScreen extends StatelessWidget {
             GradientButton(
               onPressed: () =>
                   context.push('/finance/quote/$quoteId/signature'),
-              text: 'Track Signature',
+              text: loc.financeQuotePreviewTrackCta,
               height: 56,
               width: double.infinity,
             ),
@@ -73,6 +75,7 @@ class _QuoteSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: BoxDecoration(
@@ -108,7 +111,7 @@ class _QuoteSummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Total (incl. VAT)',
+                      loc.financeQuotePreviewTotalLabel,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.hintTextfiled,
                         fontWeight: FontWeight.w600,
@@ -145,11 +148,12 @@ class _QuoteStatusBadge extends StatelessWidget {
       QuoteStatus.signed => AppColors.secondary,
       QuoteStatus.declined => const Color(0xFFE55454),
     };
+    final loc = context.l10n;
     final label = switch (status) {
-      QuoteStatus.draft => 'Draft',
-      QuoteStatus.pendingSignature => 'Pending Signature',
-      QuoteStatus.signed => 'Signed',
-      QuoteStatus.declined => 'Declined',
+      QuoteStatus.draft => loc.financeQuoteStatusDraft,
+      QuoteStatus.pendingSignature => loc.financeQuoteStatusPending,
+      QuoteStatus.signed => loc.financeQuoteStatusSigned,
+      QuoteStatus.declined => loc.financeQuoteStatusDeclined,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -173,6 +177,7 @@ class _QuoteDocumentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       height: 360,
       width: double.infinity,
@@ -185,7 +190,7 @@ class _QuoteDocumentCard extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Text(
-        'Quote PDF layout placeholder',
+        loc.financeQuotePreviewDocumentPlaceholder,
         style: theme.textTheme.bodySmall?.copyWith(
           color: AppColors.hintTextfiled,
           fontWeight: FontWeight.w600,

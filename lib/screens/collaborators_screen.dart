@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/models/collaborator_contact.dart';
 import 'package:myapp/controllers/project_controller.dart';
 
@@ -15,6 +16,7 @@ class CollaboratorsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     final controller = context.watch<ProjectController>();
     final collaborators = controller.contacts;
 
@@ -30,7 +32,7 @@ class CollaboratorsScreen extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                'My Collaborators',
+                loc.collaboratorsTitle,
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: AppColors.secondaryText,
                   fontWeight: FontWeight.bold,
@@ -40,7 +42,7 @@ class CollaboratorsScreen extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () => context.pushNamed('invitationNotifications'),
                 icon: const Icon(FeatherIcons.bell, size: 18),
-                label: const Text('Invitations'),
+                label: Text(loc.collaboratorsInvitationsButton),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.secondary,
                   side: const BorderSide(color: AppColors.secondary, width: 2),
@@ -49,7 +51,7 @@ class CollaboratorsScreen extends StatelessWidget {
               const SizedBox(width: 12),
               GradientButton(
                 onPressed: () => context.pushNamed('inviteCollaborator'),
-                text: '+ Invite',
+                text: loc.collaboratorsInviteCta,
                 height: 42,
                 width: 120,
               ),
@@ -98,6 +100,7 @@ class _CollaboratorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -187,8 +190,10 @@ class _CollaboratorCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     collaborator.lastProject == null
-                        ? 'No previous collaboration recorded'
-                        : 'Last collaborated on ${collaborator.lastProject}',
+                        ? loc.collaboratorsNoHistory
+                        : loc.collaboratorsLastProject(
+                            collaborator.lastProject!,
+                          ),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.w600,
@@ -208,32 +213,32 @@ class _CollaboratorCard extends StatelessWidget {
                   'collaboratorProfile',
                   pathParameters: {'id': collaborator.id},
                 ),
-                text: 'View Profile',
+                text: loc.collaboratorsActionViewProfile,
                 height: 44,
                 width: 150,
               ),
               _OutlineChip(
-                label: 'Start Conversation',
+                label: loc.collaboratorsActionConversation,
                 icon: FeatherIcons.messageCircle,
                 onTap: () => context.pushNamed('collaborationChat'),
               ),
               _OutlineChip(
-                label: 'Invite to Project',
+                label: loc.collaboratorsActionInvite,
                 icon: FeatherIcons.plusCircle,
                 onTap: () => context.pushNamed('inviteCollaborator'),
               ),
               _OutlineChip(
-                label: 'Send Quote',
+                label: loc.collaboratorsActionSendQuote,
                 icon: FeatherIcons.fileText,
                 onTap: () => context.pushNamed('createQuote'),
               ),
               _OutlineChip(
-                label: 'Manage Permissions',
+                label: loc.collaboratorsActionManagePermissions,
                 icon: FeatherIcons.shield,
                 onTap: () => context.pushNamed('rolesPermissions'),
               ),
               _OutlineChip(
-                label: 'View Shared Files',
+                label: loc.collaboratorsActionViewFiles,
                 icon: FeatherIcons.folder,
                 onTap: () => context.pushNamed('sharedFiles'),
               ),
@@ -345,10 +350,20 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     final (label, color) = switch (status) {
-      CollaboratorAvailability.available => ('Online', AppColors.available),
-      CollaboratorAvailability.busy => ('Busy', AppColors.reserved),
-      CollaboratorAvailability.offline => ('Offline', AppColors.hintTextfiled),
+      CollaboratorAvailability.available => (
+        loc.collaboratorsStatusOnline,
+        AppColors.available,
+      ),
+      CollaboratorAvailability.busy => (
+        loc.collaboratorsStatusBusy,
+        AppColors.reserved,
+      ),
+      CollaboratorAvailability.offline => (
+        loc.collaboratorsStatusOffline,
+        AppColors.hintTextfiled,
+      ),
     };
 
     return Container(

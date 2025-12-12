@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/controllers/finance_controller.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/models/finance.dart';
 
 class FinanceSignatureTrackingScreen extends StatelessWidget {
@@ -14,13 +15,14 @@ class FinanceSignatureTrackingScreen extends StatelessWidget {
     final finance = context.watch<FinanceController>();
     final quote = finance.getQuote(quoteId);
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          'Signature Tracking',
+          loc.financeSignatureTrackingTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -50,9 +52,7 @@ class FinanceSignatureTrackingScreen extends StatelessWidget {
                   case QuoteStatus.pendingSignature:
                     finance.updateQuoteStatus(quote.id, QuoteStatus.signed);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Quote signed – invoice draft created'),
-                      ),
+                      SnackBar(content: Text(loc.financeSignatureSignedSnack)),
                     );
                     break;
                   case QuoteStatus.signed:
@@ -66,7 +66,7 @@ class FinanceSignatureTrackingScreen extends StatelessWidget {
                     break;
                 }
               },
-              text: 'Advance Status',
+              text: loc.financeSignatureAdvanceButton,
               height: 56,
               width: double.infinity,
             ),
@@ -83,6 +83,8 @@ class _TrackingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
+    final quoteNumber = quote?.id.substring(1);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: BoxDecoration(
@@ -96,7 +98,7 @@ class _TrackingHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Quote #${quote?.id.substring(1) ?? '—'}',
+            loc.financeSignatureTrackingQuoteLabel(quoteNumber ?? '—'),
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -104,7 +106,7 @@ class _TrackingHeader extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            quote?.clientName ?? 'Unknown client',
+            quote?.clientName ?? loc.financeInvoiceUnknownClient,
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.hintTextfiled,
               fontWeight: FontWeight.w600,
@@ -121,21 +123,28 @@ class _TrackingSteps extends StatelessWidget {
   const _TrackingSteps({required this.status});
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, Object>> steps = [
+    final loc = context.l10n;
+    final steps = [
       {
-        'label': 'Waiting to be viewed',
+        'label': loc.financeSignatureStepWaiting,
         'complete':
             status != QuoteStatus.draft && status != QuoteStatus.declined,
       },
       {
-        'label': 'Opened',
+        'label': loc.financeSignatureStepOpened,
         'complete':
             status == QuoteStatus.pendingSignature ||
             status == QuoteStatus.signed ||
             status == QuoteStatus.declined,
       },
-      {'label': 'Signed', 'complete': status == QuoteStatus.signed},
-      {'label': 'Declined', 'complete': status == QuoteStatus.declined},
+      {
+        'label': loc.financeSignatureStepSigned,
+        'complete': status == QuoteStatus.signed,
+      },
+      {
+        'label': loc.financeSignatureStepDeclined,
+        'complete': status == QuoteStatus.declined,
+      },
     ];
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),

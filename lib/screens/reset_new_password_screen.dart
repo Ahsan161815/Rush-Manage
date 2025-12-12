@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:myapp/app/app_theme.dart';
-import 'package:myapp/widgets/custom_text_field.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/widgets/custom_text_field.dart';
 
 class ResetNewPasswordScreen extends StatelessWidget {
   const ResetNewPasswordScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -28,17 +31,17 @@ class ResetNewPasswordScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Enter New Password',
+                    loc.resetTitle,
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Enter your new password that you would like to use',
+                  Text(
+                    loc.resetSubtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       color: AppColors.secondaryText,
                     ),
@@ -46,26 +49,26 @@ class ResetNewPasswordScreen extends StatelessWidget {
                   SizedBox(
                     height: MediaQuery.of(context).size.height < 700 ? 75 : 100,
                   ),
-                  const CustomTextField(
-                    hintText: 'Email Address',
+                  CustomTextField(
+                    hintText: loc.commonEmailAddress,
                     iconPath: 'assets/images/emailAdress.svg',
                   ),
                   const SizedBox(height: 14),
-                  const CustomTextField(
-                    hintText: 'New Password',
+                  CustomTextField(
+                    hintText: loc.commonNewPassword,
                     iconPath: 'assets/images/Password.svg',
                     isPassword: true,
                   ),
                   const SizedBox(height: 14),
-                  const CustomTextField(
-                    hintText: 'Confirm Password',
+                  CustomTextField(
+                    hintText: loc.commonConfirmPassword,
                     iconPath: 'assets/images/Password.svg',
                     isPassword: true,
                   ),
                   const SizedBox(height: 48),
                   GradientButton(
                     onPressed: () => context.goNamed('login'),
-                    text: 'Change Password',
+                    text: loc.resetButton,
                     isLoading: false,
                   ),
                 ],

@@ -6,9 +6,11 @@ import 'package:provider/provider.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/models/collaborator_contact.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/models/project.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 
 class InviteCollaboratorScreen extends StatefulWidget {
   const InviteCollaboratorScreen({super.key, this.initialProjectId});
@@ -79,15 +81,16 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
   }
 
   void _sendDirectInvite(ProjectController controller) {
+    final loc = context.l10n;
     final project = _resolveSelectedProject(controller);
     if (project == null) {
-      _showMessage('Choose a project before sending an invite.');
+      _showMessage(loc.inviteCollaboratorSnackbarSelectProject);
       return;
     }
 
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      _showMessage('Add the collaborator\'s email first.');
+      _showMessage(loc.inviteCollaboratorSnackbarEmailRequired);
       return;
     }
 
@@ -127,14 +130,15 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
     _emailController.clear();
     _messageController.clear();
     FocusScope.of(context).unfocus();
-    _showMessage('Invitation sent to $inviteeName.');
+    _showMessage(loc.inviteCollaboratorSnackbarSent(inviteeName));
     context.goNamed('projectDetail', pathParameters: {'id': project.id});
   }
 
   Future<void> _openContactsPicker(ProjectController controller) async {
+    final loc = context.l10n;
     final project = _resolveSelectedProject(controller);
     if (project == null) {
-      _showMessage('Choose a project first to invite existing contacts.');
+      _showMessage(loc.inviteCollaboratorSnackbarSelectProjectContacts);
       return;
     }
 
@@ -170,7 +174,9 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
     }
 
     setState(() => _selectedRole = result.role);
-    _showMessage('${result.contacts.length} invitation(s) queued.');
+    _showMessage(
+      loc.inviteCollaboratorSnackbarContactsQueued(result.contacts.length),
+    );
     context.goNamed('projectDetail', pathParameters: {'id': project.id});
   }
 
@@ -179,6 +185,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
   }
 
   String _deriveNameFromEmail(String email) {
+    final loc = context.l10n;
     final localPart = email.split('@').first;
     final tokens = localPart
         .replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), ' ')
@@ -189,7 +196,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
               segment[0].toUpperCase() + segment.substring(1).toLowerCase(),
         );
     final fallback = tokens.join(' ');
-    return fallback.isEmpty ? 'New Collaborator' : fallback;
+    return fallback.isEmpty ? loc.inviteCollaboratorFallbackName : fallback;
   }
 
   @override
@@ -205,6 +212,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
     final theme = Theme.of(context);
     final controller = context.watch<ProjectController>();
     final projects = controller.projects;
+    final loc = context.l10n;
     final dropdownDecoration = InputDecorationTheme(
       filled: true,
       fillColor: AppColors.textfieldBackground,
@@ -237,7 +245,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          'Invite collaborator',
+          loc.inviteCollaboratorTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -266,7 +274,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _SectionLabel('Select project'),
+                    _SectionLabel(loc.inviteCollaboratorSelectProject),
                     const SizedBox(height: 10),
                     Theme(
                       data: Theme.of(
@@ -276,7 +284,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                         initialSelection: _selectedProjectId,
                         onSelected: (value) =>
                             setState(() => _selectedProjectId = value),
-                        hintText: 'Choose project',
+                        hintText: loc.inviteCollaboratorChooseProject,
                         dropdownMenuEntries: projects
                             .map(
                               (project) => DropdownMenuEntry<String>(
@@ -289,18 +297,20 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Send a direct invitation via email or pull from your contact list.',
+                      loc.inviteCollaboratorInfoText,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: AppColors.hintTextfiled,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const _SectionLabel('Invite via email'),
+                    _SectionLabel(loc.inviteCollaboratorEmailSection),
                     const SizedBox(height: 10),
                     TextField(
                       controller: _emailController,
-                      decoration: _inputDecoration('name@company.com'),
+                      decoration: _inputDecoration(
+                        loc.inviteCollaboratorEmailHint,
+                      ),
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 14),
@@ -309,7 +319,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => _openContactsPicker(controller),
                         icon: const Icon(FeatherIcons.users, size: 18),
-                        label: const Text('From my contacts'),
+                        label: Text(loc.inviteCollaboratorFromContacts),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.secondary,
                           side: const BorderSide(
@@ -320,7 +330,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    const _SectionLabel('Role in project'),
+                    _SectionLabel(loc.inviteCollaboratorRoleSection),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 12,
@@ -362,7 +372,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                                   ),
                                 ),
                                 child: Text(
-                                  role,
+                                  _localizedRoleLabel(loc, role),
                                   style: theme.textTheme.labelLarge?.copyWith(
                                     color: _selectedRole == role
                                         ? AppColors.primaryText
@@ -381,26 +391,28 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                         Expanded(
                           child: TextField(
                             controller: _customRoleController,
-                            decoration: _inputDecoration('Add custom role'),
+                            decoration: _inputDecoration(
+                              loc.inviteCollaboratorCustomRoleHint,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         GradientButton(
                           onPressed: _addCustomRole,
-                          text: 'Add role',
+                          text: loc.inviteCollaboratorAddRole,
                           height: 48,
                           width: 140,
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
-                    const _SectionLabel('Personal message'),
+                    _SectionLabel(loc.inviteCollaboratorMessageSection),
                     const SizedBox(height: 10),
                     TextField(
                       controller: _messageController,
                       maxLines: 5,
                       decoration: _inputDecoration(
-                        'Optional message to give context',
+                        loc.inviteCollaboratorMessageHint,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -414,14 +426,14 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                         alpha: 0.32,
                       ),
                       title: Text(
-                        'Generate shareable link',
+                        loc.inviteCollaboratorShareLinkTitle,
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: AppColors.secondaryText,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Text(
-                        'Anyone with the link can request access with the role selected above.',
+                        loc.inviteCollaboratorShareLinkSubtitle,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.hintTextfiled,
                           fontWeight: FontWeight.w600,
@@ -461,7 +473,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                             ),
                             TextButton(
                               onPressed: () {},
-                              child: const Text('Copy'),
+                              child: Text(loc.inviteCollaboratorCopyLink),
                             ),
                           ],
                         ),
@@ -470,7 +482,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
                     const SizedBox(height: 30),
                     GradientButton(
                       onPressed: () => _sendDirectInvite(controller),
-                      text: 'Send invitation',
+                      text: loc.inviteCollaboratorPrimaryCta,
                       width: double.infinity,
                       height: 52,
                     ),
@@ -513,6 +525,19 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
         borderSide: const BorderSide(color: AppColors.secondary),
       ),
     );
+  }
+}
+
+String _localizedRoleLabel(AppLocalizations loc, String role) {
+  switch (role.toLowerCase()) {
+    case 'owner':
+      return loc.inviteCollaboratorRoleOwner;
+    case 'editor':
+      return loc.inviteCollaboratorRoleEditor;
+    case 'viewer':
+      return loc.inviteCollaboratorRoleViewer;
+    default:
+      return role;
   }
 }
 
@@ -579,6 +604,7 @@ class _ContactsPickerSheetState extends State<_ContactsPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.background,
@@ -603,7 +629,7 @@ class _ContactsPickerSheetState extends State<_ContactsPickerSheet> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Invite from contacts',
+            loc.inviteCollaboratorInviteSheetTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
@@ -619,11 +645,13 @@ class _ContactsPickerSheetState extends State<_ContactsPickerSheet> {
             child: DropdownMenu<String>(
               initialSelection: _role,
               onSelected: (value) => setState(() => _role = value ?? _role),
-              label: const Text('Role applied to selection'),
+              label: Text(loc.inviteCollaboratorInviteSheetRoleLabel),
               dropdownMenuEntries: widget.availableRoles
                   .map(
-                    (role) =>
-                        DropdownMenuEntry<String>(value: role, label: role),
+                    (role) => DropdownMenuEntry<String>(
+                      value: role,
+                      label: _localizedRoleLabel(loc, role),
+                    ),
                   )
                   .toList(growable: false),
             ),
@@ -648,9 +676,9 @@ class _ContactsPickerSheetState extends State<_ContactsPickerSheet> {
           TextField(
             controller: _noteController,
             maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Add a note (optional)',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: loc.inviteCollaboratorInviteSheetNoteLabel,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 20),
@@ -658,7 +686,11 @@ class _ContactsPickerSheetState extends State<_ContactsPickerSheet> {
             onPressed: () {
               if (_selectedIds.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Select at least one contact.')),
+                  SnackBar(
+                    content: Text(
+                      loc.inviteCollaboratorInviteSheetSelectContactError,
+                    ),
+                  ),
                 );
                 return;
               }
@@ -673,7 +705,7 @@ class _ContactsPickerSheetState extends State<_ContactsPickerSheet> {
                 ),
               );
             },
-            text: 'Invite selected',
+            text: loc.inviteCollaboratorInviteSheetPrimaryCta,
             height: 52,
             width: double.infinity,
           ),
@@ -697,10 +729,20 @@ class _ContactListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = context.l10n;
     final (label, color) = switch (contact.availability) {
-      CollaboratorAvailability.available => ('Available', AppColors.available),
-      CollaboratorAvailability.busy => ('Busy', AppColors.reserved),
-      CollaboratorAvailability.offline => ('Offline', AppColors.hintTextfiled),
+      CollaboratorAvailability.available => (
+        loc.inviteCollaboratorAvailabilityAvailable,
+        AppColors.available,
+      ),
+      CollaboratorAvailability.busy => (
+        loc.inviteCollaboratorAvailabilityBusy,
+        AppColors.reserved,
+      ),
+      CollaboratorAvailability.offline => (
+        loc.inviteCollaboratorAvailabilityOffline,
+        AppColors.hintTextfiled,
+      ),
     };
 
     return Card(
