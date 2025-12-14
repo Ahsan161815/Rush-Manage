@@ -7,5 +7,5 @@ class SupabaseConfig {
   static const String serviceRoleKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlibGNhaGN4eW1lb3B5Z2Fpd3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTM2NDU0NCwiZXhwIjoyMDgwOTQwNTQ0fQ.mSpdygDf4OPm9s6Rsk4T2kVxDO_XjuiXYM6spdr3S1s';
   static const String passwordResetRedirectUrl =
-      'https://reset.rushmanage.com/#/reset-password';
+      'https://ahsan161815.github.io/Rush-Manage/#/reset-password';
 }

@@ -39,7 +39,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Flutter web bundle
-        run: flutter build web --release
+        run: flutter build web --release --base-href /Rush-Manage/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
