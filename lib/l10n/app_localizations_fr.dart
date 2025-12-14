@@ -255,6 +255,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get loginCreateNow => 'Créer maintenant';
 
   @override
+  String get loginMissingFields =>
+      'Veuillez saisir votre email et votre mot de passe.';
+
+  @override
+  String get loginGenericError =>
+      'Impossible de vous connecter. Veuillez réessayer.';
+
+  @override
   String get registrationTitle => 'Créez votre compte';
 
   @override
@@ -268,7 +276,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get registrationAlreadyPrompt => 'Déjà inscrit ?';
 
   @override
-  String get registrationLoginNow => 'Se connecter';
+  String get registrationLoginNow => 'Connectez-vous maintenant';
+
+  @override
+  String get registrationMissingFields =>
+      'Veuillez renseigner votre nom, email et mot de passe.';
+
+  @override
+  String get registrationPasswordTooShort =>
+      'Le mot de passe doit contenir au moins 6 caractères.';
+
+  @override
+  String get registrationGenericError =>
+      'Impossible de créer votre compte. Veuillez réessayer.';
 
   @override
   String get forgotTitle => 'Réinitialiser le mot de passe';
@@ -278,7 +298,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Saisissez votre e-mail pour réinitialiser votre mot de passe';
 
   @override
-  String get forgotButton => 'Demander le code OTP';
+  String get forgotButton => 'Envoyer le lien de réinitialisation';
+
+  @override
+  String get forgotInvalidEmail => 'Veuillez saisir une adresse e-mail valide.';
+
+  @override
+  String get forgotEmailSent =>
+      'Consultez votre boîte mail pour le lien de réinitialisation.';
+
+  @override
+  String get forgotGenericError =>
+      'Impossible d\'envoyer l\'e-mail de réinitialisation. Réessayez.';
 
   @override
   String get verifyTitle => 'Vérifier l\'e-mail par OTP';
@@ -310,6 +341,25 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get resetButton => 'Modifier le mot de passe';
+
+  @override
+  String get resetPasswordLengthError =>
+      'Le mot de passe doit contenir au moins 6 caractères.';
+
+  @override
+  String get resetPasswordMismatch => 'Les mots de passe ne correspondent pas.';
+
+  @override
+  String get resetNoRecoverySession =>
+      'Ouvrez le lien reçu par e-mail pour continuer.';
+
+  @override
+  String get resetGenericError =>
+      'Impossible de réinitialiser votre mot de passe. Réessayez.';
+
+  @override
+  String get resetSuccess =>
+      'Mot de passe mis à jour. Connectez-vous de nouveau.';
 
   @override
   String get setupTitle => 'Configurer le profil';
@@ -866,7 +916,39 @@ class AppLocalizationsFr extends AppLocalizations {
   String get financePrimaryCta => 'Créer un devis / facture';
 
   @override
+  String get financeQuickActionsTitle => 'Actions rapides';
+
+  @override
+  String get financeQuickActionCreateQuote => 'Créer un devis';
+
+  @override
+  String get financeQuickActionCreateInvoice => 'Créer une facture';
+
+  @override
+  String get financeQuickActionAddExpense => 'Ajouter une dépense';
+
+  @override
+  String get financeQuickActionAddPayment => 'Ajouter un paiement reçu';
+
+  @override
   String get financeBalanceTitle => 'Solde global';
+
+  @override
+  String financeBalanceVariationLabel(Object value, Object period) {
+    return '$value % vs dernier $period';
+  }
+
+  @override
+  String get financePeriodMonth => 'mois';
+
+  @override
+  String get financePeriodYear => 'année';
+
+  @override
+  String get financeBalanceToggleMonth => 'Mois';
+
+  @override
+  String get financeBalanceToggleYear => 'Année';
 
   @override
   String get financeUnpaidTitle => 'Factures impayées';
@@ -884,6 +966,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get financeUnpaidReminderCta => 'Relancer';
+
+  @override
+  String get financeUnpaidViewList => 'Voir la liste';
+
+  @override
+  String get financeReminderSentSnack => 'Relance planifiée';
 
   @override
   String get financeLatestDocumentsTitle => 'Derniers documents';
@@ -935,6 +1023,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune facture impayée avec date d\'échéance';
 
   @override
+  String get financeUpcomingSeeAll => 'Voir toutes les factures';
+
+  @override
+  String get financeUpcomingNoDueDate => 'Pas d\'échéance';
+
+  @override
   String financeUpcomingBadgeOverdue(int days) {
     return 'En retard de $days j';
   }
@@ -956,6 +1050,20 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get financeExpensesTitle => 'Dépenses (ce mois)';
+
+  @override
+  String get financeExpensesView => 'Voir les dépenses';
+
+  @override
+  String financeExpensesTopCategory(Object category) {
+    return 'Dépense principale : $category';
+  }
+
+  @override
+  String get financeExpensesEmpty => 'Aucune dépense enregistrée ce mois-ci';
+
+  @override
   String get financeRecentTitle => 'Activité récente';
 
   @override
@@ -966,6 +1074,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String financeRecentInvoice(Object id, Object status) {
     return 'Facture $id → $status';
+  }
+
+  @override
+  String financeRecentExpense(Object label, Object amount) {
+    return 'Dépense $label → $amount';
+  }
+
+  @override
+  String financeRecentPayment(Object id, Object amount) {
+    return 'Paiement reçu sur n°$id → $amount';
   }
 
   @override
@@ -1850,6 +1968,94 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get financeReportingGranularityMonthly => 'Mensuel';
+
+  @override
+  String get financeInvoicesTitle => 'Factures';
+
+  @override
+  String get financeInvoicesEmpty => 'Aucune facture pour le moment.';
+
+  @override
+  String get financeInvoicesOpenDetail => 'Ouvrir la fiche';
+
+  @override
+  String get financeExpensesScreenTitle => 'Dépenses';
+
+  @override
+  String get financeExpensesFormTitle => 'Enregistrer une dépense';
+
+  @override
+  String get financeExpensesFormDescription => 'Description';
+
+  @override
+  String get financeExpensesFormAmount => 'Montant';
+
+  @override
+  String get financeExpensesFormDate => 'Date';
+
+  @override
+  String get financeExpensesSelectDate => 'Choisir une date';
+
+  @override
+  String get financeExpensesAddCta => 'Ajouter la dépense';
+
+  @override
+  String get financeExpensesAddSuccess => 'Dépense ajoutée';
+
+  @override
+  String get financeExpensesEmptyList => 'Aucune dépense enregistrée.';
+
+  @override
+  String get financeExpensesFormError =>
+      'Ajoutez une description et un montant valide';
+
+  @override
+  String get financeCreateInvoiceTitle => 'Créer une facture';
+
+  @override
+  String get financeCreateInvoiceClientLabel => 'Nom du client';
+
+  @override
+  String get financeCreateInvoiceAmountLabel => 'Montant';
+
+  @override
+  String get financeCreateInvoiceReferenceLabel => 'Référence (optionnel)';
+
+  @override
+  String get financeCreateInvoiceDueLabel => 'Échéance';
+
+  @override
+  String get financeCreateInvoiceSelectDate => 'Choisir une date';
+
+  @override
+  String get financeCreateInvoiceSubmit => 'Créer la facture';
+
+  @override
+  String get financeCreateInvoiceSuccess => 'Facture créée';
+
+  @override
+  String get financeCreateInvoiceValidationError =>
+      'Ajoutez un client et un montant';
+
+  @override
+  String get financeRecordPaymentTitle => 'Enregistrer un paiement';
+
+  @override
+  String get financeRecordPaymentInvoiceLabel => 'Facture';
+
+  @override
+  String get financeRecordPaymentNoInvoices =>
+      'Toutes les factures sont à jour.';
+
+  @override
+  String get financeRecordPaymentSubmit => 'Marquer comme payée';
+
+  @override
+  String get financeRecordPaymentSuccess => 'Facture marquée payée';
+
+  @override
+  String get financeRecordPaymentValidationError =>
+      'Sélectionnez une facture pour continuer';
 
   @override
   String get financeReportingChartPlaceholder => 'Graphique à venir';

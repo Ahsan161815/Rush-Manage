@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:myapp/models/finance.dart';
 
@@ -90,17 +92,27 @@ class FinanceController extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _inRange(DateTime d) {
+  bool _inRange(DateTime d) => _inRangeWithFilter(d, _timeFilter);
+
+  bool _inRangeWithFilter(DateTime date, TimeFilter filter) {
     final now = DateTime.now();
-    switch (_timeFilter) {
+    switch (filter) {
       case TimeFilter.week:
-        return d.isAfter(now.subtract(const Duration(days: 7)));
+        return date.isAfter(now.subtract(const Duration(days: 7)));
       case TimeFilter.month:
-        return d.year == now.year && d.month == now.month;
+        return date.year == now.year && date.month == now.month;
       case TimeFilter.year:
-        return d.year == now.year;
+        return date.year == now.year;
     }
   }
+
+  List<Invoice> _invoicesFor(TimeFilter filter) => _invoices
+      .where((i) => _inRangeWithFilter(i.issuedAt, filter))
+      .toList(growable: false);
+
+  List<Expense> _expensesFor(TimeFilter filter) => _expenses
+      .where((e) => _inRangeWithFilter(e.date, filter))
+      .toList(growable: false);
 
   List<Invoice> get filteredInvoices =>
       _invoices.where((i) => _inRange(i.issuedAt)).toList(growable: false);
@@ -109,7 +121,9 @@ class FinanceController extends ChangeNotifier {
   List<Expense> get filteredExpenses =>
       _expenses.where((e) => _inRange(e.date)).toList(growable: false);
 
-  double get globalBalance => filteredInvoices
+  double get globalBalance => collectedTotalFor(TimeFilter.month);
+
+  double collectedTotalFor(TimeFilter filter) => _invoicesFor(filter)
       .where((i) => i.status == InvoiceStatus.paid)
       .fold(0.0, (sum, inv) => sum + inv.amount);
 
@@ -120,25 +134,64 @@ class FinanceController extends ChangeNotifier {
   int get unpaidCount =>
       filteredInvoices.where((i) => i.status == InvoiceStatus.unpaid).length;
 
-  double get monthVariationPercent {
-    // Mock: compare paid invoices this month vs last month.
+  double get monthVariationPercent => variationPercentFor(TimeFilter.month);
+
+  double variationPercentFor(TimeFilter filter) {
     final now = DateTime.now();
-    final thisMonth = filteredInvoices
-        .where(
-          (i) =>
-              i.status == InvoiceStatus.paid && i.issuedAt.month == now.month,
-        )
-        .fold(0.0, (s, i) => s + i.amount);
-    final lastMonth = _invoices
-        .where(
-          (i) =>
-              i.status == InvoiceStatus.paid &&
-              i.issuedAt.month == (now.month - 1),
-        )
-        .fold(0.0, (s, i) => s + i.amount);
-    if (lastMonth == 0) return 100; // baseline growth
-    return ((thisMonth - lastMonth) / lastMonth) * 100;
+    double current = 0;
+    double previous = 0;
+
+    switch (filter) {
+      case TimeFilter.month:
+        current = _sumPaidInvoicesByMonth(now.year, now.month);
+        final prevMonthDate = DateTime(now.year, now.month - 1, 1);
+        previous = _sumPaidInvoicesByMonth(
+          prevMonthDate.year,
+          prevMonthDate.month,
+        );
+        break;
+      case TimeFilter.year:
+        current = _sumPaidInvoicesByYear(now.year);
+        previous = _sumPaidInvoicesByYear(now.year - 1);
+        break;
+      case TimeFilter.week:
+        final currentRangeStart = now.subtract(const Duration(days: 7));
+        final previousRangeStart = currentRangeStart.subtract(
+          const Duration(days: 7),
+        );
+        current = _sumPaidInvoicesInRange(currentRangeStart, now);
+        previous = _sumPaidInvoicesInRange(
+          previousRangeStart,
+          currentRangeStart,
+        );
+        break;
+    }
+
+    if (previous == 0) return 100;
+    return ((current - previous) / previous) * 100;
   }
+
+  double _sumPaidInvoicesByMonth(int year, int month) => _invoices
+      .where(
+        (i) =>
+            i.status == InvoiceStatus.paid &&
+            i.issuedAt.year == year &&
+            i.issuedAt.month == month,
+      )
+      .fold(0.0, (s, i) => s + i.amount);
+
+  double _sumPaidInvoicesByYear(int year) => _invoices
+      .where((i) => i.status == InvoiceStatus.paid && i.issuedAt.year == year)
+      .fold(0.0, (s, i) => s + i.amount);
+
+  double _sumPaidInvoicesInRange(DateTime start, DateTime end) => _invoices
+      .where(
+        (i) =>
+            i.status == InvoiceStatus.paid &&
+            !i.issuedAt.isBefore(start) &&
+            i.issuedAt.isBefore(end),
+      )
+      .fold(0.0, (s, i) => s + i.amount);
 
   List<String> get latestDocuments {
     final docs = <String>[];
@@ -168,17 +221,47 @@ class FinanceController extends ChangeNotifier {
     return docs.take(8).toList(growable: false);
   }
 
-  List<double> get trendValues {
-    // Mock: generate last 8 points combining paid/unpaid totals
+  List<double> get trendValues => revenueTrendFor(TimeFilter.month);
+
+  List<double> revenueTrendFor(TimeFilter filter) {
+    final now = DateTime.now();
+    if (filter == TimeFilter.year) {
+      final values = <double>[];
+      for (int i = 11; i >= 0; i--) {
+        final sampleIndex = 11 - i;
+        final date = DateTime(now.year, now.month - i, 1);
+        double value = _sumPaidInvoicesByMonth(date.year, date.month);
+        if (value == 0) value = _syntheticTrendValue(sampleIndex, 620);
+        values.add(value);
+      }
+      return values;
+    }
+
     final values = <double>[];
     for (int i = 7; i >= 0; i--) {
-      final day = DateTime.now().subtract(Duration(days: i));
-      final daily = filteredInvoices
-          .where((inv) => inv.issuedAt.day == day.day)
+      final sampleIndex = 7 - i;
+      final day = now.subtract(Duration(days: i));
+      double daily = _invoices
+          .where(
+            (inv) =>
+                inv.status == InvoiceStatus.paid &&
+                inv.issuedAt.year == day.year &&
+                inv.issuedAt.month == day.month &&
+                inv.issuedAt.day == day.day,
+          )
           .fold(0.0, (s, inv) => s + inv.amount);
-      values.add(daily == 0 ? (i + 1) * 120 : daily);
+      if (daily == 0) daily = _syntheticTrendValue(sampleIndex, 320);
+      values.add(daily);
     }
     return values;
+  }
+
+  double _syntheticTrendValue(int index, double amplitude) {
+    final base = 380 + (index % 4) * 140;
+    final wave = math.sin(index / 1.4) * amplitude * 0.45;
+    final jitter = (index * 47) % 160;
+    final value = base + wave + jitter;
+    return value.clamp(120, 3200).toDouble();
   }
 
   // KPI helpers
@@ -189,7 +272,44 @@ class FinanceController extends ChangeNotifier {
       .where((q) => q.status == QuoteStatus.pendingSignature)
       .length;
   double get currentMonthExpensesTotal =>
-      filteredExpenses.fold(0.0, (s, e) => s + e.amount);
+      _expensesFor(TimeFilter.month).fold(0.0, (s, e) => s + e.amount);
+
+  Expense? get topExpenseThisMonth {
+    final monthExpenses = _expensesFor(TimeFilter.month);
+    if (monthExpenses.isEmpty) return null;
+    monthExpenses.sort((a, b) => b.amount.compareTo(a.amount));
+    return monthExpenses.first;
+  }
+
+  Expense addExpense({
+    required String description,
+    required double amount,
+    DateTime? date,
+    String? projectId,
+    ExpenseRecurrence recurrence = ExpenseRecurrence.oneTime,
+  }) {
+    final expense = Expense(
+      id: 'exp${DateTime.now().millisecondsSinceEpoch}',
+      projectId: projectId,
+      description: description,
+      amount: amount,
+      date: date ?? DateTime.now(),
+      recurrence: recurrence,
+    );
+    _expenses.insert(0, expense);
+    notifyListeners();
+    return expense;
+  }
+
+  List<Invoice> get unpaidInvoices => _invoices
+      .where((i) => i.status == InvoiceStatus.unpaid)
+      .toList(growable: false);
+
+  List<Invoice> get upcomingInvoices {
+    final pending = unpaidInvoices.where((i) => i.dueDate != null).toList();
+    pending.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+    return pending;
+  }
 
   // --- Quote lifecycle methods ---
   Quote createDraftQuote({
@@ -238,6 +358,26 @@ class FinanceController extends ChangeNotifier {
       amount: quote.total,
     );
     _invoices.insert(0, invoice);
+  }
+
+  Invoice createInvoice({
+    required String clientName,
+    required double amount,
+    DateTime? dueDate,
+    String? referenceId,
+  }) {
+    final invoice = Invoice(
+      id: 'inv${DateTime.now().millisecondsSinceEpoch}',
+      quoteId: referenceId ?? 'manual',
+      clientName: clientName,
+      issuedAt: DateTime.now(),
+      status: InvoiceStatus.unpaid,
+      amount: amount,
+      dueDate: dueDate,
+    );
+    _invoices.insert(0, invoice);
+    notifyListeners();
+    return invoice;
   }
 
   void markInvoicePaid(String invoiceId) {

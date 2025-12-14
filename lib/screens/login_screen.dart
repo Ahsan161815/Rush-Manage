@@ -1,15 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/widgets/custom_text_field.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (_isLoading) return;
+    final loc = context.l10n;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    if (email.isEmpty || password.isEmpty) {
+      _showError(loc.loginMissingFields);
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+    try {
+      await context.read<AuthService>().signIn(
+        email: email,
+        password: password,
+      );
+      if (!mounted) return;
+      context.goNamed('home');
+    } on AuthException catch (error) {
+      _showError(error.message);
+    } catch (_) {
+      _showError(loc.loginGenericError);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +98,13 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 69),
                   CustomTextField(
+                    controller: _emailController,
                     hintText: loc.commonEmailAddress,
                     iconPath: 'assets/images/emailAdress.svg',
                   ),
                   const SizedBox(height: 14),
                   CustomTextField(
+                    controller: _passwordController,
                     hintText: loc.commonEnterPassword,
                     iconPath: 'assets/images/Password.svg',
                     isPassword: true,
@@ -90,9 +147,9 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 40),
                   GradientButton(
-                    onPressed: () => context.goNamed('home'),
+                    onPressed: _handleLogin,
                     text: loc.loginButton,
-                    isLoading: false,
+                    isLoading: _isLoading,
                   ),
                   const SizedBox(height: 20),
                   Row(

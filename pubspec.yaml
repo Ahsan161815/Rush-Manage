@@ -28,6 +28,8 @@ dependencies:
   flutter_gantt: ^1.1.1
   intl: ^0.20.2
   shared_preferences: ^2.3.2
+  supabase_flutter: ^2.6.0
+  web: ^1.0.0
 
 dev_dependencies:
   flutter_test:

@@ -92,14 +92,22 @@
   "loginSocialApple": "Continue with Apple",
   "loginNoAccountPrompt": "Don't have an account?",
   "loginCreateNow": "Create Now",
+  "loginMissingFields": "Please enter both email and password.",
+  "loginGenericError": "We couldn't sign you in. Please try again.",
   "registrationTitle": "Create Your Account",
   "registrationSubtitle": "Please fill in your details to create an account",
   "registrationButton": "Save & Next",
   "registrationAlreadyPrompt": "Already a Subscriber?",
   "registrationLoginNow": "Login Now",
+  "registrationMissingFields": "Please provide your name, email, and password.",
+  "registrationPasswordTooShort": "Password must be at least 6 characters.",
+  "registrationGenericError": "We couldn't create your account. Please try again.",
   "forgotTitle": "Reset Password",
   "forgotSubtitle": "Enter your email below to reset your password",
-  "forgotButton": "Request OTP Verify",
+  "forgotButton": "Send reset link",
+  "forgotInvalidEmail": "Please enter a valid email address.",
+  "forgotEmailSent": "Check your email for the reset link.",
+  "forgotGenericError": "We couldn't send the reset email. Please try again.",
   "verifyTitle": "Verify Email by OTP",
   "verifySubtitle": "A verification code sent on your email address",
   "verifyConfirm": "Confirm",
@@ -114,6 +122,11 @@
   "resetTitle": "Enter New Password",
   "resetSubtitle": "Enter your new password that you would like to use",
   "resetButton": "Change Password",
+  "resetPasswordLengthError": "Password must be at least 6 characters.",
+  "resetPasswordMismatch": "Passwords do not match.",
+  "resetNoRecoverySession": "Open the reset link from your email to continue.",
+  "resetGenericError": "We couldn't reset your password. Please try again.",
+  "resetSuccess": "Password updated. You can sign in again.",
   "setupTitle": "Set up profile",
   "setupHeadline": "Personalise your workspace",
   "setupSubtitle": "Add a face, role, and focus areas so teammates know who you are.",
@@ -347,7 +360,23 @@
   "createProjectPrimaryCta": "Create project",
   "financeNewQuoteTooltip": "New quote",
   "financePrimaryCta": "Create a quote / invoice",
+  "financeQuickActionsTitle": "Quick actions",
+  "financeQuickActionCreateQuote": "Create quote",
+  "financeQuickActionCreateInvoice": "Create invoice",
+  "financeQuickActionAddExpense": "Add expense",
+  "financeQuickActionAddPayment": "Add payment received",
   "financeBalanceTitle": "Global balance",
+  "financeBalanceVariationLabel": "{value}% vs last {period}",
+  "@financeBalanceVariationLabel": {
+    "placeholders": {
+      "value": {},
+      "period": {}
+    }
+  },
+  "financePeriodMonth": "month",
+  "financePeriodYear": "year",
+  "financeBalanceToggleMonth": "Month",
+  "financeBalanceToggleYear": "Year",
   "financeUnpaidTitle": "Unpaid invoices",
   "financeUnpaidMeta": "{count, plural, one {# invoice} other {# invoices}} · {amount}",
   "@financeUnpaidMeta": {
@@ -359,6 +388,8 @@
     }
   },
   "financeUnpaidReminderCta": "Send reminder",
+  "financeUnpaidViewList": "View list",
+  "financeReminderSentSnack": "Reminder scheduled",
   "financeLatestDocumentsTitle": "Latest documents",
   "financeQuickAccessTitle": "Quick access",
   "financeQuickAccessCreateQuote": "Create quote",
@@ -375,6 +406,8 @@
   "financePipelineTitle": "Pipeline overview",
   "financeUpcomingTitle": "Upcoming / overdue invoices",
   "financeUpcomingEmpty": "No unpaid invoices with due dates",
+  "financeUpcomingSeeAll": "See all invoices",
+  "financeUpcomingNoDueDate": "No due date",
   "financeUpcomingBadgeOverdue": "Overdue {days}d",
   "@financeUpcomingBadgeOverdue": {
     "placeholders": {
@@ -400,6 +433,15 @@
       "amount": {}
     }
   },
+  "financeExpensesTitle": "Expenses (this month)",
+  "financeExpensesView": "View expenses",
+  "financeExpensesTopCategory": "Top expense: {category}",
+  "@financeExpensesTopCategory": {
+    "placeholders": {
+      "category": {}
+    }
+  },
+  "financeExpensesEmpty": "No expenses recorded this month",
   "financeRecentTitle": "Recent activity",
   "financeRecentQuote": "Quote {id} → {status}",
   "@financeRecentQuote": {
@@ -413,6 +455,20 @@
     "placeholders": {
       "id": {},
       "status": {}
+    }
+  },
+  "financeRecentExpense": "Expense {label} → {amount}",
+  "@financeRecentExpense": {
+    "placeholders": {
+      "label": {},
+      "amount": {}
+    }
+  },
+  "financeRecentPayment": "Payment received on #{id} → {amount}",
+  "@financeRecentPayment": {
+    "placeholders": {
+      "id": {},
+      "amount": {}
     }
   },
   "financeRecentEmpty": "No recent activity",
@@ -800,6 +856,34 @@
   "financeReportingGranularityDaily": "Daily",
   "financeReportingGranularityWeekly": "Weekly",
   "financeReportingGranularityMonthly": "Monthly",
+  "financeInvoicesTitle": "Invoices",
+  "financeInvoicesEmpty": "No invoices yet.",
+  "financeInvoicesOpenDetail": "Open detail",
+  "financeExpensesScreenTitle": "Expenses",
+  "financeExpensesFormTitle": "Log a new expense",
+  "financeExpensesFormDescription": "Description",
+  "financeExpensesFormAmount": "Amount",
+  "financeExpensesFormDate": "Date",
+  "financeExpensesSelectDate": "Select date",
+  "financeExpensesAddCta": "Add expense",
+  "financeExpensesAddSuccess": "Expense added",
+  "financeExpensesEmptyList": "No expenses recorded yet.",
+  "financeExpensesFormError": "Enter a description and valid amount",
+  "financeCreateInvoiceTitle": "Create invoice",
+  "financeCreateInvoiceClientLabel": "Client name",
+  "financeCreateInvoiceAmountLabel": "Amount",
+  "financeCreateInvoiceReferenceLabel": "Reference (optional)",
+  "financeCreateInvoiceDueLabel": "Due date",
+  "financeCreateInvoiceSelectDate": "Pick date",
+  "financeCreateInvoiceSubmit": "Create invoice",
+  "financeCreateInvoiceSuccess": "Invoice created",
+  "financeCreateInvoiceValidationError": "Add a client name and amount",
+  "financeRecordPaymentTitle": "Record payment received",
+  "financeRecordPaymentInvoiceLabel": "Invoice",
+  "financeRecordPaymentNoInvoices": "All invoices are up to date.",
+  "financeRecordPaymentSubmit": "Mark as paid",
+  "financeRecordPaymentSuccess": "Invoice marked as paid",
+  "financeRecordPaymentValidationError": "Select an invoice to continue",
   "financeReportingChartPlaceholder": "Chart placeholder",
   "financeSignatureTrackingTitle": "Signature tracking",
   "financeSignatureTrackingQuoteLabel": "Quote #{id}",

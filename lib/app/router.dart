@@ -19,6 +19,10 @@ import 'package:myapp/screens/finance_quote_preview_screen.dart';
 import 'package:myapp/screens/finance_signature_tracking_screen.dart';
 import 'package:myapp/screens/finance_invoice_screen.dart';
 import 'package:myapp/screens/finance_reporting_screen.dart';
+import 'package:myapp/screens/finance_invoices_screen.dart';
+import 'package:myapp/screens/finance_expenses_screen.dart';
+import 'package:myapp/screens/finance_create_invoice_screen.dart';
+import 'package:myapp/screens/finance_record_payment_screen.dart';
 import 'package:myapp/screens/forgot_password_screen.dart';
 import 'package:myapp/screens/login_screen.dart';
 import 'package:myapp/screens/checkout_screen.dart';
@@ -126,6 +130,11 @@ final router = GoRouter(
       builder: (context, state) => const FinanceCreateQuoteScreen(),
     ),
     GoRoute(
+      path: '/finance/create-invoice',
+      name: 'financeCreateInvoiceForm',
+      builder: (context, state) => const FinanceCreateInvoiceScreen(),
+    ),
+    GoRoute(
       path: '/finance/quote/:id/preview',
       name: 'financeQuotePreview',
       builder: (context, state) {
@@ -148,6 +157,21 @@ final router = GoRouter(
         final id = state.pathParameters['id'] ?? '';
         return FinanceInvoiceScreen(invoiceId: id);
       },
+    ),
+    GoRoute(
+      path: '/finance/invoices',
+      name: 'financeInvoices',
+      builder: (context, state) => const FinanceInvoicesScreen(),
+    ),
+    GoRoute(
+      path: '/finance/expenses',
+      name: 'financeExpensesList',
+      builder: (context, state) => const FinanceExpensesScreen(),
+    ),
+    GoRoute(
+      path: '/finance/add-payment',
+      name: 'financeRecordPayment',
+      builder: (context, state) => const FinanceRecordPaymentScreen(),
     ),
     GoRoute(
       path: '/finance/reporting',

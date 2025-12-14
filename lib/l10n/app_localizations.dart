@@ -572,6 +572,18 @@ abstract class AppLocalizations {
   /// **'Create Now'**
   String get loginCreateNow;
 
+  /// No description provided for @loginMissingFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter both email and password.'**
+  String get loginMissingFields;
+
+  /// No description provided for @loginGenericError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t sign you in. Please try again.'**
+  String get loginGenericError;
+
   /// No description provided for @registrationTitle.
   ///
   /// In en, this message translates to:
@@ -602,6 +614,24 @@ abstract class AppLocalizations {
   /// **'Login Now'**
   String get registrationLoginNow;
 
+  /// No description provided for @registrationMissingFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please provide your name, email, and password.'**
+  String get registrationMissingFields;
+
+  /// No description provided for @registrationPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters.'**
+  String get registrationPasswordTooShort;
+
+  /// No description provided for @registrationGenericError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t create your account. Please try again.'**
+  String get registrationGenericError;
+
   /// No description provided for @forgotTitle.
   ///
   /// In en, this message translates to:
@@ -617,8 +647,26 @@ abstract class AppLocalizations {
   /// No description provided for @forgotButton.
   ///
   /// In en, this message translates to:
-  /// **'Request OTP Verify'**
+  /// **'Send reset link'**
   String get forgotButton;
+
+  /// No description provided for @forgotInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email address.'**
+  String get forgotInvalidEmail;
+
+  /// No description provided for @forgotEmailSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email for the reset link.'**
+  String get forgotEmailSent;
+
+  /// No description provided for @forgotGenericError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t send the reset email. Please try again.'**
+  String get forgotGenericError;
 
   /// No description provided for @verifyTitle.
   ///
@@ -673,6 +721,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change Password'**
   String get resetButton;
+
+  /// No description provided for @resetPasswordLengthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters.'**
+  String get resetPasswordLengthError;
+
+  /// No description provided for @resetPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match.'**
+  String get resetPasswordMismatch;
+
+  /// No description provided for @resetNoRecoverySession.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the reset link from your email to continue.'**
+  String get resetNoRecoverySession;
+
+  /// No description provided for @resetGenericError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t reset your password. Please try again.'**
+  String get resetGenericError;
+
+  /// No description provided for @resetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated. You can sign in again.'**
+  String get resetSuccess;
 
   /// No description provided for @setupTitle.
   ///
@@ -1610,11 +1688,71 @@ abstract class AppLocalizations {
   /// **'Create a quote / invoice'**
   String get financePrimaryCta;
 
+  /// No description provided for @financeQuickActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick actions'**
+  String get financeQuickActionsTitle;
+
+  /// No description provided for @financeQuickActionCreateQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Create quote'**
+  String get financeQuickActionCreateQuote;
+
+  /// No description provided for @financeQuickActionCreateInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Create invoice'**
+  String get financeQuickActionCreateInvoice;
+
+  /// No description provided for @financeQuickActionAddExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expense'**
+  String get financeQuickActionAddExpense;
+
+  /// No description provided for @financeQuickActionAddPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add payment received'**
+  String get financeQuickActionAddPayment;
+
   /// No description provided for @financeBalanceTitle.
   ///
   /// In en, this message translates to:
   /// **'Global balance'**
   String get financeBalanceTitle;
+
+  /// No description provided for @financeBalanceVariationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}% vs last {period}'**
+  String financeBalanceVariationLabel(Object value, Object period);
+
+  /// No description provided for @financePeriodMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'month'**
+  String get financePeriodMonth;
+
+  /// No description provided for @financePeriodYear.
+  ///
+  /// In en, this message translates to:
+  /// **'year'**
+  String get financePeriodYear;
+
+  /// No description provided for @financeBalanceToggleMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get financeBalanceToggleMonth;
+
+  /// No description provided for @financeBalanceToggleYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get financeBalanceToggleYear;
 
   /// No description provided for @financeUnpaidTitle.
   ///
@@ -1633,6 +1771,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send reminder'**
   String get financeUnpaidReminderCta;
+
+  /// No description provided for @financeUnpaidViewList.
+  ///
+  /// In en, this message translates to:
+  /// **'View list'**
+  String get financeUnpaidViewList;
+
+  /// No description provided for @financeReminderSentSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder scheduled'**
+  String get financeReminderSentSnack;
 
   /// No description provided for @financeLatestDocumentsTitle.
   ///
@@ -1730,6 +1880,18 @@ abstract class AppLocalizations {
   /// **'No unpaid invoices with due dates'**
   String get financeUpcomingEmpty;
 
+  /// No description provided for @financeUpcomingSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all invoices'**
+  String get financeUpcomingSeeAll;
+
+  /// No description provided for @financeUpcomingNoDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No due date'**
+  String get financeUpcomingNoDueDate;
+
   /// No description provided for @financeUpcomingBadgeOverdue.
   ///
   /// In en, this message translates to:
@@ -1760,6 +1922,30 @@ abstract class AppLocalizations {
   /// **'Invoice #{id} · {amount}'**
   String financeUpcomingInvoiceLabel(Object id, Object amount);
 
+  /// No description provided for @financeExpensesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses (this month)'**
+  String get financeExpensesTitle;
+
+  /// No description provided for @financeExpensesView.
+  ///
+  /// In en, this message translates to:
+  /// **'View expenses'**
+  String get financeExpensesView;
+
+  /// No description provided for @financeExpensesTopCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Top expense: {category}'**
+  String financeExpensesTopCategory(Object category);
+
+  /// No description provided for @financeExpensesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses recorded this month'**
+  String get financeExpensesEmpty;
+
   /// No description provided for @financeRecentTitle.
   ///
   /// In en, this message translates to:
@@ -1777,6 +1963,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invoice {id} → {status}'**
   String financeRecentInvoice(Object id, Object status);
+
+  /// No description provided for @financeRecentExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense {label} → {amount}'**
+  String financeRecentExpense(Object label, Object amount);
+
+  /// No description provided for @financeRecentPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment received on #{id} → {amount}'**
+  String financeRecentPayment(Object id, Object amount);
 
   /// No description provided for @financeRecentEmpty.
   ///
@@ -3349,6 +3547,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Monthly'**
   String get financeReportingGranularityMonthly;
+
+  /// No description provided for @financeInvoicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get financeInvoicesTitle;
+
+  /// No description provided for @financeInvoicesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No invoices yet.'**
+  String get financeInvoicesEmpty;
+
+  /// No description provided for @financeInvoicesOpenDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Open detail'**
+  String get financeInvoicesOpenDetail;
+
+  /// No description provided for @financeExpensesScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get financeExpensesScreenTitle;
+
+  /// No description provided for @financeExpensesFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a new expense'**
+  String get financeExpensesFormTitle;
+
+  /// No description provided for @financeExpensesFormDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get financeExpensesFormDescription;
+
+  /// No description provided for @financeExpensesFormAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get financeExpensesFormAmount;
+
+  /// No description provided for @financeExpensesFormDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get financeExpensesFormDate;
+
+  /// No description provided for @financeExpensesSelectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date'**
+  String get financeExpensesSelectDate;
+
+  /// No description provided for @financeExpensesAddCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expense'**
+  String get financeExpensesAddCta;
+
+  /// No description provided for @financeExpensesAddSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense added'**
+  String get financeExpensesAddSuccess;
+
+  /// No description provided for @financeExpensesEmptyList.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses recorded yet.'**
+  String get financeExpensesEmptyList;
+
+  /// No description provided for @financeExpensesFormError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a description and valid amount'**
+  String get financeExpensesFormError;
+
+  /// No description provided for @financeCreateInvoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create invoice'**
+  String get financeCreateInvoiceTitle;
+
+  /// No description provided for @financeCreateInvoiceClientLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Client name'**
+  String get financeCreateInvoiceClientLabel;
+
+  /// No description provided for @financeCreateInvoiceAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get financeCreateInvoiceAmountLabel;
+
+  /// No description provided for @financeCreateInvoiceReferenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference (optional)'**
+  String get financeCreateInvoiceReferenceLabel;
+
+  /// No description provided for @financeCreateInvoiceDueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date'**
+  String get financeCreateInvoiceDueLabel;
+
+  /// No description provided for @financeCreateInvoiceSelectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick date'**
+  String get financeCreateInvoiceSelectDate;
+
+  /// No description provided for @financeCreateInvoiceSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Create invoice'**
+  String get financeCreateInvoiceSubmit;
+
+  /// No description provided for @financeCreateInvoiceSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice created'**
+  String get financeCreateInvoiceSuccess;
+
+  /// No description provided for @financeCreateInvoiceValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a client name and amount'**
+  String get financeCreateInvoiceValidationError;
+
+  /// No description provided for @financeRecordPaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record payment received'**
+  String get financeRecordPaymentTitle;
+
+  /// No description provided for @financeRecordPaymentInvoiceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get financeRecordPaymentInvoiceLabel;
+
+  /// No description provided for @financeRecordPaymentNoInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'All invoices are up to date.'**
+  String get financeRecordPaymentNoInvoices;
+
+  /// No description provided for @financeRecordPaymentSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as paid'**
+  String get financeRecordPaymentSubmit;
+
+  /// No description provided for @financeRecordPaymentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice marked as paid'**
+  String get financeRecordPaymentSuccess;
+
+  /// No description provided for @financeRecordPaymentValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an invoice to continue'**
+  String get financeRecordPaymentValidationError;
 
   /// No description provided for @financeReportingChartPlaceholder.
   ///

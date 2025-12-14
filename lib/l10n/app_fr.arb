@@ -92,14 +92,22 @@
   "loginSocialApple": "Continuer avec Apple",
   "loginNoAccountPrompt": "Pas encore de compte ?",
   "loginCreateNow": "Créer maintenant",
+  "loginMissingFields": "Veuillez saisir votre email et votre mot de passe.",
+  "loginGenericError": "Impossible de vous connecter. Veuillez réessayer.",
   "registrationTitle": "Créez votre compte",
   "registrationSubtitle": "Veuillez remplir vos informations pour créer un compte",
   "registrationButton": "Enregistrer et suivant",
   "registrationAlreadyPrompt": "Déjà inscrit ?",
-  "registrationLoginNow": "Se connecter",
+    "registrationLoginNow": "Connectez-vous maintenant",
+    "registrationMissingFields": "Veuillez renseigner votre nom, email et mot de passe.",
+    "registrationPasswordTooShort": "Le mot de passe doit contenir au moins 6 caractères.",
+    "registrationGenericError": "Impossible de créer votre compte. Veuillez réessayer.",
   "forgotTitle": "Réinitialiser le mot de passe",
   "forgotSubtitle": "Saisissez votre e-mail pour réinitialiser votre mot de passe",
-  "forgotButton": "Demander le code OTP",
+  "forgotButton": "Envoyer le lien de réinitialisation",
+  "forgotInvalidEmail": "Veuillez saisir une adresse e-mail valide.",
+  "forgotEmailSent": "Consultez votre boîte mail pour le lien de réinitialisation.",
+  "forgotGenericError": "Impossible d'envoyer l'e-mail de réinitialisation. Réessayez.",
   "verifyTitle": "Vérifier l'e-mail par OTP",
   "verifySubtitle": "Un code de vérification a été envoyé sur votre e-mail",
   "verifyConfirm": "Confirmer",
@@ -114,6 +122,11 @@
   "resetTitle": "Saisissez un nouveau mot de passe",
   "resetSubtitle": "Saisissez le nouveau mot de passe que vous souhaitez utiliser",
   "resetButton": "Modifier le mot de passe",
+  "resetPasswordLengthError": "Le mot de passe doit contenir au moins 6 caractères.",
+  "resetPasswordMismatch": "Les mots de passe ne correspondent pas.",
+  "resetNoRecoverySession": "Ouvrez le lien reçu par e-mail pour continuer.",
+  "resetGenericError": "Impossible de réinitialiser votre mot de passe. Réessayez.",
+  "resetSuccess": "Mot de passe mis à jour. Connectez-vous de nouveau.",
   "setupTitle": "Configurer le profil",
   "setupHeadline": "Personnalisez votre espace de travail",
   "setupSubtitle": "Ajoutez un visage, un rôle et des domaines d'expertise pour que l'équipe sache qui vous êtes.",
@@ -347,7 +360,23 @@
   "createProjectPrimaryCta": "Créer le projet",
   "financeNewQuoteTooltip": "Nouveau devis",
   "financePrimaryCta": "Créer un devis / facture",
+  "financeQuickActionsTitle": "Actions rapides",
+  "financeQuickActionCreateQuote": "Créer un devis",
+  "financeQuickActionCreateInvoice": "Créer une facture",
+  "financeQuickActionAddExpense": "Ajouter une dépense",
+  "financeQuickActionAddPayment": "Ajouter un paiement reçu",
   "financeBalanceTitle": "Solde global",
+  "financeBalanceVariationLabel": "{value} % vs dernier {period}",
+  "@financeBalanceVariationLabel": {
+    "placeholders": {
+      "value": {},
+      "period": {}
+    }
+  },
+  "financePeriodMonth": "mois",
+  "financePeriodYear": "année",
+  "financeBalanceToggleMonth": "Mois",
+  "financeBalanceToggleYear": "Année",
   "financeUnpaidTitle": "Factures impayées",
   "financeUnpaidMeta": "{count, plural, one {# facture} other {# factures}} · {amount}",
   "@financeUnpaidMeta": {
@@ -359,6 +388,8 @@
     }
   },
   "financeUnpaidReminderCta": "Relancer",
+  "financeUnpaidViewList": "Voir la liste",
+  "financeReminderSentSnack": "Relance planifiée",
   "financeLatestDocumentsTitle": "Derniers documents",
   "financeQuickAccessTitle": "Accès rapide",
   "financeQuickAccessCreateQuote": "Créer un devis",
@@ -375,6 +406,8 @@
   "financePipelineTitle": "Vue pipeline",
   "financeUpcomingTitle": "Factures à venir / en retard",
   "financeUpcomingEmpty": "Aucune facture impayée avec date d'échéance",
+  "financeUpcomingSeeAll": "Voir toutes les factures",
+  "financeUpcomingNoDueDate": "Pas d'échéance",
   "financeUpcomingBadgeOverdue": "En retard de {days} j",
   "@financeUpcomingBadgeOverdue": {
     "placeholders": {
@@ -400,6 +433,15 @@
       "amount": {}
     }
   },
+  "financeExpensesTitle": "Dépenses (ce mois)",
+  "financeExpensesView": "Voir les dépenses",
+  "financeExpensesTopCategory": "Dépense principale : {category}",
+  "@financeExpensesTopCategory": {
+    "placeholders": {
+      "category": {}
+    }
+  },
+  "financeExpensesEmpty": "Aucune dépense enregistrée ce mois-ci",
   "financeRecentTitle": "Activité récente",
   "financeRecentQuote": "Devis {id} → {status}",
   "@financeRecentQuote": {
@@ -413,6 +455,20 @@
     "placeholders": {
       "id": {},
       "status": {}
+    }
+  },
+  "financeRecentExpense": "Dépense {label} → {amount}",
+  "@financeRecentExpense": {
+    "placeholders": {
+      "label": {},
+      "amount": {}
+    }
+  },
+  "financeRecentPayment": "Paiement reçu sur n°{id} → {amount}",
+  "@financeRecentPayment": {
+    "placeholders": {
+      "id": {},
+      "amount": {}
     }
   },
   "financeRecentEmpty": "Aucune activité récente",
@@ -800,6 +856,34 @@
   "financeReportingGranularityDaily": "Quotidien",
   "financeReportingGranularityWeekly": "Hebdomadaire",
   "financeReportingGranularityMonthly": "Mensuel",
+  "financeInvoicesTitle": "Factures",
+  "financeInvoicesEmpty": "Aucune facture pour le moment.",
+  "financeInvoicesOpenDetail": "Ouvrir la fiche",
+  "financeExpensesScreenTitle": "Dépenses",
+  "financeExpensesFormTitle": "Enregistrer une dépense",
+  "financeExpensesFormDescription": "Description",
+  "financeExpensesFormAmount": "Montant",
+  "financeExpensesFormDate": "Date",
+  "financeExpensesSelectDate": "Choisir une date",
+  "financeExpensesAddCta": "Ajouter la dépense",
+  "financeExpensesAddSuccess": "Dépense ajoutée",
+  "financeExpensesEmptyList": "Aucune dépense enregistrée.",
+  "financeExpensesFormError": "Ajoutez une description et un montant valide",
+  "financeCreateInvoiceTitle": "Créer une facture",
+  "financeCreateInvoiceClientLabel": "Nom du client",
+  "financeCreateInvoiceAmountLabel": "Montant",
+  "financeCreateInvoiceReferenceLabel": "Référence (optionnel)",
+  "financeCreateInvoiceDueLabel": "Échéance",
+  "financeCreateInvoiceSelectDate": "Choisir une date",
+  "financeCreateInvoiceSubmit": "Créer la facture",
+  "financeCreateInvoiceSuccess": "Facture créée",
+  "financeCreateInvoiceValidationError": "Ajoutez un client et un montant",
+  "financeRecordPaymentTitle": "Enregistrer un paiement",
+  "financeRecordPaymentInvoiceLabel": "Facture",
+  "financeRecordPaymentNoInvoices": "Toutes les factures sont à jour.",
+  "financeRecordPaymentSubmit": "Marquer comme payée",
+  "financeRecordPaymentSuccess": "Facture marquée payée",
+  "financeRecordPaymentValidationError": "Sélectionnez une facture pour continuer",
   "financeReportingChartPlaceholder": "Graphique à venir",
   "financeSignatureTrackingTitle": "Suivi des signatures",
   "financeSignatureTrackingQuoteLabel": "Devis n°{id}",

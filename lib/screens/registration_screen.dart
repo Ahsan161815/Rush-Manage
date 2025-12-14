@@ -1,15 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/widgets/custom_text_field.dart';
 
-class RegistrationScreen extends StatelessWidget {
+class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
+
+  @override
+  State<RegistrationScreen> createState() => _RegistrationScreenState();
+}
+
+class _RegistrationScreenState extends State<RegistrationScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    if (_isLoading) return;
+    final loc = context.l10n;
+    final fullName = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (fullName.isEmpty || email.isEmpty || password.length < 6) {
+      final errorMessage = password.length < 6
+          ? loc.registrationPasswordTooShort
+          : loc.registrationMissingFields;
+      _showError(errorMessage);
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+    try {
+      final authService = context.read<AuthService>();
+      await authService.signUp(
+        email: email,
+        password: password,
+        fullName: fullName,
+      );
+      if (!mounted) return;
+      context.goNamed('setupProfile');
+    } on AuthException catch (error) {
+      _showError(error.message);
+    } catch (_) {
+      _showError(loc.registrationGenericError);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,25 +109,28 @@ class RegistrationScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 60),
                   CustomTextField(
+                    controller: _nameController,
                     hintText: loc.commonName,
                     iconPath: 'assets/images/fullname.svg',
                   ),
                   const SizedBox(height: 14),
                   CustomTextField(
+                    controller: _emailController,
                     hintText: loc.commonEmailAddress,
                     iconPath: 'assets/images/emailAdress.svg',
                   ),
                   const SizedBox(height: 14),
                   CustomTextField(
+                    controller: _passwordController,
                     hintText: loc.commonPassword,
                     iconPath: 'assets/images/Password.svg',
                     isPassword: true,
                   ),
                   const SizedBox(height: 60),
                   GradientButton(
-                    onPressed: () => context.pushNamed('setupProfile'),
+                    onPressed: _handleRegister,
                     text: loc.registrationButton,
-                    isLoading: false,
+                    isLoading: _isLoading,
                   ),
                   const SizedBox(height: 20),
                   Row(
