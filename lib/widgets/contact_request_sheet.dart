@@ -9,6 +9,7 @@ import 'package:myapp/common/models/contact_form_models.dart';
 class ContactRequestSheet extends StatefulWidget {
   const ContactRequestSheet({
     super.key,
+    this.contactId,
     required this.nameController,
     required this.emailController,
     required this.phoneController,
@@ -27,6 +28,7 @@ class ContactRequestSheet extends StatefulWidget {
   final TextEditingController notesController;
   final ContactFormMode mode;
   final double bottomInset;
+  final String? contactId;
 
   @override
   State<ContactRequestSheet> createState() => _ContactRequestSheetState();
@@ -34,31 +36,76 @@ class ContactRequestSheet extends StatefulWidget {
 
 class _ContactRequestSheetState extends State<ContactRequestSheet> {
   static const List<String> _contactTypeOptions = [
-    'Client',
-    'Collaborator',
-    'Vendor',
-    'Partner',
+    'client',
+    'collaborator',
+    'supplier',
   ];
 
-  String? _selectedType;
+  String? _selectedTypeValue;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     final initialType = widget.typeController.text.trim();
-    _selectedType = initialType.isEmpty ? null : initialType;
+    _selectedTypeValue = _normalizeType(initialType);
+    if (_selectedTypeValue != null) {
+      widget.typeController.text = _selectedTypeValue!;
+    }
   }
 
   void _onSubmit() {
+    if (_isSubmitting) {
+      return;
+    }
+    setState(() => _isSubmitting = true);
     FocusScope.of(context).unfocus();
-    Navigator.of(context).pop();
+    final data = ContactFormData(
+      name: widget.nameController.text.trim().isEmpty
+          ? null
+          : widget.nameController.text.trim(),
+      email: widget.emailController.text.trim().isEmpty
+          ? null
+          : widget.emailController.text.trim(),
+      phone: widget.phoneController.text.trim().isEmpty
+          ? null
+          : widget.phoneController.text.trim(),
+      address: widget.addressController.text.trim().isEmpty
+          ? null
+          : widget.addressController.text.trim(),
+      type: _selectedTypeValue,
+      notes: widget.notesController.text.trim().isEmpty
+          ? null
+          : widget.notesController.text.trim(),
+    );
+    if (!Navigator.of(context).canPop()) {
+      setState(() => _isSubmitting = false);
+      return;
+    }
+    Navigator.of(context).pop(
+      ContactFormSubmission(
+        mode: widget.mode,
+        data: data,
+        contactId: widget.contactId,
+      ),
+    );
   }
 
   void _handleTypeChanged(String? value) {
     setState(() {
-      _selectedType = value;
+      _selectedTypeValue = value;
       widget.typeController.text = value ?? '';
     });
+  }
+
+  String? _normalizeType(String value) {
+    final normalized = value.toLowerCase();
+    return switch (normalized) {
+      'client' => 'client',
+      'collaborator' => 'collaborator',
+      'supplier' => 'supplier',
+      _ => null,
+    };
   }
 
   @override
@@ -103,7 +150,11 @@ class _ContactRequestSheetState extends State<ContactRequestSheet> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+                    },
                     icon: const Icon(
                       FeatherIcons.x,
                       color: AppColors.hintTextfiled,
@@ -158,8 +209,13 @@ class _ContactRequestSheetState extends State<ContactRequestSheet> {
               const SizedBox(height: 10),
               AppDropdownField<String>(
                 items: _contactTypeOptions,
-                value: _selectedType,
+                value: _selectedTypeValue,
                 hintText: 'Select type',
+                labelBuilder: (value) => switch (value) {
+                  'client' => 'Client',
+                  'supplier' => 'Supplier',
+                  _ => 'Collaborator',
+                },
                 onChanged: _handleTypeChanged,
               ),
               const SizedBox(height: 22),

@@ -9,6 +9,7 @@ import 'package:myapp/screens/reset_new_password_screen.dart';
 import 'package:myapp/screens/management_screen.dart';
 import 'package:myapp/screens/create_project_screen.dart';
 import 'package:myapp/screens/project_detail_screen.dart';
+import 'package:myapp/screens/edit_profile_screen.dart';
 
 final GoRouter router = GoRouter(
   routes: <RouteBase>[
@@ -39,13 +40,20 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/verify-email',
       builder: (BuildContext context, GoRouterState state) {
-        return const VerifyEmailScreen();
+        final email = state.uri.queryParameters['email'];
+        return VerifyEmailScreen(initialEmail: email);
       },
     ),
     GoRoute(
       path: '/reset-new-password',
       builder: (BuildContext context, GoRouterState state) {
         return const ResetNewPasswordScreen();
+      },
+    ),
+    GoRoute(
+      path: '/profile/edit',
+      builder: (BuildContext context, GoRouterState state) {
+        return const EditProfileScreen();
       },
     ),
     GoRoute(

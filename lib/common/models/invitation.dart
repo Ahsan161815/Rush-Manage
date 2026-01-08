@@ -2,7 +2,27 @@ import 'package:equatable/equatable.dart';
 
 import 'package:myapp/common/models/message.dart';
 
+typedef JsonMap = Map<String, dynamic>;
+
 enum InvitationStatus { pending, accepted, declined }
+
+extension InvitationStatusMapper on InvitationStatus {
+  static const Map<InvitationStatus, String> _storage = {
+    InvitationStatus.pending: 'pending',
+    InvitationStatus.accepted: 'accepted',
+    InvitationStatus.declined: 'declined',
+  };
+
+  String get storageValue => _storage[this] ?? 'pending';
+
+  static InvitationStatus fromStorage(String? value) {
+    final entry = _storage.entries.firstWhere(
+      (item) => item.value == value,
+      orElse: () => const MapEntry(InvitationStatus.pending, ''),
+    );
+    return entry.key;
+  }
+}
 
 typedef InvitationId = String;
 
@@ -46,6 +66,7 @@ class Invitation extends Equatable {
   bool get isPending => status == InvitationStatus.pending;
 
   Invitation copyWith({
+    String? role,
     InvitationStatus? status,
     DateTime? updatedAt,
     bool? requiresOnboarding,
@@ -59,7 +80,7 @@ class Invitation extends Equatable {
       projectName: projectName,
       inviteeEmail: inviteeEmail,
       inviteeName: inviteeName,
-      role: role,
+      role: role ?? this.role,
       status: status ?? this.status,
       sentAt: sentAt,
       requiresOnboarding: requiresOnboarding ?? this.requiresOnboarding,
@@ -86,4 +107,47 @@ class Invitation extends Equatable {
     readByInvitee,
     receiptStatus,
   ];
+
+  factory Invitation.fromJson(JsonMap json) => Invitation(
+    id: json['id'] as String,
+    projectId: json['project_id'] as String? ?? '',
+    projectName: json['project_name'] as String? ?? '',
+    inviteeEmail: json['invitee_email'] as String? ?? '',
+    inviteeName: json['invitee_name'] as String? ?? '',
+    role: json['role'] as String? ?? '',
+    status: InvitationStatusMapper.fromStorage(json['status'] as String?),
+    sentAt: _parseDate(json['sent_at']) ?? DateTime.now(),
+    requiresOnboarding: json['requires_onboarding'] as bool? ?? false,
+    message: json['message'] as String?,
+    updatedAt: _parseDate(json['updated_at']),
+    readByInvitee: json['read_by_invitee'] as bool? ?? false,
+    receiptStatus: MessageReceiptStatusMapper.fromStorage(
+      json['receipt_status'] as String?,
+    ),
+  );
+
+  JsonMap toJson() => {
+    'id': id,
+    'project_id': projectId,
+    'project_name': projectName,
+    'invitee_email': inviteeEmail,
+    'invitee_name': inviteeName,
+    'role': role,
+    'status': status.storageValue,
+    'sent_at': sentAt.toIso8601String(),
+    'requires_onboarding': requiresOnboarding,
+    'message': message,
+    'updated_at': updatedAt?.toIso8601String(),
+    'read_by_invitee': readByInvitee,
+    'receipt_status': receiptStatus.storageValue,
+  };
+}
+
+DateTime? _parseDate(dynamic value) {
+  if (value == null) return null;
+  if (value is DateTime) return value;
+  if (value is String && value.isNotEmpty) {
+    return DateTime.tryParse(value);
+  }
+  return null;
 }

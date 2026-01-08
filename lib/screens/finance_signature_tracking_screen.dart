@@ -23,7 +23,7 @@ class FinanceSignatureTrackingScreen extends StatelessWidget {
         elevation: 0,
         title: Text(
           loc.financeSignatureTrackingTitle,
-          style: theme.textTheme.titleLarge?.copyWith(
+          style: (theme.textTheme.titleLarge ?? const TextStyle()).copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
           ),
@@ -36,34 +36,50 @@ class FinanceSignatureTrackingScreen extends StatelessWidget {
           children: [
             _TrackingHeader(quote: quote),
             const SizedBox(height: 24),
-            _TrackingSteps(status: quote?.status ?? QuoteStatus.draft),
+            _TrackingSteps(status: quote.status),
             const SizedBox(height: 32),
             GradientButton(
-              onPressed: () {
-                if (quote == null) return;
-                // Cycle through statuses for demo purposes
-                switch (quote.status) {
-                  case QuoteStatus.draft:
-                    finance.updateQuoteStatus(
-                      quote.id,
-                      QuoteStatus.pendingSignature,
-                    );
-                    break;
-                  case QuoteStatus.pendingSignature:
-                    finance.updateQuoteStatus(quote.id, QuoteStatus.signed);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(loc.financeSignatureSignedSnack)),
-                    );
-                    break;
-                  case QuoteStatus.signed:
-                    finance.updateQuoteStatus(
-                      quote.id,
-                      QuoteStatus.declined,
-                    ); // demo decline toggle
-                    break;
-                  case QuoteStatus.declined:
-                    finance.updateQuoteStatus(quote.id, QuoteStatus.signed);
-                    break;
+              onPressed: () async {
+                final controller = context.read<FinanceController>();
+                try {
+                  switch (quote.status) {
+                    case QuoteStatus.draft:
+                      await controller.updateQuoteStatus(
+                        quote.id,
+                        QuoteStatus.pendingSignature,
+                      );
+                      break;
+                    case QuoteStatus.pendingSignature:
+                      await controller.updateQuoteStatus(
+                        quote.id,
+                        QuoteStatus.signed,
+                      );
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(loc.financeSignatureSignedSnack),
+                        ),
+                      );
+                      break;
+                    case QuoteStatus.signed:
+                      await controller.updateQuoteStatus(
+                        quote.id,
+                        QuoteStatus.declined,
+                      );
+                      break;
+                    case QuoteStatus.declined:
+                      await controller.updateQuoteStatus(
+                        quote.id,
+                        QuoteStatus.signed,
+                      );
+                      break;
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  const snackBar = SnackBar(
+                    content: Text('Unable to update quote status.'),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
                 }
               },
               text: loc.financeSignatureAdvanceButton,
@@ -78,13 +94,13 @@ class FinanceSignatureTrackingScreen extends StatelessWidget {
 }
 
 class _TrackingHeader extends StatelessWidget {
-  final Quote? quote;
+  final Quote quote;
   const _TrackingHeader({required this.quote});
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = context.l10n;
-    final quoteNumber = quote?.id.substring(1);
+    final quoteNumber = quote.id.substring(1);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: BoxDecoration(
@@ -98,16 +114,18 @@ class _TrackingHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            loc.financeSignatureTrackingQuoteLabel(quoteNumber ?? '—'),
-            style: theme.textTheme.titleMedium?.copyWith(
+            loc.financeSignatureTrackingQuoteLabel(quoteNumber),
+            style: (theme.textTheme.titleMedium ?? const TextStyle()).copyWith(
               color: AppColors.secondaryText,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            quote?.clientName ?? loc.financeInvoiceUnknownClient,
-            style: theme.textTheme.bodySmall?.copyWith(
+            quote.clientName.isNotEmpty
+                ? quote.clientName
+                : loc.financeInvoiceUnknownClient,
+            style: (theme.textTheme.bodySmall ?? const TextStyle()).copyWith(
               color: AppColors.hintTextfiled,
               fontWeight: FontWeight.w600,
             ),

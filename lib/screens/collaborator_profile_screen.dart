@@ -1,38 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/common/models/collaborator_contact.dart';
+import 'package:myapp/controllers/project_controller.dart';
+import 'package:myapp/l10n/app_localizations.dart';
+import 'package:myapp/models/project.dart';
 
 class CollaboratorProfileScreen extends StatelessWidget {
   const CollaboratorProfileScreen({super.key, required this.collaboratorId});
 
   final String collaboratorId;
 
-  static final _CollaboratorProfile _sampleProfile = _CollaboratorProfile(
-    name: 'Sarah Collins',
-    profession: 'Photographer',
-    location: 'Paris, France',
-    rating: 4.8,
-    reviewCount: 32,
-    bio:
-        'Documentary-style photographer capturing candid moments for weddings and live events.',
-    skills: ['Photography', 'Editing', 'Lighting'],
-    collaborationHistory: [
-      'Dupont Wedding (with @Alex Carter)',
-      'Corporate Dinner (with @Karim Haddad)',
-      'Art Expo Launch (with @Laura Design)',
-    ],
-  );
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = context.l10n;
-    final profile = _sampleProfile; // Mocked; replace with real lookup later.
+    final controller = context.watch<ProjectController>();
+    final profile = _buildProfile(controller, loc);
+
+    if (profile == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(
+              FeatherIcons.chevronLeft,
+              color: AppColors.secondaryText,
+            ),
+            onPressed: () => context.pop(),
+          ),
+          title: Text(
+            loc.collaboratorsActionViewProfile,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: AppColors.secondaryText,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    loc.contactsEmptyMessage,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: CustomNavBar(currentRouteName: 'management'),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -68,7 +107,10 @@ class CollaboratorProfileScreen extends StatelessWidget {
               FeatherIcons.messageCircle,
               color: AppColors.secondaryText,
             ),
-            onPressed: () => context.pushNamed('collaborationChat'),
+            onPressed: () => context.pushNamed(
+              'collaborationChat',
+              queryParameters: {'contactId': collaboratorId},
+            ),
           ),
         ],
       ),
@@ -180,7 +222,10 @@ class CollaboratorProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
-                      onPressed: () => context.pushNamed('collaborationChat'),
+                      onPressed: () => context.pushNamed(
+                        'collaborationChat',
+                        queryParameters: {'contactId': collaboratorId},
+                      ),
                       icon: const Icon(
                         FeatherIcons.messageCircle,
                         color: AppColors.secondary,
@@ -216,6 +261,68 @@ class CollaboratorProfileScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  _CollaboratorProfile? _buildProfile(
+    ProjectController controller,
+    AppLocalizations loc,
+  ) {
+    final contact = controller.contactById(collaboratorId);
+    if (contact == null) {
+      return null;
+    }
+
+    final normalized = contact.name.trim().toLowerCase();
+    final involvement = <String>[];
+    final memberIdsByProject = <String, Set<String>>{};
+
+    for (final project in controller.projects) {
+      final matchingMembers = project.members.where(
+        (member) => _matchesContact(member, contact, normalized),
+      );
+      if (matchingMembers.isEmpty) {
+        continue;
+      }
+      involvement.add(
+        project.name.isEmpty ? loc.chatsUnnamedProject : project.name,
+      );
+      memberIdsByProject[project.id] = matchingMembers
+          .map((member) => member.id)
+          .whereType<String>()
+          .toSet();
+    }
+
+    final stats = _buildCollaboratorStats(
+      projects: controller.projects,
+      memberIdsByProject: memberIdsByProject,
+    );
+
+    final history = <String>{...involvement};
+    if (contact.lastProject != null) {
+      history.add(contact.lastProject!);
+    }
+
+    final bioBuffer = StringBuffer()
+      ..write('${contact.profession} • ${contact.location}. ');
+    if (contact.lastProject != null) {
+      bioBuffer.write(loc.collaboratorsLastProject(contact.lastProject!));
+    } else {
+      bioBuffer.write(loc.collaboratorsNoHistory);
+    }
+
+    final skills = contact.tags.isEmpty
+        ? <String>[contact.profession]
+        : contact.tags;
+
+    return _CollaboratorProfile(
+      name: contact.name,
+      profession: contact.profession,
+      location: contact.location,
+      stats: stats,
+      bio: bioBuffer.toString(),
+      skills: skills,
+      collaborationHistory: history.take(6).toList(growable: false),
     );
   }
 }
@@ -304,24 +411,28 @@ class _ProfileHeader extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Row(
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
                   children: [
-                    const Icon(
-                      FeatherIcons.star,
-                      size: 18,
-                      color: AppColors.secondary,
+                    _StatPill(
+                      value: '${profile.stats.projectCount}',
+                      label: loc.collaboratorStatProjectsLabel,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      loc.collaboratorReviewsMeta(
-                        profile.rating.toStringAsFixed(1),
-                        profile.reviewCount,
-                      ),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: AppColors.secondaryText,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    _StatPill(
+                      value: '${profile.stats.completedTasks}',
+                      label: loc.collaboratorStatCompletedTasksLabel,
                     ),
+                    _StatPill(
+                      value: '${profile.stats.activeTasks}',
+                      label: loc.collaboratorStatActiveTasksLabel,
+                    ),
+                    if (profile.stats.overdueTasks > 0)
+                      _StatPill(
+                        value: '${profile.stats.overdueTasks}',
+                        label: loc.collaboratorStatOverdueTasksLabel,
+                        highlight: true,
+                      ),
                   ],
                 ),
               ],
@@ -373,8 +484,7 @@ class _CollaboratorProfile {
     required this.name,
     required this.profession,
     required this.location,
-    required this.rating,
-    required this.reviewCount,
+    required this.stats,
     required this.bio,
     required this.skills,
     required this.collaborationHistory,
@@ -383,8 +493,7 @@ class _CollaboratorProfile {
   final String name;
   final String profession;
   final String location;
-  final double rating;
-  final int reviewCount;
+  final _CollaboratorStats stats;
   final String bio;
   final List<String> skills;
   final List<String> collaborationHistory;
@@ -402,5 +511,124 @@ class _CollaboratorProfile {
       return parts.first[0].toUpperCase();
     }
     return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+}
+
+class _CollaboratorStats {
+  const _CollaboratorStats({
+    required this.projectCount,
+    required this.completedTasks,
+    required this.activeTasks,
+    required this.overdueTasks,
+  });
+
+  final int projectCount;
+  final int completedTasks;
+  final int activeTasks;
+  final int overdueTasks;
+}
+
+_CollaboratorStats _buildCollaboratorStats({
+  required List<Project> projects,
+  required Map<String, Set<String>> memberIdsByProject,
+}) {
+  var completedTasks = 0;
+  var activeTasks = 0;
+  var overdueTasks = 0;
+  final now = DateTime.now();
+
+  for (final project in projects) {
+    final assigneeIds = memberIdsByProject[project.id];
+    if (assigneeIds == null || assigneeIds.isEmpty) {
+      continue;
+    }
+    for (final task in project.tasks) {
+      final assigneeId = task.assigneeId;
+      if (assigneeId == null || !assigneeIds.contains(assigneeId)) {
+        continue;
+      }
+      if (task.status == TaskStatus.completed) {
+        completedTasks += 1;
+      } else {
+        activeTasks += 1;
+        final dueDate = task.endDate;
+        if (dueDate != null && dueDate.isBefore(now)) {
+          overdueTasks += 1;
+        }
+      }
+    }
+  }
+
+  return _CollaboratorStats(
+    projectCount: memberIdsByProject.length,
+    completedTasks: completedTasks,
+    activeTasks: activeTasks,
+    overdueTasks: overdueTasks,
+  );
+}
+
+bool _matchesContact(
+  Member member,
+  CollaboratorContact contact,
+  String normalized,
+) {
+  if (member.contactId == contact.id) {
+    return true;
+  }
+  final memberName = member.name.trim().toLowerCase();
+  return memberName.isNotEmpty && memberName == normalized;
+}
+
+class _StatPill extends StatelessWidget {
+  const _StatPill({
+    required this.value,
+    required this.label,
+    this.highlight = false,
+  });
+
+  final String value;
+  final String label;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = highlight ? AppColors.error : AppColors.secondaryText;
+    final background = highlight
+        ? AppColors.error.withValues(alpha: 0.08)
+        : AppColors.textfieldBackground;
+    final borderColor = highlight
+        ? AppColors.error.withValues(alpha: 0.4)
+        : AppColors.textfieldBorder.withValues(alpha: 0.5);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: highlight ? AppColors.error : AppColors.hintTextfiled,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
@@ -9,12 +10,31 @@ import 'package:myapp/app/widgets/app_form_fields.dart';
 import 'package:myapp/app/widgets/avatar_stack.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/app/widgets/gradient_progress_bar.dart';
+import 'package:myapp/common/models/shared_file_record.dart';
+import 'package:myapp/common/utils/shared_file_builder.dart';
+import 'package:myapp/controllers/finance_controller.dart';
 import 'package:myapp/controllers/project_controller.dart';
+import 'package:myapp/controllers/user_controller.dart';
 import 'package:myapp/common/models/message.dart';
 import 'package:myapp/common/localization/formatters.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/utils/project_ui.dart';
+import 'package:myapp/models/finance.dart';
+import 'package:myapp/models/industry.dart';
 import 'package:myapp/models/project.dart';
+import 'package:myapp/l10n/app_localizations.dart';
+import 'package:myapp/services/chat_attachment_service.dart';
+
+String _filenameFromUrl(String url) {
+  try {
+    final uri = Uri.parse(url);
+    final segs = uri.pathSegments;
+    if (segs.isNotEmpty) return segs.last;
+    return url;
+  } catch (_) {
+    return url;
+  }
+}
 
 class ProjectDetailScreen extends StatelessWidget {
   final String projectId;
@@ -24,6 +44,7 @@ class ProjectDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ProjectController>();
+    final financeController = context.watch<FinanceController>();
     final project = controller.getById(projectId);
     final loc = context.l10n;
 
@@ -63,6 +84,16 @@ class ProjectDetailScreen extends StatelessWidget {
     }
 
     final messages = controller.messagesFor(project.id);
+    final industryExtension = controller.industryExtensionFor(project.id);
+    final financeSnapshot = _ProjectFinanceSnapshot.fromControllers(
+      project: project,
+      finance: financeController,
+    );
+    final projectFiles = SharedFileAggregator(
+      controller: controller,
+      loc: loc,
+    ).build(projectId: project.id);
+    final projectFilePreview = projectFiles.take(3).toList(growable: false);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -224,6 +255,13 @@ class ProjectDetailScreen extends StatelessWidget {
                         }
                       },
                     ),
+                    if (industryExtension != null) ...[
+                      const SizedBox(height: 18),
+                      _IndustryInsightsCard(
+                        extension: industryExtension,
+                        loc: loc,
+                      ),
+                    ],
                     const SizedBox(height: 18),
                     _SectionCard(
                       title: loc.projectDetailScheduleTitle,
@@ -349,25 +387,93 @@ class ProjectDetailScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              _FinanceTile(
-                                label: loc.projectDetailFinanceBilled,
-                                value: '€850',
-                              ),
-                              const SizedBox(width: 16),
-                              _FinanceTile(
-                                label: loc.projectDetailFinancePaid,
-                                value: '€0',
-                              ),
-                              const SizedBox(width: 16),
-                              _FinanceTile(
-                                label: loc.projectDetailFinanceRemaining,
-                                value: '€850',
-                              ),
-                            ],
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isCompact = constraints.maxWidth < 520;
+                              final tiles = <Widget>[
+                                _FinanceTile(
+                                  label: loc.projectDetailFinanceBilled,
+                                  value: formatCurrency(
+                                    context,
+                                    financeSnapshot.totalBilled,
+                                  ),
+                                ),
+                                _FinanceTile(
+                                  label: loc.projectDetailFinancePaid,
+                                  value: formatCurrency(
+                                    context,
+                                    financeSnapshot.totalPaid,
+                                  ),
+                                ),
+                                _FinanceTile(
+                                  label: loc.projectDetailFinanceRemaining,
+                                  value: formatCurrency(
+                                    context,
+                                    financeSnapshot.totalOutstanding,
+                                  ),
+                                ),
+                              ];
+                              if (isCompact) {
+                                return Column(
+                                  children: [
+                                    for (int i = 0; i < tiles.length; i++) ...[
+                                      tiles[i],
+                                      if (i != tiles.length - 1)
+                                        const SizedBox(height: 12),
+                                    ],
+                                  ],
+                                );
+                              }
+                              return Row(
+                                children: [
+                                  for (int i = 0; i < tiles.length; i++) ...[
+                                    Expanded(child: tiles[i]),
+                                    if (i != tiles.length - 1)
+                                      const SizedBox(width: 14),
+                                  ],
+                                ],
+                              );
+                            },
                           ),
                           const SizedBox(height: 16),
+                          if (financeSnapshot.hasData) ...[
+                            Text(
+                              loc.financeUpcomingTitle,
+                              style: Theme.of(context).textTheme.labelLarge
+                                  ?.copyWith(
+                                    color: AppColors.hintTextfiled,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (financeSnapshot.upcomingInvoices.isEmpty)
+                              Text(
+                                loc.financeUpcomingEmpty,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.hintTextfiled,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              )
+                            else
+                              ...financeSnapshot.upcomingInvoices
+                                  .take(2)
+                                  .map(
+                                    (invoice) =>
+                                        _UpcomingInvoiceRow(invoice: invoice),
+                                  ),
+                            const SizedBox(height: 12),
+                          ] else ...[
+                            Text(
+                              loc.financeReportingChartPlaceholder,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: AppColors.hintTextfiled,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                           GradientButton(
                             onPressed: () => context.pushNamed('createQuote'),
                             text: loc.projectDetailFinanceCreateQuote,
@@ -383,13 +489,86 @@ class ProjectDetailScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _FileTile(fileName: 'contracts.pdf', onTap: () {}),
+                          if (projectFilePreview.isEmpty)
+                            Text(
+                              loc.sharedFilesUploadCta,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: AppColors.hintTextfiled,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            )
+                          else ...[
+                            for (
+                              int i = 0;
+                              i < projectFilePreview.length;
+                              i++
+                            ) ...[
+                              _ProjectFileRow(file: projectFilePreview[i]),
+                              if (i != projectFilePreview.length - 1)
+                                const Divider(
+                                  height: 16,
+                                  color: AppColors.textfieldBorder,
+                                ),
+                            ],
+                            if (projectFiles.length > projectFilePreview.length)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 10,
+                                  bottom: 6,
+                                ),
+                                child: Text(
+                                  '${loc.sharedFilesTitle} (${projectFiles.length})',
+                                  style: Theme.of(context).textTheme.labelMedium
+                                      ?.copyWith(
+                                        color: AppColors.hintTextfiled,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ),
+                          ],
                           const SizedBox(height: 12),
-                          GradientButton(
-                            onPressed: () {},
-                            text: loc.projectDetailFilesAdd,
-                            width: double.infinity,
-                            height: 48,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GradientButton(
+                                  onPressed: () => _handleProjectFileUpload(
+                                    context,
+                                    controller,
+                                    project.id,
+                                  ),
+                                  text: loc.projectDetailFilesAdd,
+                                  width: double.infinity,
+                                  height: 48,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () =>
+                                      context.pushNamed('sharedFiles'),
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(48),
+                                    side: const BorderSide(
+                                      color: AppColors.textfieldBorder,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    loc.sharedFilesTitle,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          color: AppColors.secondaryText,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -1044,6 +1223,140 @@ class _AttachmentPill extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _IndustryInsightsCard extends StatelessWidget {
+  const _IndustryInsightsCard({required this.extension, required this.loc});
+
+  final ProjectIndustryExtension extension;
+  final AppLocalizations loc;
+
+  @override
+  Widget build(BuildContext context) {
+    if (extension is! CatererProjectExtension) {
+      return const SizedBox.shrink();
+    }
+    final caterer = extension as CatererProjectExtension;
+    final rows = <_IndustryInsightRow>[];
+    if (caterer.guestCount != null) {
+      rows.add(
+        _IndustryInsightRow(
+          label: loc.projectDetailIndustryGuests,
+          value: loc.projectDetailIndustryGuestsValue(caterer.guestCount!),
+        ),
+      );
+    }
+    if (caterer.menuStyle != null && caterer.menuStyle!.isNotEmpty) {
+      rows.add(
+        _IndustryInsightRow(
+          label: loc.projectDetailIndustryMenu,
+          value: caterer.menuStyle!,
+        ),
+      );
+    }
+    if (caterer.allergyNotes != null && caterer.allergyNotes!.isNotEmpty) {
+      rows.add(
+        _IndustryInsightRow(
+          label: loc.projectDetailIndustryAllergies,
+          value: caterer.allergyNotes!,
+        ),
+      );
+    }
+    if (caterer.serviceStyle != null && caterer.serviceStyle!.isNotEmpty) {
+      rows.add(
+        _IndustryInsightRow(
+          label: loc.projectDetailIndustryService,
+          value: caterer.serviceStyle!,
+        ),
+      );
+    }
+    if (caterer.requiresTasting) {
+      final tastingValue = caterer.tastingDate != null
+          ? loc.projectDetailIndustryTastingScheduled(
+              DateFormat.yMMMd().format(caterer.tastingDate!),
+            )
+          : loc.projectDetailIndustryTastingPending;
+      rows.add(
+        _IndustryInsightRow(
+          label: loc.projectDetailIndustryTasting,
+          value: tastingValue,
+        ),
+      );
+    }
+    rows.add(
+      _IndustryInsightRow(
+        label: loc.projectDetailIndustryKitchen,
+        value: caterer.requiresOnsiteKitchen
+            ? loc.projectDetailIndustryKitchenRequired
+            : loc.projectDetailIndustryKitchenOptional,
+      ),
+    );
+    if (caterer.kitchenNotes != null && caterer.kitchenNotes!.isNotEmpty) {
+      rows.add(
+        _IndustryInsightRow(
+          label: loc.projectDetailIndustryKitchenNotes,
+          value: caterer.kitchenNotes!,
+        ),
+      );
+    }
+
+    if (rows.isEmpty) {
+      rows.add(
+        _IndustryInsightRow(
+          label: loc.projectDetailIndustryEmptyLabel,
+          value: loc.projectDetailIndustryEmptyValue,
+          emphasized: true,
+        ),
+      );
+    }
+
+    return _SectionCard(
+      title: loc.projectDetailIndustryTitle,
+      child: Column(
+        children: [
+          for (int i = 0; i < rows.length; i++) ...[
+            rows[i],
+            if (i != rows.length - 1) const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _IndustryInsightRow extends StatelessWidget {
+  const _IndustryInsightRow({
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+  });
+
+  final String label;
+  final String value;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: AppColors.hintTextfiled,
+      fontWeight: FontWeight.w600,
+    );
+    final valueStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: emphasized ? AppColors.secondary : AppColors.secondaryText,
+      fontWeight: emphasized ? FontWeight.bold : FontWeight.w600,
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: Text(label, style: labelStyle)),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
+          child: Text(value, textAlign: TextAlign.right, style: valueStyle),
+        ),
+      ],
     );
   }
 }
@@ -2085,8 +2398,10 @@ class _TaskTile extends StatelessWidget {
                       runSpacing: 10,
                       children: task.attachments
                           .map(
-                            (file) =>
-                                _AttachmentPill(label: file, removable: false),
+                            (file) => _AttachmentPill(
+                              label: _filenameFromUrl(file),
+                              removable: false,
+                            ),
                           )
                           .toList(),
                     ),
@@ -2109,74 +2424,501 @@ class _FinanceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.textfieldBackground,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: AppColors.hintTextfiled,
-                fontWeight: FontWeight.bold,
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.textfieldBackground,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.hintTextfiled,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.secondaryText,
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppColors.secondaryText,
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _FileTile extends StatelessWidget {
-  const _FileTile({required this.fileName, required this.onTap});
+class _ProjectFileRow extends StatelessWidget {
+  const _ProjectFileRow({required this.file});
 
-  final String fileName;
-  final VoidCallback onTap;
+  final SharedFileSummary file;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.textfieldBackground,
-          borderRadius: BorderRadius.circular(18),
+    final theme = Theme.of(context);
+    final loc = context.l10n;
+    final iconData = switch (file.category) {
+      SharedFileCategory.pdf => FeatherIcons.fileText,
+      SharedFileCategory.image => FeatherIcons.image,
+      SharedFileCategory.spreadsheet => FeatherIcons.file,
+    };
+    final originLabel = switch (file.origin) {
+      SharedFileOrigin.task => loc.projectDetailTasksTitle,
+      SharedFileOrigin.chat => loc.projectDetailDiscussionTitle,
+      SharedFileOrigin.library => loc.sharedFilesOriginLibrary,
+    };
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: AppColors.textfieldBackground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          alignment: Alignment.center,
+          child: Icon(iconData, size: 18, color: AppColors.secondary),
         ),
-        child: Row(
-          children: [
-            const Icon(FeatherIcons.fileText, color: AppColors.secondaryText),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                fileName,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                file.name,
+                style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.secondaryText,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            const Icon(
-              FeatherIcons.chevronRight,
-              color: AppColors.hintTextfiled,
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                loc.sharedFilesFileMeta(
+                  file.category.label(loc),
+                  file.sizeLabel,
+                ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.hintTextfiled,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${file.projectName} • $originLabel',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.hintTextfiled,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                loc.sharedFilesUploadedMeta(file.uploader, file.timestampLabel),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.hintTextfiled,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
+      ],
+    );
+  }
+}
+
+class _UpcomingInvoiceRow extends StatelessWidget {
+  const _UpcomingInvoiceRow({required this.invoice});
+
+  final Invoice invoice;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final loc = context.l10n;
+    final amountLabel = formatCurrency(context, invoice.amount);
+    final clientLabel = invoice.clientName.isEmpty
+        ? loc.financeInvoiceUnknownClient
+        : invoice.clientName;
+    final dueDate = invoice.dueDate;
+    final dueLabel = dueDate == null
+        ? loc.financeUpcomingNoDueDate
+        : DateFormat.yMMMd(loc.localeName).format(dueDate);
+    final dueDelta = dueDate?.difference(
+      DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+    );
+    final daysDiff = dueDelta?.inDays;
+    final badgeLabel = _invoiceBadgeLabel(loc, daysDiff);
+    final badgeColor = (daysDiff != null && daysDiff < 0)
+        ? AppColors.error
+        : AppColors.secondary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.financeInvoiceTitle(_invoiceNumber(invoice.id)),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: AppColors.secondaryText,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  clientLabel,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.hintTextfiled,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  dueLabel,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.hintTextfiled,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  badgeLabel,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: badgeColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                amountLabel,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.secondaryText,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
+  }
+}
+
+class _ProjectFinanceSnapshot {
+  const _ProjectFinanceSnapshot({
+    required this.totalBilled,
+    required this.totalPaid,
+    required this.totalOutstanding,
+    required this.upcomingInvoices,
+    required this.linkedInvoiceCount,
+  });
+
+  final double totalBilled;
+  final double totalPaid;
+  final double totalOutstanding;
+  final List<Invoice> upcomingInvoices;
+  final int linkedInvoiceCount;
+
+  bool get hasData => linkedInvoiceCount > 0;
+
+  factory _ProjectFinanceSnapshot.fromControllers({
+    required Project project,
+    required FinanceController finance,
+  }) {
+    // Prefer invoices that explicitly reference this project's ID. For
+    // backward-compatibility, if no invoice has a `projectId` for this
+    // project, fall back to the legacy client-name fuzzy match.
+    final byProjectId = finance.invoices
+        .where(
+          (invoice) =>
+              invoice.projectId != null && invoice.projectId == project.id,
+        )
+        .toList(growable: false);
+    final invoices = byProjectId.isNotEmpty
+        ? byProjectId
+        : () {
+            final key = _financeMatchKey(project);
+            if (key == null) return <Invoice>[];
+            return finance.invoices
+                .where(
+                  (invoice) => invoice.clientName.trim().toLowerCase() == key,
+                )
+                .toList(growable: false);
+          }();
+    final totalBilled = invoices.fold<double>(
+      0,
+      (sum, invoice) => sum + invoice.amount,
+    );
+    final totalPaid = invoices
+        .where((invoice) => invoice.status == InvoiceStatus.paid)
+        .fold<double>(0, (sum, invoice) => sum + invoice.amount);
+    final totalOutstanding = invoices
+        .where((invoice) => invoice.status == InvoiceStatus.unpaid)
+        .fold<double>(0, (sum, invoice) => sum + invoice.amount);
+    final upcoming =
+        invoices
+            .where(
+              (invoice) =>
+                  invoice.status == InvoiceStatus.unpaid &&
+                  invoice.dueDate != null,
+            )
+            .toList(growable: false)
+          ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+
+    return _ProjectFinanceSnapshot(
+      totalBilled: totalBilled,
+      totalPaid: totalPaid,
+      totalOutstanding: totalOutstanding,
+      upcomingInvoices: upcoming,
+      linkedInvoiceCount: invoices.length,
+    );
+  }
+
+  static String? _financeMatchKey(Project project) {
+    final candidate =
+        (project.client.isNotEmpty ? project.client : project.name)
+            .trim()
+            .toLowerCase();
+    if (candidate.isEmpty) {
+      return null;
+    }
+    return candidate;
+  }
+}
+
+String _invoiceBadgeLabel(AppLocalizations loc, int? daysDiff) {
+  if (daysDiff == null) {
+    return loc.financeUpcomingNoDueDate;
+  }
+  if (daysDiff < 0) {
+    return loc.financeUpcomingBadgeOverdue(daysDiff.abs());
+  }
+  if (daysDiff == 0) {
+    return loc.financeUpcomingBadgeDueToday;
+  }
+  if (daysDiff <= 3) {
+    return loc.financeUpcomingBadgeDueSoon;
+  }
+  return loc.financeUpcomingBadgeDueIn(daysDiff);
+}
+
+String _invoiceNumber(String id) {
+  final match = RegExp(r'(\d+)').firstMatch(id);
+  if (match != null) {
+    return match.group(0)!;
+  }
+  return id;
+}
+
+Future<ChatAttachmentSource?> _pickAttachmentSourceFor(
+  BuildContext context,
+) async {
+  return showModalBottomSheet<ChatAttachmentSource>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) {
+      final loc = sheetContext.l10n;
+      final bottomPadding = MediaQuery.of(sheetContext).viewPadding.bottom;
+      final theme = Theme.of(sheetContext);
+      return SafeArea(
+        top: false,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.secondaryBackground,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(24, 20, 24, 16 + bottomPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    loc.sharedFilesPickerTitle,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.textfieldBackground,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(FeatherIcons.image, color: AppColors.secondary),
+                  ),
+                  title: Text(
+                    loc.collaborationChatAttachPhoto,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onTap: () => Navigator.of(
+                    sheetContext,
+                  ).pop(ChatAttachmentSource.photoLibrary),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.textfieldBackground,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      FeatherIcons.fileText,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                  title: Text(
+                    loc.collaborationChatAttachDocument,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onTap: () => Navigator.of(
+                    sheetContext,
+                  ).pop(ChatAttachmentSource.document),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.textfieldBackground,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(FeatherIcons.file, color: AppColors.secondary),
+                  ),
+                  title: Text(
+                    loc.collaborationChatAttachPdf,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop(ChatAttachmentSource.pdf),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.textfieldBackground,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      FeatherIcons.camera,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                  title: Text(
+                    loc.collaborationChatAttachCamera,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: AppColors.secondaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onTap: () => Navigator.of(
+                    sheetContext,
+                  ).pop(ChatAttachmentSource.camera),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _handleProjectFileUpload(
+  BuildContext context,
+  ProjectController controller,
+  String projectId,
+) async {
+  final loc = context.l10n;
+  final userController = context.read<UserController>();
+  final scaffold = ScaffoldMessenger.of(context);
+  final attachmentService = ChatAttachmentService();
+
+  final source = await _pickAttachmentSourceFor(context);
+  if (source == null) return;
+
+  try {
+    final uploaded = await attachmentService.pickAndUpload(source);
+    if (uploaded == null) return;
+
+    final uploaderId =
+        controller.currentUserId ?? controller.currentUserEmail ?? 'anonymous';
+    final uploaderName =
+        userController.profile?.displayName ??
+        controller.currentUserEmail ??
+        uploaderId;
+    final draft = SharedFileDraft(
+      fileUrl: uploaded.url,
+      fileName: uploaded.name,
+      contentType: uploaded.contentType,
+      sizeBytes: uploaded.sizeBytes,
+      origin: SharedFileOrigin.library,
+      uploaderId: uploaderId,
+      uploaderName: uploaderName,
+      projectId: projectId,
+    );
+    await controller.saveSharedFile(draft);
+    scaffold
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(loc.sharedFilesUploadSuccess)));
+  } catch (_) {
+    scaffold
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(loc.sharedFilesUploadFailure)));
   }
 }

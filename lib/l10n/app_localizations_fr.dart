@@ -22,6 +22,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get contactsAdd => 'Ajouter un contact';
 
   @override
+  String get contactsEmptyMessage =>
+      'No contacts yet. Add your first client or collaborator to get started.';
+
+  @override
   String get collaboratorsTitle => 'Mes collaborateurs';
 
   @override
@@ -82,6 +86,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get collaboratorSectionHistory => 'Historique de collaboration';
 
   @override
+  String get collaboratorStatProjectsLabel => 'Projets';
+
+  @override
+  String get collaboratorStatCompletedTasksLabel => 'Tâches terminées';
+
+  @override
+  String get collaboratorStatActiveTasksLabel => 'Tâches en cours';
+
+  @override
+  String get collaboratorStatOverdueTasksLabel => 'En retard';
+
+  @override
   String get collaboratorSendMessage => 'Envoyer un message';
 
   @override
@@ -124,6 +140,30 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileInvitationNotifications => 'Notifications d\'invitation';
 
   @override
+  String get editProfileTitle => 'Modifier le profil';
+
+  @override
+  String get editProfileHeadline =>
+      'Actualisez vos informations pour garder l\'équipe alignée.';
+
+  @override
+  String get editProfileSubtitle =>
+      'Chaque modification est partagée instantanément dans Rush Manage.';
+
+  @override
+  String get editProfileSave => 'Enregistrer les modifications';
+
+  @override
+  String get editProfileSuccess => 'Profil mis à jour';
+
+  @override
+  String get profileLogoutButton => 'Se déconnecter';
+
+  @override
+  String get profileLogoutError =>
+      'Nous n\'avons pas pu vous déconnecter. Veuillez réessayer.';
+
+  @override
   String get profileContactSection => 'Contact';
 
   @override
@@ -137,6 +177,32 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileLocationLabel => 'Localisation';
+
+  @override
+  String get profileErrorFullName =>
+      'Ajoutez votre nom complet avant de continuer.';
+
+  @override
+  String get profileErrorRole => 'Indiquez votre rôle ou titre.';
+
+  @override
+  String get profileErrorLocation => 'Précisez votre localisation.';
+
+  @override
+  String get profileErrorFocus =>
+      'Choisissez au moins un domaine d\'expertise.';
+
+  @override
+  String get profileErrorIndustry =>
+      'Sélectionnez l\'industrie principale que vous servez.';
+
+  @override
+  String get profileErrorAvatar =>
+      'Ajoutez une photo de profil pour continuer.';
+
+  @override
+  String get profileErrorGeneric =>
+      'Impossible d\'enregistrer le profil, veuillez réessayer.';
 
   @override
   String get commonOr => 'OU';
@@ -178,6 +244,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonSkip => 'Ignorer pour l\'instant';
 
   @override
+  String get commonTryAgain => 'Réessayer';
+
+  @override
   String get commonSearchContacts =>
       'Rechercher des contacts par nom ou projet';
 
@@ -192,6 +261,39 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get commonCollaboratorsFilter => 'Collaborateurs';
+
+  @override
+  String get commonSuppliersFilter => 'Fournisseurs';
+
+  @override
+  String get planUpgradeProjectsTitle => 'Limite de l\'offre gratuite atteinte';
+
+  @override
+  String get planUpgradeProjectsDescription =>
+      'L\'espace gratuit permet de gérer jusqu\'à 2 projets actifs. Passez à l\'offre supérieure pour continuer.';
+
+  @override
+  String get planUpgradeDocumentsTitle => 'Limite de documents atteinte';
+
+  @override
+  String get planUpgradeDocumentsDescription =>
+      'L\'espace gratuit permet d\'envoyer jusqu\'à 5 devis ou factures au total. Passez à l\'offre supérieure pour continuer à facturer.';
+
+  @override
+  String get planUpgradeGeneralHeading => 'Offres générales';
+
+  @override
+  String get planUpgradeAddOnHeading => 'Modules par profession';
+
+  @override
+  String get planUpgradeTrialCta => 'Ajouter 1 jour Pro';
+
+  @override
+  String get planUpgradeTrialFooter =>
+      'Paiements disponibles bientôt. Cette période d\'essai débloque tout temporairement.';
+
+  @override
+  String get planUpgradeTrialActivated => 'Accès Pro activé pendant 1 jour.';
 
   @override
   String get commonProjectsFilter => 'Projets';
@@ -249,6 +351,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get loginSocialApple => 'Continuer avec Apple';
 
   @override
+  String get loginAppleUnavailable =>
+      'La connexion Apple n\'est pas encore configurée.';
+
+  @override
   String get loginNoAccountPrompt => 'Pas encore de compte ?';
 
   @override
@@ -285,6 +391,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get registrationPasswordTooShort =>
       'Le mot de passe doit contenir au moins 6 caractères.';
+
+  @override
+  String get registrationEmailConflict =>
+      'Un compte existe déjà avec cet e-mail. Essayez de vous connecter.';
 
   @override
   String get registrationGenericError =>
@@ -372,6 +482,19 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ajoutez un visage, un rôle et des domaines d\'expertise pour que l\'équipe sache qui vous êtes.';
 
   @override
+  String get setupIndustrySectionTitle => 'Primary industry';
+
+  @override
+  String get setupIndustrySectionSubtitle =>
+      'Activate an industry module to unlock tailored workflows.';
+
+  @override
+  String get setupIndustryOptionCore => 'General workspace';
+
+  @override
+  String get setupIndustryOptionCaterer => 'Events & catering';
+
+  @override
   String get setupFinish => 'Terminer la configuration';
 
   @override
@@ -397,6 +520,24 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get chatsBadgeContact => 'Contact';
+
+  @override
+  String get chatsEmptyTitle => 'Aucun fil de projet';
+
+  @override
+  String get chatsEmptySubtitle =>
+      'Les collaborateurs apparaîtront ici dès qu\'un chat démarre.';
+
+  @override
+  String get chatsNoMessagesYet =>
+      'Pas encore de mises à jour. Ouvrez le projet pour commencer à échanger.';
+
+  @override
+  String get chatsUnnamedProject => 'Projet sans nom';
+
+  @override
+  String get chatsSearchEmpty =>
+      'Aucune conversation ne correspond à vos filtres.';
 
   @override
   String homeGreeting(Object name) {
@@ -575,6 +716,63 @@ class AppLocalizationsFr extends AppLocalizations {
   String sharedFilesUploadedMeta(Object uploader, Object timestamp) {
     return 'Ajouté par $uploader · $timestamp';
   }
+
+  @override
+  String get sharedFilesWorkspaceLibrary =>
+      'Bibliothèque de l\'espace de travail';
+
+  @override
+  String get sharedFilesOriginLibrary => 'Bibliothèque partagée';
+
+  @override
+  String get sharedFilesUploadSuccess =>
+      'Fichier ajouté à la bibliothèque partagée.';
+
+  @override
+  String get sharedFilesUploadFailure =>
+      'Impossible de téléverser le fichier. Réessayez.';
+
+  @override
+  String get sharedFilesPickerTitle => 'Choisissez une source de fichier';
+
+  @override
+  String get sharedFilesDestinationTitle =>
+      'Où devons-nous stocker ce fichier ?';
+
+  @override
+  String get sharedFilesDestinationWorkspaceSubtitle =>
+      'Le conserver dans la bibliothèque de l\'espace';
+
+  @override
+  String get sharedFilesDestinationProjectSubtitle => 'L\'associer à ce projet';
+
+  @override
+  String get sharedFilesDownloadError =>
+      'Impossible d\'ouvrir le lien du fichier.';
+
+  @override
+  String get sharedFilesMenuCopyLink => 'Copier le lien';
+
+  @override
+  String get sharedFilesMenuOpen => 'Ouvrir dans le navigateur';
+
+  @override
+  String get sharedFilesMenuRemove => 'Retirer de la bibliothèque';
+
+  @override
+  String get sharedFilesCopySuccess => 'Lien copié dans le presse-papiers.';
+
+  @override
+  String sharedFilesRemoveConfirm(Object name) {
+    return 'Retirer $name des fichiers partagés ?';
+  }
+
+  @override
+  String get sharedFilesRemoveSuccess =>
+      'Fichier retiré de la bibliothèque partagée.';
+
+  @override
+  String get sharedFilesRemoveFailure => 'Impossible de retirer ce fichier.';
 
   @override
   String get analyticsTitle => 'Analyses';
@@ -774,6 +972,41 @@ class AppLocalizationsFr extends AppLocalizations {
   String get collaborationChatReactTooltip => 'Réagir au message';
 
   @override
+  String get emojiReactionPickerTitle => 'Réagir avec un emoji';
+
+  @override
+  String get chatReplyAction => 'Répondre';
+
+  @override
+  String chatReplyingTo(Object name) {
+    return 'Réponse à $name';
+  }
+
+  @override
+  String get chatCancelReplyTooltip => 'Annuler la réponse';
+
+  @override
+  String get chatMessageNotAvailable => 'Message indisponible';
+
+  @override
+  String get chatQuotedFallbackMessage => 'Message';
+
+  @override
+  String get chatAttachmentUploadError =>
+      'Impossible d\'envoyer la pièce jointe. Veuillez réessayer.';
+
+  @override
+  String chatAttachmentCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# pièces jointes',
+      one: '# pièce jointe',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get contactDetailTitle => 'Fiche contact';
 
   @override
@@ -877,6 +1110,53 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ajoutez un bref résumé pour votre équipe...';
 
   @override
+  String get createProjectCatererSectionTitle => 'Event & catering context';
+
+  @override
+  String get createProjectCatererSectionSubtitle =>
+      'Capture headcount, menu preferences, and kitchen needs for this project.';
+
+  @override
+  String get createProjectCatererGuestCountLabel => 'Guests';
+
+  @override
+  String get createProjectCatererGuestCountHint => 'Number of expected guests';
+
+  @override
+  String get createProjectCatererMenuLabel => 'Menu style';
+
+  @override
+  String get createProjectCatererMenuHint =>
+      'e.g. Seated dinner, buffet, cocktail';
+
+  @override
+  String get createProjectCatererAllergyLabel => 'Allergies & dietary notes';
+
+  @override
+  String get createProjectCatererAllergyHint =>
+      'Summarise restrictions or allergy notes';
+
+  @override
+  String get createProjectCatererServiceLabel => 'Service flow';
+
+  @override
+  String get createProjectCatererServiceHint =>
+      'e.g. Ceremony canapés, plated mains, late-night snacks';
+
+  @override
+  String get createProjectCatererTastingToggle => 'Tasting required';
+
+  @override
+  String get createProjectCatererKitchenToggle => 'On-site kitchen support';
+
+  @override
+  String get createProjectCatererKitchenLabel => 'Kitchen notes';
+
+  @override
+  String get createProjectCatererKitchenHint =>
+      'Access constraints, equipment, or vendor notes';
+
+  @override
   String get createProjectInviteTitle => 'Inviter des membres de l\'équipe';
 
   @override
@@ -905,6 +1185,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String createProjectPreviewLink(Object link) {
     return 'Lien de prévisualisation : $link';
   }
+
+  @override
+  String get createProjectErrorGeneric =>
+      'Impossible de créer le projet. Veuillez réessayer.';
 
   @override
   String get createProjectPrimaryCta => 'Créer le projet';
@@ -1385,6 +1669,58 @@ class AppLocalizationsFr extends AppLocalizations {
   String get projectDetailScheduleCta => 'Ouvrir le planning';
 
   @override
+  String get projectDetailIndustryTitle => 'Contexte événement & traiteur';
+
+  @override
+  String get projectDetailIndustryGuests => 'Invités';
+
+  @override
+  String projectDetailIndustryGuestsValue(int count) {
+    return '$count invités';
+  }
+
+  @override
+  String get projectDetailIndustryMenu => 'Style de menu';
+
+  @override
+  String get projectDetailIndustryAllergies => 'Allergies & restrictions';
+
+  @override
+  String get projectDetailIndustryService => 'Déroulé du service';
+
+  @override
+  String get projectDetailIndustryTasting => 'Dégustation';
+
+  @override
+  String projectDetailIndustryTastingScheduled(Object date) {
+    return 'Prévue le $date';
+  }
+
+  @override
+  String get projectDetailIndustryTastingPending => 'Date à confirmer';
+
+  @override
+  String get projectDetailIndustryKitchen => 'Support cuisine';
+
+  @override
+  String get projectDetailIndustryKitchenRequired =>
+      'Cuisine sur place requise';
+
+  @override
+  String get projectDetailIndustryKitchenOptional =>
+      'Support cuisine optionnel';
+
+  @override
+  String get projectDetailIndustryKitchenNotes => 'Notes cuisine';
+
+  @override
+  String get projectDetailIndustryEmptyLabel => 'Détails industrie';
+
+  @override
+  String get projectDetailIndustryEmptyValue =>
+      'Aucun contexte supplémentaire pour l\'instant.';
+
+  @override
   String get projectDetailTeamTitle => 'Équipe';
 
   @override
@@ -1746,6 +2082,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get crmContactTypeCollaborator => 'Collaborateur';
+
+  @override
+  String get crmContactTypeSupplier => 'Fournisseur';
 
   @override
   String get crmRowInsights => 'Aperçus';

@@ -1,6 +1,26 @@
 import 'package:equatable/equatable.dart';
 
+typedef JsonMap = Map<String, dynamic>;
+
 enum CollaboratorAvailability { available, busy, offline }
+
+extension CollaboratorAvailabilityMapper on CollaboratorAvailability {
+  static const Map<CollaboratorAvailability, String> _storage = {
+    CollaboratorAvailability.available: 'available',
+    CollaboratorAvailability.busy: 'busy',
+    CollaboratorAvailability.offline: 'offline',
+  };
+
+  String get storageValue => _storage[this] ?? 'available';
+
+  static CollaboratorAvailability fromStorage(String? value) {
+    final entry = _storage.entries.firstWhere(
+      (item) => item.value == value,
+      orElse: () => const MapEntry(CollaboratorAvailability.available, ''),
+    );
+    return entry.key;
+  }
+}
 
 typedef CollaboratorTag = String;
 
@@ -62,4 +82,37 @@ class CollaboratorContact extends Equatable {
     lastProject,
     tags,
   ];
+
+  factory CollaboratorContact.fromJson(JsonMap json) => CollaboratorContact(
+    id: json['id'] as String,
+    name: json['name'] as String? ?? '',
+    profession: json['profession'] as String? ?? '',
+    availability: CollaboratorAvailabilityMapper.fromStorage(
+      json['availability'] as String?,
+    ),
+    location: json['location'] as String? ?? '',
+    email: json['email'] as String? ?? '',
+    phone: json['phone'] as String?,
+    lastProject: json['last_project'] as String?,
+    tags: _stringList(json['tags']),
+  );
+
+  JsonMap toJson() => {
+    'id': id,
+    'name': name,
+    'profession': profession,
+    'availability': availability.storageValue,
+    'location': location,
+    'email': email,
+    'phone': phone,
+    'last_project': lastProject,
+    'tags': tags,
+  };
+}
+
+List<String> _stringList(dynamic source) {
+  if (source is List) {
+    return source.whereType<String>().toList(growable: false);
+  }
+  return const [];
 }

@@ -8,6 +8,7 @@ class AppFormTextField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.hintText,
+    this.labelText,
     this.maxLines = 1,
     this.keyboardType,
     this.validator,
@@ -17,6 +18,7 @@ class AppFormTextField extends StatelessWidget {
 
   final TextEditingController controller;
   final String hintText;
+  final String? labelText;
   final int maxLines;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
@@ -25,7 +27,7 @@ class AppFormTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final field = Container(
       decoration: BoxDecoration(
         color: AppColors.secondaryBackground,
         borderRadius: BorderRadius.circular(16),
@@ -73,6 +75,30 @@ class AppFormTextField extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+
+    if (labelText == null) {
+      return field;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          labelText!,
+          style:
+              Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: AppColors.secondaryText,
+                fontWeight: FontWeight.w600,
+              ) ??
+              const TextStyle(
+                color: AppColors.secondaryText,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        const SizedBox(height: 6),
+        field,
+      ],
     );
   }
 }

@@ -4,6 +4,7 @@
   "contactsTitle": "Contacts",
   "contactsSubtitle": "Centralize clients and collaborators in one place.",
   "contactsAdd": "Add contact",
+  "contactsEmptyMessage": "No contacts yet. Add your first client or collaborator to get started.",
   "collaboratorsTitle": "My Collaborators",
   "collaboratorsInvitationsButton": "Invitations",
   "collaboratorsInviteCta": "+ Invite",
@@ -28,6 +29,10 @@
   "collaboratorSectionSkills": "Key Skills",
   "collaboratorSectionAbout": "About",
   "collaboratorSectionHistory": "Collaboration History",
+  "collaboratorStatProjectsLabel": "Projects",
+  "collaboratorStatCompletedTasksLabel": "Tasks completed",
+  "collaboratorStatActiveTasksLabel": "Active tasks",
+  "collaboratorStatOverdueTasksLabel": "Overdue",
   "collaboratorSendMessage": "Send Message",
   "collaboratorReviewsMeta": "{rating} • {count} reviews",
   "@collaboratorReviewsMeta": {
@@ -49,11 +54,25 @@
   "profileEditButton": "Edit Profile",
   "profileViewAnalytics": "View Analytics",
   "profileInvitationNotifications": "Invitation Notifications",
+  "editProfileTitle": "Edit Profile",
+  "editProfileHeadline": "Refresh your details to keep teammates aligned.",
+  "editProfileSubtitle": "Updates sync across Rush Manage instantly.",
+  "editProfileSave": "Save changes",
+  "editProfileSuccess": "Profile updated",
+  "profileLogoutButton": "Log out",
+  "profileLogoutError": "We couldn't sign you out. Please try again.",
   "profileContactSection": "Contact",
   "profileFocusAreaSection": "Focus Area",
   "profileEmailLabel": "Email",
   "profilePhoneLabel": "Phone",
   "profileLocationLabel": "Location",
+  "profileErrorFullName": "Add your full name before continuing.",
+  "profileErrorRole": "Tell us your role or title.",
+  "profileErrorLocation": "Share where you're based.",
+  "profileErrorFocus": "Pick at least one focus area.",
+  "profileErrorIndustry": "Select the primary industry you serve.",
+  "profileErrorAvatar": "Add a profile photo to continue.",
+  "profileErrorGeneric": "Unable to save profile, please try again.",
   "commonOr": "OR",
   "commonEmailAddress": "Email Address",
   "commonPassword": "Password",
@@ -67,11 +86,22 @@
   "commonFocusAreas": "Focus areas",
   "commonUploadPhoto": "Upload photo",
   "commonSkip": "Skip for now",
+  "commonTryAgain": "Try again",
   "commonSearchContacts": "Search contacts by name or project",
   "commonSearchThreads": "Search threads or contacts",
   "commonAllFilter": "All",
   "commonClientsFilter": "Clients",
   "commonCollaboratorsFilter": "Collaborators",
+  "commonSuppliersFilter": "Suppliers",
+  "planUpgradeProjectsTitle": "Free plan limit reached",
+  "planUpgradeProjectsDescription": "You can manage up to 2 active projects on the free workspace. Upgrade to keep moving without interruptions.",
+  "planUpgradeDocumentsTitle": "Document limit reached",
+  "planUpgradeDocumentsDescription": "The free workspace lets you send up to 5 quotes or invoices in total. Upgrade to keep billing.",
+  "planUpgradeGeneralHeading": "General packages",
+  "planUpgradeAddOnHeading": "Profession add-ons",
+  "planUpgradeTrialCta": "Add 1 day Pro",
+  "planUpgradeTrialFooter": "Payments arrive soon. Trials unlock everything temporarily.",
+  "planUpgradeTrialActivated": "Pro access activated for 1 day.",
   "commonProjectsFilter": "Projects",
   "commonContactsFilter": "Contacts",
   "commonAddContact": "Add contact",
@@ -90,6 +120,7 @@
   "loginButton": "Log in",
   "loginSocialGoogle": "Continue with Google",
   "loginSocialApple": "Continue with Apple",
+  "loginAppleUnavailable": "Apple sign-in isn't set up yet.",
   "loginNoAccountPrompt": "Don't have an account?",
   "loginCreateNow": "Create Now",
   "loginMissingFields": "Please enter both email and password.",
@@ -101,6 +132,7 @@
   "registrationLoginNow": "Login Now",
   "registrationMissingFields": "Please provide your name, email, and password.",
   "registrationPasswordTooShort": "Password must be at least 6 characters.",
+  "registrationEmailConflict": "An account with this email already exists. Try signing in instead.",
   "registrationGenericError": "We couldn't create your account. Please try again.",
   "forgotTitle": "Reset Password",
   "forgotSubtitle": "Enter your email below to reset your password",
@@ -130,6 +162,10 @@
   "setupTitle": "Set up profile",
   "setupHeadline": "Personalise your workspace",
   "setupSubtitle": "Add a face, role, and focus areas so teammates know who you are.",
+  "setupIndustrySectionTitle": "Primary industry",
+  "setupIndustrySectionSubtitle": "Activate an industry module to unlock tailored workflows.",
+  "setupIndustryOptionCore": "General workspace",
+  "setupIndustryOptionCaterer": "Events & catering",
   "setupFinish": "Finish Setup",
   "navHome": "Home",
   "navFinance": "Finance",
@@ -139,6 +175,11 @@
   "chatsTitle": "Project threads",
   "chatsBadgeProject": "Project",
   "chatsBadgeContact": "Contact",
+  "chatsEmptyTitle": "No project threads yet",
+  "chatsEmptySubtitle": "Collaborators will show up here once a chat starts.",
+  "chatsNoMessagesYet": "No updates yet. Open the project to start messaging.",
+  "chatsUnnamedProject": "Untitled project",
+  "chatsSearchEmpty": "No threads match your filters.",
   "homeGreeting": "Hey, {name}",
   "@homeGreeting": {
     "placeholders": {
@@ -238,6 +279,27 @@
       "timestamp": {}
     }
   },
+  "sharedFilesWorkspaceLibrary": "Workspace library",
+  "sharedFilesOriginLibrary": "Shared library",
+  "sharedFilesUploadSuccess": "File added to shared library.",
+  "sharedFilesUploadFailure": "Unable to upload file. Please try again.",
+  "sharedFilesPickerTitle": "Choose a file source",
+  "sharedFilesDestinationTitle": "Where should we store this file?",
+  "sharedFilesDestinationWorkspaceSubtitle": "Keep it in the workspace library",
+  "sharedFilesDestinationProjectSubtitle": "Attach to this project",
+  "sharedFilesDownloadError": "Couldn't open the file link.",
+  "sharedFilesMenuCopyLink": "Copy link",
+  "sharedFilesMenuOpen": "Open in browser",
+  "sharedFilesMenuRemove": "Remove from library",
+  "sharedFilesCopySuccess": "Link copied to clipboard.",
+  "sharedFilesRemoveConfirm": "Remove {name} from shared files?",
+  "@sharedFilesRemoveConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "sharedFilesRemoveSuccess": "File removed from shared library.",
+  "sharedFilesRemoveFailure": "Couldn't remove that file.",
   "analyticsTitle": "Analytics",
   "analyticsUpdatedLabel": "Updated {date}",
   "@analyticsUpdatedLabel": {
@@ -311,6 +373,26 @@
   "collaborationChatAttachPdf": "PDF",
   "collaborationChatAttachCamera": "Capture from camera",
   "collaborationChatReactTooltip": "React to message",
+  "emojiReactionPickerTitle": "React with emoji",
+  "chatReplyAction": "Reply",
+  "chatReplyingTo": "Replying to {name}",
+  "@chatReplyingTo": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "chatCancelReplyTooltip": "Cancel reply",
+  "chatMessageNotAvailable": "Message not available",
+  "chatQuotedFallbackMessage": "Message",
+  "chatAttachmentUploadError": "Unable to upload attachment. Please try again.",
+  "chatAttachmentCount": "{count, plural, one {# attachment} other {# attachments}}",
+  "@chatAttachmentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "contactDetailTitle": "Contact detail",
   "contactDetailStartChat": "Start chat",
   "contactDetailSectionContact": "Contact",
@@ -344,6 +426,20 @@
   "createProjectFieldEndDate": "End date",
   "createProjectFieldDescriptionLabel": "Description (optional)",
   "createProjectFieldDescriptionHint": "Add a short brief for your team...",
+  "createProjectCatererSectionTitle": "Event & catering context",
+  "createProjectCatererSectionSubtitle": "Capture headcount, menu preferences, and kitchen needs for this project.",
+  "createProjectCatererGuestCountLabel": "Guests",
+  "createProjectCatererGuestCountHint": "Number of expected guests",
+  "createProjectCatererMenuLabel": "Menu style",
+  "createProjectCatererMenuHint": "e.g. Seated dinner, buffet, cocktail",
+  "createProjectCatererAllergyLabel": "Allergies & dietary notes",
+  "createProjectCatererAllergyHint": "Summarise restrictions or allergy notes",
+  "createProjectCatererServiceLabel": "Service flow",
+  "createProjectCatererServiceHint": "e.g. Ceremony canapés, plated mains, late-night snacks",
+  "createProjectCatererTastingToggle": "Tasting required",
+  "createProjectCatererKitchenToggle": "On-site kitchen support",
+  "createProjectCatererKitchenLabel": "Kitchen notes",
+  "createProjectCatererKitchenHint": "Access constraints, equipment, or vendor notes",
   "createProjectInviteTitle": "Invite team members",
   "createProjectInviteDescription": "Assign roles to control access.",
   "createProjectCustomRolePlaceholder": "Custom role (e.g. Coordinator)",
@@ -357,6 +453,7 @@
       "link": {}
     }
   },
+  "createProjectErrorGeneric": "We couldn't create your project. Please try again.",
   "createProjectPrimaryCta": "Create project",
   "financeNewQuoteTooltip": "New quote",
   "financePrimaryCta": "Create a quote / invoice",
@@ -576,6 +673,33 @@
   "projectDetailMenuDelete": "Delete project",
   "projectDetailScheduleTitle": "Schedule",
   "projectDetailScheduleCta": "Open schedule",
+  "projectDetailIndustryTitle": "Event & catering insights",
+  "projectDetailIndustryGuests": "Guests",
+  "projectDetailIndustryGuestsValue": "{count} guests",
+  "@projectDetailIndustryGuestsValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectDetailIndustryMenu": "Menu style",
+  "projectDetailIndustryAllergies": "Allergies & dietary notes",
+  "projectDetailIndustryService": "Service flow",
+  "projectDetailIndustryTasting": "Tasting",
+  "projectDetailIndustryTastingScheduled": "Scheduled on {date}",
+  "@projectDetailIndustryTastingScheduled": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "projectDetailIndustryTastingPending": "Date to be confirmed",
+  "projectDetailIndustryKitchen": "Kitchen support",
+  "projectDetailIndustryKitchenRequired": "On-site kitchen required",
+  "projectDetailIndustryKitchenOptional": "Kitchen support optional",
+  "projectDetailIndustryKitchenNotes": "Kitchen notes",
+  "projectDetailIndustryEmptyLabel": "Industry context",
+  "projectDetailIndustryEmptyValue": "No extra details captured yet.",
   "projectDetailTeamTitle": "Team",
   "projectDetailTeamCount": "{count, plural, one {# member} other {# members}}",
   "@projectDetailTeamCount": {
@@ -759,6 +883,7 @@
   "managementCreateProjectTooltip": "Create project",
   "crmContactTypeClient": "Client",
   "crmContactTypeCollaborator": "Collaborator",
+  "crmContactTypeSupplier": "Supplier",
   "crmRowInsights": "Insights",
   "crmRowEditContact": "Edit contact",
   "crmSectionLinkedProjects": "Linked projects",

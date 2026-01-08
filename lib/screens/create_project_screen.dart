@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -8,9 +10,13 @@ import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/app/widgets/app_form_fields.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:myapp/common/models/contact_detail_args.dart';
+import 'package:myapp/common/models/plan_package.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/controllers/project_controller.dart';
+import 'package:myapp/controllers/user_controller.dart';
+import 'package:myapp/models/industry.dart';
 import 'package:myapp/models/project.dart';
+import 'package:myapp/widgets/plan_upgrade_sheet.dart';
 
 class CreateProjectScreen extends StatefulWidget {
   const CreateProjectScreen({super.key, this.seed});
@@ -44,19 +50,25 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     _categoryOther,
   ];
 
-  static const String _roleOwnerKey = 'owner';
-  static const String _roleEditorKey = 'editor';
-  static const String _roleViewerKey = 'viewer';
+  static const String _roleClientKey = 'client';
+  static const String _roleCollaboratorKey = 'collaborator';
   static const List<String> _rolePresets = [
-    _roleOwnerKey,
-    _roleEditorKey,
-    _roleViewerKey,
+    _roleClientKey,
+    _roleCollaboratorKey,
   ];
   final List<String> _customRoles = [];
   String _selectedRole = _rolePresets.first;
   final TextEditingController _customRoleController = TextEditingController();
+  final TextEditingController _guestCountController = TextEditingController();
+  final TextEditingController _menuStyleController = TextEditingController();
+  final TextEditingController _allergyController = TextEditingController();
+  final TextEditingController _serviceStyleController = TextEditingController();
+  final TextEditingController _kitchenNotesController = TextEditingController();
   bool _inviteExternal = false;
   bool _isLoading = false;
+  bool _requiresTasting = false;
+  DateTime? _tastingDate;
+  bool _requiresOnsiteKitchen = false;
 
   List<String> get _availableRoles => [..._rolePresets, ..._customRoles];
 
@@ -82,6 +94,18 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           _endDate = newDate;
         }
       });
+    }
+  }
+
+  Future<void> _pickTastingDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _tastingDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+    );
+    if (date != null) {
+      setState(() => _tastingDate = date);
     }
   }
 
@@ -113,15 +137,143 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   String _roleLabel(BuildContext context, String role) {
     final loc = context.l10n;
     switch (role) {
-      case _roleOwnerKey:
-        return loc.createProjectRoleOwner;
-      case _roleEditorKey:
-        return loc.createProjectRoleEditor;
-      case _roleViewerKey:
-        return loc.createProjectRoleViewer;
+      case _roleClientKey:
+        return loc.crmContactTypeClient;
+      case _roleCollaboratorKey:
+        return loc.crmContactTypeCollaborator;
       default:
         return role;
     }
+  }
+
+  CatererProjectExtension _buildCatererExtension() {
+    final guestCount = int.tryParse(_guestCountController.text.trim());
+    final menuStyle = _menuStyleController.text.trim();
+    final allergies = _allergyController.text.trim();
+    final serviceStyle = _serviceStyleController.text.trim();
+    final kitchenNotes = _kitchenNotesController.text.trim();
+    final tastingDate = _requiresTasting ? _tastingDate : null;
+
+    return CatererProjectExtension(
+      guestCount: guestCount,
+      menuStyle: menuStyle.isEmpty ? null : menuStyle,
+      allergyNotes: allergies.isEmpty ? null : allergies,
+      serviceStyle: serviceStyle.isEmpty ? null : serviceStyle,
+      requiresTasting: _requiresTasting,
+      tastingDate: tastingDate,
+      requiresOnsiteKitchen: _requiresOnsiteKitchen,
+      kitchenNotes: kitchenNotes.isEmpty ? null : kitchenNotes,
+    );
+  }
+
+  Widget _buildCatererSection(BuildContext context, AppLocalizations loc) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          loc.createProjectCatererSectionTitle,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: AppColors.secondaryText,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          loc.createProjectCatererSectionSubtitle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.hintTextfiled,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.textfieldBackground,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppFormTextField(
+                controller: _guestCountController,
+                hintText: loc.createProjectCatererGuestCountHint,
+                labelText: loc.createProjectCatererGuestCountLabel,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 12),
+              AppFormTextField(
+                controller: _menuStyleController,
+                hintText: loc.createProjectCatererMenuHint,
+                labelText: loc.createProjectCatererMenuLabel,
+              ),
+              const SizedBox(height: 12),
+              AppFormTextField(
+                controller: _allergyController,
+                hintText: loc.createProjectCatererAllergyHint,
+                labelText: loc.createProjectCatererAllergyLabel,
+                maxLines: 2,
+              ),
+              const SizedBox(height: 12),
+              AppFormTextField(
+                controller: _serviceStyleController,
+                hintText: loc.createProjectCatererServiceHint,
+                labelText: loc.createProjectCatererServiceLabel,
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                value: _requiresTasting,
+                onChanged: (value) => setState(() {
+                  _requiresTasting = value;
+                  if (!value) {
+                    _tastingDate = null;
+                  }
+                }),
+                title: Text(
+                  loc.createProjectCatererTastingToggle,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.secondaryText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (_requiresTasting) ...[
+                const SizedBox(height: 8),
+                AppDateField(
+                  label: _formatDate(context, _tastingDate),
+                  hasValue: _tastingDate != null,
+                  onTap: _pickTastingDate,
+                  leading: const Icon(Icons.event, color: AppColors.secondary),
+                ),
+              ],
+              const SizedBox(height: 12),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                value: _requiresOnsiteKitchen,
+                onChanged: (value) =>
+                    setState(() => _requiresOnsiteKitchen = value),
+                title: Text(
+                  loc.createProjectCatererKitchenToggle,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.secondaryText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              AppFormTextField(
+                controller: _kitchenNotesController,
+                hintText: loc.createProjectCatererKitchenHint,
+                labelText: loc.createProjectCatererKitchenLabel,
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   void _addInvitee() {
@@ -176,50 +328,149 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       return;
     }
 
+    final userController = context.read<UserController?>();
+    final currentProjects = controller.projects.length;
+    if (userController != null &&
+        !userController.canCreateProject(currentProjects)) {
+      final unlocked = await showPlanUpgradeSheet(
+        context,
+        quotaType: PlanQuotaType.projects,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (!unlocked) {
+        return;
+      }
+      if (!userController.canCreateProject(currentProjects)) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.planUpgradeTrialActivated)),
+      );
+    }
+
     setState(() => _isLoading = true);
 
     await Future.delayed(const Duration(milliseconds: 800));
 
+    // Do NOT pre-populate project.members with invitee emails. Invitees
+    // should be created as invitations and only become members after
+    // acceptance (or after backend onboarding). Keep only any seeded
+    // contact (the project owner/contact) in the initial members list.
     final seedMembers = widget.seed;
-    final members = _inviteesAsMembers();
+    final members = <Member>[];
     if (seedMembers != null) {
-      final alreadyIncluded = members.any(
-        (member) => member.id == seedMembers.contactId,
+      members.add(
+        Member(id: seedMembers.contactId, name: seedMembers.clientName),
       );
-      if (!alreadyIncluded) {
-        members.insert(
-          0,
-          Member(id: seedMembers.contactId, name: seedMembers.clientName),
-        );
-      }
     }
 
     final id = DateTime.now().millisecondsSinceEpoch.toString();
-    controller.addProject(
-      Project(
-        id: id,
-        name: _nameController.text.trim(),
-        client: _clientController.text.trim(),
-        description: _descriptionController.text.trim(),
-        status: ProjectStatus.inPreparation,
-        startDate: _startDate,
-        endDate: _endDate,
-        members: members,
-      ),
-    );
+    ProjectIndustryExtension? industryExtension;
+    if (controller.isCatererWorkspace) {
+      final extension = _buildCatererExtension();
+      if (extension.hasData) {
+        industryExtension = extension;
+      }
+    }
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    context.goNamed('projectDetail', pathParameters: {'id': id});
+    try {
+      final created = await controller.addProject(
+        Project(
+          id: id,
+          name: _nameController.text.trim(),
+          client: _clientController.text.trim(),
+          category: _selectedCategory,
+          description: _descriptionController.text.trim(),
+          status: ProjectStatus.inPreparation,
+          startDate: _startDate,
+          endDate: _endDate,
+          members: members,
+        ),
+        extension: industryExtension,
+      );
+
+      await _sendInvitationsForProject(controller, created);
+
+      if (!mounted) {
+        return;
+      }
+      context.goNamed('projectDetail', pathParameters: {'id': created.id});
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.createProjectErrorGeneric),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
-  List<Member> _inviteesAsMembers() {
-    return _invitees
+  Future<void> _sendInvitationsForProject(
+    ProjectController controller,
+    Project project,
+  ) async {
+    if (_invitees.isEmpty) {
+      return;
+    }
+    final List<String> failed = [];
+    for (final invite in List<_Invitee>.from(_invitees)) {
+      final email = invite.email.trim().toLowerCase();
+      if (email.isEmpty) {
+        continue;
+      }
+      final alreadyRegistered = await controller.emailHasRegisteredUser(email);
+      if (alreadyRegistered) {
+        continue;
+      }
+      final inviteeName = _deriveNameFromEmail(email);
+      try {
+        await controller.addInvitation(
+          projectId: project.id,
+          projectName: project.name,
+          inviteeName: inviteeName,
+          inviteeEmail: email,
+          role: invite.role,
+          requiresOnboarding: true,
+        );
+      } catch (error) {
+        failed.add(email);
+        if (kDebugMode) {
+          debugPrint('Failed to queue invite for $email: $error');
+        }
+      }
+    }
+
+    if (failed.isNotEmpty && mounted) {
+      final msg = failed.length == 1
+          ? 'Failed to send invite to ${failed.first}'
+          : 'Failed to send invites to ${failed.length} recipients';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
+  String _deriveNameFromEmail(String email) {
+    final localPart = email.split('@').first;
+    final tokens = localPart
+        .replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), ' ')
+        .split(RegExp(r'[._\s]+'))
+        .where((segment) => segment.isNotEmpty)
         .map(
-          (invite) =>
-              Member(id: invite.email, name: invite.email.split('@').first),
-        )
-        .toList();
+          (segment) =>
+              segment[0].toUpperCase() + segment.substring(1).toLowerCase(),
+        );
+    final fallback = tokens.join(' ');
+    return fallback.isEmpty ? email : fallback;
   }
 
   @override
@@ -394,6 +645,10 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           maxLines: 4,
                         ),
                       ),
+                      if (controller.isCatererWorkspace) ...[
+                        const SizedBox(height: 24),
+                        _buildCatererSection(context, loc),
+                      ],
                       const SizedBox(height: 24),
                       _SectionHeader(
                         title: loc.createProjectInviteTitle,
@@ -660,6 +915,11 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     _descriptionController.dispose();
     _inviteController.dispose();
     _customRoleController.dispose();
+    _guestCountController.dispose();
+    _menuStyleController.dispose();
+    _allergyController.dispose();
+    _serviceStyleController.dispose();
+    _kitchenNotesController.dispose();
     super.dispose();
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
@@ -8,7 +9,9 @@ import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/models/contact_detail_args.dart';
 import 'package:myapp/common/models/contact_form_models.dart';
 import 'package:myapp/common/utils/contact_form_launcher.dart';
+import 'package:myapp/controllers/crm_controller.dart';
 import 'package:myapp/l10n/app_localizations.dart';
+import 'package:myapp/models/crm_contact.dart';
 import 'package:myapp/widgets/custom_text_field.dart';
 import 'package:myapp/widgets/gradiant_button_widget.dart';
 import 'package:myapp/widgets/section_hero_header.dart';
@@ -28,6 +31,12 @@ class _CRMScreenState extends State<CRMScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      context.read<CrmController>().initialize();
+    });
   }
 
   @override
@@ -47,7 +56,7 @@ class _CRMScreenState extends State<CRMScreen> {
     setState(() => _selectedFilter = filter);
   }
 
-  Future<void> _showContactInsights(_ContactRecord contact) async {
+  Future<void> _showContactInsights(CrmContact contact) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -61,30 +70,45 @@ class _CRMScreenState extends State<CRMScreen> {
     );
   }
 
-  Future<void> _openContactForm({_ContactRecord? contact}) {
-    final data = ContactFormData(
-      name: contact?.name,
-      email: contact?.email,
-      phone: contact?.phone,
-      address: contact?.address,
-      type: contact?.localizedTypeLabel(context.l10n),
-      notes: contact?.notes,
+  Future<void> _openContactForm({CrmContact? contact}) async {
+    final controller = context.read<CrmController>();
+    final formData = contact == null
+        ? const ContactFormData()
+        : controller.formDataFor(contact);
+    final submission = await ContactFormLauncher.show(
+      context,
+      mode: contact == null ? ContactFormMode.create : ContactFormMode.edit,
+      data: formData,
+      contactId: contact?.id,
     );
-    final mode = contact == null
-        ? ContactFormMode.create
-        : ContactFormMode.edit;
-    return ContactFormLauncher.show(context, mode: mode, data: data);
+    if (submission == null) {
+      return;
+    }
+    try {
+      if (submission.mode == ContactFormMode.create) {
+        await controller.createContact(submission.data);
+      } else if (submission.contactId != null) {
+        await controller.updateContact(submission.contactId!, submission.data);
+      }
+      if (!mounted) return;
+      const snackBar = SnackBar(content: Text('Contact saved'));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    } catch (error) {
+      if (!mounted) return;
+      const snackBar = SnackBar(content: Text('Unable to save contact'));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    }
   }
 
-  List<_ContactRecord> get _visibleContacts {
+  List<CrmContact> _filterContacts(List<CrmContact> source) {
     final query = _searchController.text.trim().toLowerCase();
-    return _contacts
+    return source
         .where((contact) {
           final matchesFilter = switch (_selectedFilter) {
             _ContactFilter.all => true,
-            _ContactFilter.clients => contact.type == _ContactType.client,
-            _ContactFilter.collaborators =>
-              contact.type == _ContactType.collaborator,
+            _ContactFilter.clients => contact.isClient,
+            _ContactFilter.collaborators => contact.isCollaborator,
+            _ContactFilter.suppliers => contact.isSupplier,
           };
           if (!matchesFilter) {
             return false;
@@ -97,127 +121,74 @@ class _CRMScreenState extends State<CRMScreen> {
         .toList(growable: false);
   }
 
-  static const List<_ContactRecord> _contacts = [
-    _ContactRecord(
-      id: 'contact-1',
-      name: 'Marina Flores',
-      type: _ContactType.client,
-      email: 'marina@westwardhospitality.com',
-      phone: '+1 (410) 555-8124',
-      address: 'San Diego, CA',
-      notes: 'Prefers Thursday calls before noon.',
-      primaryProjectLabel: 'Lumen Rooftop Launch',
-      relationshipLabel: 'Priority tier: Strategic',
-      crmStats: [
-        _CRMStat(label: 'Open deals', value: '3'),
-        _CRMStat(label: 'Last meeting', value: '7d ago'),
-      ],
-      linkedProjects: ['Lumen Rooftop Launch', 'Harbor Lights Dinner'],
-      financeHighlights: ['Pipeline - USD 420K', 'Closed this year - USD 190K'],
-      documentLinks: ['Hospitality Playbook.pdf', 'Preferred Vendors.xlsx'],
-      projects: [
-        ContactProjectSummary(
-          id: 'p4',
-          name: 'Lumen Rooftop Launch',
-          role: 'Client',
-          statusLabel: 'Discovery',
-        ),
-        ContactProjectSummary(
-          id: 'p5',
-          name: 'Harbor Lights Dinner',
-          role: 'Client',
-          statusLabel: 'Completed',
-        ),
-      ],
-    ),
-    _ContactRecord(
-      id: 'contact-2',
-      name: 'Karim Haddad',
-      type: _ContactType.collaborator,
-      email: 'karim@fleetx.io',
-      phone: '+1 (312) 555-9303',
-      address: 'Chicago, IL',
-      notes: 'Handles transportation for metro events.',
-      primaryProjectLabel: 'Metro Fleet Refresh',
-      relationshipLabel: 'Last project: Corporate Dinner',
-      crmStats: [
-        _CRMStat(label: 'Last touchpoint', value: '3d ago'),
-        _CRMStat(label: 'Quotes won', value: '4', trend: '+1 vs Aug'),
-      ],
-      linkedProjects: ['Apollo Station Build', 'Metro Fleet Refresh'],
-      financeHighlights: [
-        'Open invoice - USD 18.2K - Due Oct 12',
-        'Avg. service cost - USD 4.4K/mo',
-      ],
-      documentLinks: ['Maintenance SLA.pdf', 'Insurance Certificate FY24.pdf'],
-      projects: [
-        ContactProjectSummary(
-          id: 'p2',
-          name: 'Metro Fleet Refresh',
-          role: 'Logistics Partner',
-        ),
-        ContactProjectSummary(
-          id: 'p1',
-          name: 'Apollo Station Build',
-          role: 'Logistics Partner',
-        ),
-      ],
-    ),
-    _ContactRecord(
-      id: 'contact-3',
-      name: 'Sarai Collins',
-      type: _ContactType.collaborator,
-      email: 'sarai@northcote.io',
-      phone: '+1 (646) 555-2298',
-      address: 'New York, NY',
-      notes: 'Lead coordinator for Apollo Station.',
-      primaryProjectLabel: 'Apollo Station Build',
-      relationshipLabel: 'Team lead: Sarai Collins',
-      crmStats: [_CRMStat(label: 'Active projects', value: '2')],
-      linkedProjects: ['Apollo Station Build'],
-      projects: [
-        ContactProjectSummary(
-          id: 'p1',
-          name: 'Apollo Station Build',
-          role: 'Coordination Lead',
-        ),
-      ],
-    ),
-    _ContactRecord(
-      id: 'contact-4',
-      name: 'Hassan Malik',
-      type: _ContactType.collaborator,
-      email: 'hassan@cobaltlogistics.com',
-      phone: '+971 50 123 4567',
-      address: 'Dubai, UAE',
-      notes: 'Freight forwarding partner on APAC work.',
-      primaryProjectLabel: 'Evening Gala Logistics',
-      relationshipLabel: 'Worked on: Apollo Station Build',
-      crmStats: [
-        _CRMStat(label: 'Active shipments', value: '6', trend: '2 delayed'),
-        _CRMStat(label: 'Spend YTD', value: 'USD 312K'),
-      ],
-      linkedProjects: ['Apollo Station Build', 'Evening Gala Logistics'],
-      financeHighlights: [
-        'Credit terms - Net 45',
-        'Next payout - USD 48K on Oct 5',
-      ],
-      documentLinks: ['2024 Freight Agreement.pdf'],
-      projects: [
-        ContactProjectSummary(
-          id: 'p8',
-          name: 'Evening Gala Logistics',
-          role: 'Freight forwarder',
-        ),
-      ],
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final visibleContacts = _visibleContacts;
+    final controller = context.watch<CrmController>();
     final loc = context.l10n;
     final theme = Theme.of(context);
+    final visibleContacts = _filterContacts(controller.contacts);
+    final isInitialLoading =
+        controller.isLoading && controller.contacts.isEmpty;
+
+    final listContent = RefreshIndicator(
+      onRefresh: controller.refresh,
+      child: ListView(
+        padding: EdgeInsets.only(
+          top: 16,
+          bottom: CustomNavBar.totalHeight + 32,
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SectionHeroHeader(
+              title: loc.contactsTitle,
+              subtitle: loc.contactsSubtitle,
+              subtitleStyle: theme.textTheme.labelSmall?.copyWith(
+                color: AppColors.primaryText.withValues(alpha: 0.7),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              actionTooltip: loc.contactsAdd,
+              onActionTap: () => _openContactForm(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _ContactsListHeader(
+            searchController: _searchController,
+            selectedFilter: _selectedFilter,
+            onFilterChanged: _handleFilterChanged,
+          ),
+          if (controller.errorMessage != null && controller.contacts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: _ErrorPlaceholder(
+                message: controller.errorMessage!,
+                onRetry: controller.refresh,
+              ),
+            )
+          else if (!controller.isLoading && visibleContacts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: _EmptyPlaceholder(message: loc.contactsEmptyMessage),
+            )
+          else
+            ...visibleContacts.map(
+              (contact) => Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                child: _ContactCard(
+                  contact: contact,
+                  onTap: () => context.pushNamed(
+                    'contactDetail',
+                    extra: contact.toDetailArgs(loc),
+                  ),
+                  onShowInsights: () => _showContactInsights(contact),
+                  onEditContact: () => _openContactForm(contact: contact),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -226,54 +197,9 @@ class _CRMScreenState extends State<CRMScreen> {
           Positioned.fill(
             child: SafeArea(
               bottom: false,
-              child: ListView.builder(
-                padding: EdgeInsets.only(
-                  top: 16,
-                  bottom: CustomNavBar.totalHeight + 32,
-                ),
-                itemCount: visibleContacts.length + 2,
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: SectionHeroHeader(
-                        title: loc.contactsTitle,
-                        subtitle: loc.contactsSubtitle,
-                        subtitleStyle: theme.textTheme.labelSmall?.copyWith(
-                          color: AppColors.primaryText.withValues(alpha: 0.7),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        actionTooltip: loc.contactsAdd,
-                        onActionTap: () => _openContactForm(),
-                      ),
-                    );
-                  }
-                  if (index == 1) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: _ContactsListHeader(
-                        searchController: _searchController,
-                        selectedFilter: _selectedFilter,
-                        onFilterChanged: _handleFilterChanged,
-                      ),
-                    );
-                  }
-                  final contact = visibleContacts[index - 2];
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                    child: _ContactCard(
-                      contact: contact,
-                      onTap: () => context.pushNamed(
-                        'contactDetail',
-                        extra: contact.asArgs(loc),
-                      ),
-                      onShowInsights: () => _showContactInsights(contact),
-                      onEditContact: () => _openContactForm(contact: contact),
-                    ),
-                  );
-                },
-              ),
+              child: isInitialLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : listContent,
             ),
           ),
           const Positioned(
@@ -321,6 +247,56 @@ class _ContactsListHeader extends StatelessWidget {
   }
 }
 
+class _EmptyPlaceholder extends StatelessWidget {
+  const _EmptyPlaceholder({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.secondaryBackground,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.textfieldBorder.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: AppColors.hintTextfiled,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorPlaceholder extends StatelessWidget {
+  const _ErrorPlaceholder({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _EmptyPlaceholder(message: message),
+        const SizedBox(height: 12),
+        FilledButton.tonal(
+          onPressed: () => onRetry(),
+          child: const Text('Retry'),
+        ),
+      ],
+    );
+  }
+}
+
 class _ContactFilterRow extends StatelessWidget {
   const _ContactFilterRow({required this.selected, required this.onChanged});
 
@@ -337,6 +313,7 @@ class _ContactFilterRow extends StatelessWidget {
         label: loc.commonCollaboratorsFilter,
         filter: _ContactFilter.collaborators,
       ),
+      (label: loc.commonSuppliersFilter, filter: _ContactFilter.suppliers),
     ];
 
     return SingleChildScrollView(
@@ -412,7 +389,7 @@ class _ContactCard extends StatelessWidget {
     required this.onEditContact,
   });
 
-  final _ContactRecord contact;
+  final CrmContact contact;
   final VoidCallback onTap;
   final VoidCallback onShowInsights;
   final VoidCallback onEditContact;
@@ -421,7 +398,8 @@ class _ContactCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = context.l10n;
-    final _CRMStat? primaryStat = contact.primaryStat;
+    final CrmStat? primaryStat = contact.primaryStat;
+    final typeLabel = contact.localizedTypeLabel(loc);
 
     return GestureDetector(
       onTap: onTap,
@@ -457,7 +435,7 @@ class _ContactCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      _TypeChip(label: contact.localizedTypeLabel(loc)),
+                      _TypeChip(label: typeLabel),
                     ],
                   ),
                 ),
@@ -640,91 +618,27 @@ class _TypeChip extends StatelessWidget {
   }
 }
 
-enum _ContactFilter { all, clients, collaborators }
+enum _ContactFilter { all, clients, collaborators, suppliers }
 
-enum _ContactType { client, collaborator }
-
-class _ContactRecord {
-  const _ContactRecord({
-    required this.id,
-    required this.name,
-    required this.type,
-    this.email,
-    this.phone,
-    this.address,
-    this.notes,
-    this.primaryProjectLabel,
-    this.projects = const <ContactProjectSummary>[],
-    this.relationshipLabel,
-    this.crmStats = const <_CRMStat>[],
-    this.linkedProjects = const <String>[],
-    this.financeHighlights = const <String>[],
-    this.documentLinks = const <String>[],
-  });
-
-  final String id;
-  final String name;
-  final _ContactType type;
-  final String? email;
-  final String? phone;
-  final String? address;
-  final String? notes;
-  final String? primaryProjectLabel;
-  final List<ContactProjectSummary> projects;
-  final String? relationshipLabel;
-  final List<_CRMStat> crmStats;
-  final List<String> linkedProjects;
-  final List<String> financeHighlights;
-  final List<String> documentLinks;
-
-  String get typeLabel => switch (type) {
-    _ContactType.client => 'Client',
-    _ContactType.collaborator => 'Collaborator',
-  };
-
-  String localizedTypeLabel(AppLocalizations loc) => switch (type) {
-    _ContactType.client => loc.crmContactTypeClient,
-    _ContactType.collaborator => loc.crmContactTypeCollaborator,
-  };
-
-  String get initials {
-    final parts = name
-        .split(RegExp(r'\s+'))
-        .where((segment) => segment.isNotEmpty)
-        .toList(growable: false);
-    if (parts.isEmpty) {
-      return '?';
-    }
-    if (parts.length == 1) {
-      return parts.first[0].toUpperCase();
-    }
-    return (parts.first[0] + parts.last[0]).toUpperCase();
+extension _CrmContactLocalization on CrmContact {
+  String localizedTypeLabel(AppLocalizations loc) {
+    return switch (type) {
+      CrmContactType.client => loc.crmContactTypeClient,
+      CrmContactType.supplier => loc.crmContactTypeSupplier,
+      CrmContactType.collaborator => loc.crmContactTypeCollaborator,
+    };
   }
 
-  String get searchableText {
-    final buffer = StringBuffer()
-      ..write(name)
-      ..write(' ')
-      ..write(typeLabel)
-      ..write(' ')
-      ..write(primaryProjectLabel ?? '')
-      ..write(' ')
-      ..write(email ?? '')
-      ..write(' ')
-      ..write(phone ?? '');
-    return buffer.toString().toLowerCase();
-  }
-
-  _CRMStat? get primaryStat => crmStats.isNotEmpty ? crmStats.first : null;
-
-  ContactDetailArgs asArgs(AppLocalizations loc) {
+  ContactDetailArgs toDetailArgs(AppLocalizations loc) {
     return ContactDetailArgs(
       contactId: id,
       name: name,
       title: localizedTypeLabel(loc),
-      category: type == _ContactType.client
-          ? ContactCategory.client
-          : ContactCategory.collaborator,
+      category: switch (type) {
+        CrmContactType.client => ContactCategory.client,
+        CrmContactType.supplier => ContactCategory.supplier,
+        CrmContactType.collaborator => ContactCategory.collaborator,
+      },
       email: email,
       phone: phone,
       location: address,
@@ -732,14 +646,6 @@ class _ContactRecord {
       projects: projects,
     );
   }
-}
-
-class _CRMStat {
-  const _CRMStat({required this.label, required this.value, this.trend});
-
-  final String label;
-  final String value;
-  final String? trend;
 }
 
 class _CRMActionButton extends StatelessWidget {
@@ -777,12 +683,13 @@ class _CRMActionButton extends StatelessWidget {
 class _ContactInsightsSheet extends StatelessWidget {
   const _ContactInsightsSheet({required this.contact});
 
-  final _ContactRecord contact;
+  final CrmContact contact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = context.l10n;
+    final typeLabel = contact.localizedTypeLabel(loc);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -836,7 +743,7 @@ class _ContactInsightsSheet extends StatelessWidget {
                         spacing: 10,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          _TypeChip(label: contact.localizedTypeLabel(loc)),
+                          _TypeChip(label: typeLabel),
                           if (contact.primaryProjectLabel != null)
                             _TypeChip(label: contact.primaryProjectLabel!),
                         ],
@@ -887,13 +794,13 @@ class _ContactInsightsSheet extends StatelessWidget {
                 ),
               ),
             ],
-            if (contact.crmStats.isNotEmpty) ...[
+            if (contact.stats.isNotEmpty) ...[
               const SizedBox(height: 20),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  for (final stat in contact.crmStats) _CRMStatCard(stat: stat),
+                  for (final stat in contact.stats) _CRMStatCard(stat: stat),
                 ],
               ),
             ],
@@ -921,7 +828,7 @@ class _ContactInsightsSheet extends StatelessWidget {
                 icon: FeatherIcons.folder,
               ),
             ],
-            if (contact.type == _ContactType.client) ...[
+            if (contact.isClient) ...[
               const SizedBox(height: 20),
               GradiantButtonWidget(
                 buttonText: loc.crmActionCreateProject,
@@ -952,7 +859,10 @@ class _ContactInsightsSheet extends StatelessWidget {
               onPressed: () {
                 final router = GoRouter.of(context);
                 Navigator.of(context).pop();
-                router.pushNamed('contactDetail', extra: contact.asArgs(loc));
+                router.pushNamed(
+                  'contactDetail',
+                  extra: contact.toDetailArgs(loc),
+                );
               },
             ),
           ],
@@ -973,18 +883,40 @@ class _ContactInsightsSheet extends StatelessWidget {
   }
 
   void _openQuoteCreation(BuildContext context) {
-    GoRouter.of(context).pushNamed('financeCreateQuote');
+    GoRouter.of(context).pushNamed(
+      'financeCreateQuote',
+      queryParameters: {
+        'clientName': contact.name,
+        if (contact.email != null && contact.email!.trim().isNotEmpty)
+          'clientEmail': contact.email!.trim(),
+        'contactId': contact.id,
+      },
+    );
   }
 
   void _openInvoiceCreation(BuildContext context) {
-    GoRouter.of(context).goNamed('finance');
+    final params = <String, String>{};
+    if (contact.projects.isNotEmpty && contact.projects.first.id.isNotEmpty) {
+      params['projectId'] = contact.projects.first.id;
+    } else if (contact.linkedProjects.isNotEmpty) {
+      params['projectId'] = contact.linkedProjects.first;
+    }
+    params['clientName'] = contact.name;
+    if (contact.email != null && contact.email!.trim().isNotEmpty) {
+      params['clientEmail'] = contact.email!.trim();
+    }
+    params['contactId'] = contact.id;
+    GoRouter.of(context).pushNamed(
+      'financeCreateInvoiceForm',
+      queryParameters: params.cast<String, dynamic>(),
+    );
   }
 }
 
 class _CRMStatCard extends StatelessWidget {
   const _CRMStatCard({required this.stat});
 
-  final _CRMStat stat;
+  final CrmStat stat;
 
   @override
   Widget build(BuildContext context) {

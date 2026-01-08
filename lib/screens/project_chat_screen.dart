@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
@@ -7,11 +9,31 @@ import 'package:provider/provider.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/emoji_reaction_picker.dart';
+import 'package:myapp/app/widgets/message_reply_widgets.dart';
 import 'package:myapp/common/models/message.dart';
 import 'package:myapp/common/localization/formatters.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/common/models/shared_file_record.dart';
+import 'package:myapp/common/utils/attachment_utils.dart';
 import 'package:myapp/controllers/project_controller.dart';
+import 'package:myapp/controllers/user_controller.dart';
 import 'package:myapp/models/project.dart';
+import 'package:myapp/services/chat_attachment_service.dart';
+
+const String _localMemberFallbackId = 'me';
+
+MessageReceiptStatus? _receiptForViewer(
+  Map<String, MessageReceiptStatus> receipts,
+  String? memberId,
+) {
+  if (memberId != null) {
+    final status = receipts[memberId];
+    if (status != null) {
+      return status;
+    }
+  }
+  return receipts[_localMemberFallbackId];
+}
 
 class ProjectChatScreen extends StatefulWidget {
   const ProjectChatScreen({super.key, required this.projectId});
@@ -25,6 +47,11 @@ class ProjectChatScreen extends StatefulWidget {
 class _ProjectChatScreenState extends State<ProjectChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ChatAttachmentService _attachmentService = ChatAttachmentService();
+  final List<UploadedAttachment> _pendingAttachments = [];
+  final Map<String, GlobalKey> _messageRowKeys = <String, GlobalKey>{};
+  bool _isUploadingAttachment = false;
+  MessageReplyPreview? _replyingTo;
 
   @override
   void dispose() {
@@ -33,36 +60,92 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
     super.dispose();
   }
 
+  String _tagTokenFromName(String name) {
+    final cleaned = name.trim().replaceAll(RegExp(r'\s+'), '_');
+    final buffer = StringBuffer();
+    for (final rune in cleaned.runes) {
+      final ch = String.fromCharCode(rune);
+      if (RegExp(r'[A-Za-z0-9_]').hasMatch(ch)) {
+        buffer.write(ch);
+      }
+    }
+    final token = buffer.toString();
+    return token.isEmpty ? 'user' : token;
+  }
+
+  String? _replyPrefixText() {
+    final preview = _replyingTo;
+    if (preview == null) {
+      return null;
+    }
+    final token = _tagTokenFromName(preview.authorName);
+    return '@$token ';
+  }
+
+  void _startReply(MessageReplyPreview preview) {
+    setState(() => _replyingTo = preview);
+  }
+
+  void _clearReply() {
+    if (_replyingTo == null) {
+      return;
+    }
+    setState(() => _replyingTo = null);
+  }
+
   void _handleSend(Project project) {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) {
+    final pendingAttachments = List<UploadedAttachment>.from(
+      _pendingAttachments,
+    );
+    final typedText = _messageController.text.trim();
+    final attachments = pendingAttachments
+        .map((attachment) => attachment.url)
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+    if (typedText.isEmpty && attachments.isEmpty) {
       return;
     }
 
     FocusScope.of(context).unfocus();
-    final mentionMatches = RegExp(r'@[A-Za-z0-9_]+').allMatches(text);
+    final replyPrefix = _replyPrefixText();
+    final body = replyPrefix == null
+        ? typedText
+        : typedText.isEmpty
+        ? replyPrefix.trimRight()
+        : '$replyPrefix$typedText';
+    final mentionMatches = RegExp(r'@[A-Za-z0-9_]+').allMatches(body);
     final mentions = {
       for (final match in mentionMatches) match.group(0)!,
     }.toList(growable: false);
     final controller = context.read<ProjectController>();
+    final authorId = _viewerUserId(controller);
+    final viewerMemberId = _viewerMemberId(project, controller);
     final receipts = <String, MessageReceiptStatus>{
       for (final member in project.members)
         member.id: MessageReceiptStatus.sent,
     };
-    receipts['me'] = MessageReceiptStatus.read;
+    receipts[_viewerReceiptKey(viewerMemberId)] = MessageReceiptStatus.read;
     controller.addMessage(
       project.id,
       Message(
         id: 'local-${DateTime.now().millisecondsSinceEpoch}',
-        authorId: 'me',
-        body: text,
+        authorId: authorId,
+        body: body,
         sentAt: DateTime.now(),
+        attachments: attachments,
         mentions: mentions,
         receipts: receipts,
+        replyToMessageId: _replyingTo?.messageId,
+        replyPreview: _replyingTo,
       ),
     );
 
     _messageController.clear();
+    _clearReply();
+    if (_pendingAttachments.isNotEmpty) {
+      setState(() => _pendingAttachments.clear());
+    }
+    _recordSharedFileUploads(project: project, attachments: pendingAttachments);
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
@@ -78,6 +161,148 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
     );
   }
 
+  Future<void> _jumpToMessage(String messageId, List<Message> ordered) async {
+    if (!mounted) return;
+    final loc = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+
+    final key = _messageRowKeys[messageId];
+    final ctx = key?.currentContext;
+    if (ctx != null) {
+      if (!ctx.mounted) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          ctx,
+          alignment: 0.2,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOut,
+        ),
+      );
+      return;
+    }
+
+    final targetIndex = ordered.indexWhere((m) => m.id == messageId);
+    if (targetIndex == -1 || !_scrollController.hasClients) {
+      if (!mounted) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(loc.chatMessageNotAvailable)));
+      return;
+    }
+
+    final denom = ordered.length <= 1 ? 1 : ordered.length - 1;
+    final fraction = targetIndex / denom;
+    final estimatedOffset =
+        _scrollController.position.maxScrollExtent * fraction;
+
+    await _scrollController.animateTo(
+      estimatedOffset,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+    );
+
+    if (!mounted) return;
+
+    for (var attempt = 0; attempt < 6; attempt++) {
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      if (!mounted) return;
+      final afterCtx = _messageRowKeys[messageId]?.currentContext;
+      if (afterCtx != null) {
+        if (!afterCtx.mounted) {
+          continue;
+        }
+        unawaited(
+          Scrollable.ensureVisible(
+            afterCtx,
+            alignment: 0.2,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+          ),
+        );
+        return;
+      }
+    }
+  }
+
+  Future<void> _handleAttachmentSelected(ChatAttachmentSource source) async {
+    if (_isUploadingAttachment) {
+      return;
+    }
+    setState(() => _isUploadingAttachment = true);
+    try {
+      final uploaded = await _attachmentService.pickAndUpload(source);
+      if (!mounted || uploaded == null) {
+        return;
+      }
+      setState(() => _pendingAttachments.add(uploaded));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      _showAttachmentError();
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingAttachment = false);
+      }
+    }
+  }
+
+  void _removePendingAttachment(UploadedAttachment attachment) {
+    setState(() {
+      _pendingAttachments.removeWhere((item) => item.url == attachment.url);
+    });
+  }
+
+  void _showAttachmentError() {
+    if (!mounted) {
+      return;
+    }
+    final loc = context.l10n;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(loc.chatAttachmentUploadError)));
+  }
+
+  void _recordSharedFileUploads({
+    required Project project,
+    required List<UploadedAttachment> attachments,
+    SharedFileOrigin origin = SharedFileOrigin.chat,
+  }) {
+    if (attachments.isEmpty) {
+      return;
+    }
+    final controller = context.read<ProjectController>();
+    final userController = context.read<UserController>();
+    final loc = context.l10n;
+    final uploaderId =
+        controller.currentUserId ??
+        controller.currentUserEmail ??
+        _localMemberFallbackId;
+    final uploaderName =
+        userController.profile?.displayName ??
+        controller.currentUserEmail ??
+        loc.homeCollaboratorFallback;
+    final drafts = attachments
+        .where((attachment) => attachment.url.isNotEmpty)
+        .map(
+          (attachment) => SharedFileDraft(
+            fileUrl: attachment.url,
+            fileName: attachment.name,
+            contentType: attachment.contentType,
+            sizeBytes: attachment.sizeBytes,
+            origin: origin,
+            uploaderId: uploaderId,
+            uploaderName: uploaderName,
+            projectId: project.id,
+            projectName: project.name,
+          ),
+        )
+        .toList(growable: false);
+    for (final draft in drafts) {
+      unawaited(controller.saveSharedFile(draft));
+    }
+  }
+
   void _handleAuthorTap({
     required Project project,
     Member? member,
@@ -88,12 +313,13 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
       return;
     }
 
-    if (authorId == 'me') {
+    final controller = context.read<ProjectController>();
+    final viewerId = _viewerUserId(controller);
+    if (authorId == viewerId || authorId == _localMemberFallbackId) {
       context.pushNamed('profile');
       return;
     }
 
-    final controller = context.read<ProjectController>();
     final detailArgs = controller.buildContactDetailArgs(
       member: member ?? Member(id: authorId, name: fallbackName),
       currentProject: project,
@@ -195,6 +421,28 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
     );
   }
 
+  String _viewerUserId(ProjectController controller) {
+    return controller.currentUserId ?? _localMemberFallbackId;
+  }
+
+  String? _viewerMemberId(Project project, ProjectController controller) {
+    final userId = controller.currentUserId;
+    final email = controller.currentUserEmail;
+    for (final member in project.members) {
+      if ((userId != null && userId.isNotEmpty && member.id == userId) ||
+          (email != null && email.isNotEmpty && member.id == email) ||
+          (userId != null && userId.isNotEmpty && member.contactId == userId) ||
+          (email != null && email.isNotEmpty && member.contactId == email)) {
+        return member.id;
+      }
+    }
+    return null;
+  }
+
+  String _viewerReceiptKey(String? memberId) {
+    return memberId ?? _localMemberFallbackId;
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ProjectController>();
@@ -266,15 +514,21 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
       );
     }
 
+    final viewerId = _viewerUserId(controller);
+    final viewerMemberId = _viewerMemberId(project, controller);
+    final receiptKey = _viewerReceiptKey(viewerMemberId);
+
     final messages = List<Message>.from(controller.messagesFor(project.id))
       ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+    final messagesById = {for (final message in messages) message.id: message};
     final members = {for (final member in project.members) member.id: member};
 
     final unreadByMe = messages
         .where(
           (message) =>
-              message.authorId != 'me' &&
-              message.receipts['me'] != MessageReceiptStatus.read,
+              message.authorId != viewerId &&
+              _receiptForViewer(message.receipts, viewerMemberId) !=
+                  MessageReceiptStatus.read,
         )
         .toList(growable: false);
 
@@ -287,7 +541,7 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
           controller.markReceipt(
             projectId: project.id,
             messageId: message.id,
-            memberId: 'me',
+            memberId: receiptKey,
             status: MessageReceiptStatus.read,
           );
         }
@@ -352,16 +606,36 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
-                      final isMine = message.authorId == 'me';
+                      final rowKey = _messageRowKeys.putIfAbsent(
+                        message.id,
+                        () => GlobalKey(),
+                      );
+                      final isMine = message.authorId == viewerId;
                       final author = members[message.authorId];
                       final authorName = isMine
                           ? loc.homeAuthorYou
                           : (author?.name ?? loc.homeCollaboratorFallback);
-                      return _ChatBubble(
+                      final replyAuthorName = author?.name ?? authorName;
+                      final replyPreview = MessageReplyPreview(
+                        messageId: message.id,
+                        authorId: message.authorId,
+                        authorName: replyAuthorName,
+                        authorAvatarUrl: author?.avatarUrl,
+                        sentAt: message.sentAt,
+                        body: message.body,
+                        attachments: message.attachments,
+                      );
+
+                      final bubble = _ChatBubble(
                         message: message,
                         author: author,
                         authorName: authorName,
                         isMine: isMine,
+                        viewerId: viewerId,
+                        viewerMemberId: viewerMemberId,
+                        messagesById: messagesById,
+                        onReply: () => _startReply(replyPreview),
+                        onJumpToMessage: (id) => _jumpToMessage(id, messages),
                         onReact: (emoji) => controller.addReaction(
                           project.id,
                           message.id,
@@ -375,12 +649,45 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
                           fallbackName: authorName,
                         ),
                       );
+
+                      return KeyedSubtree(
+                        key: rowKey,
+                        child: Dismissible(
+                          key: ValueKey('reply-${message.id}'),
+                          direction: DismissDirection.horizontal,
+                          dismissThresholds: const {
+                            DismissDirection.startToEnd: 0.2,
+                            DismissDirection.endToStart: 0.2,
+                          },
+                          background: _SwipeReplyBackground(
+                            alignment: AlignmentDirectional.centerStart,
+                          ),
+                          secondaryBackground: _SwipeReplyBackground(
+                            alignment: AlignmentDirectional.centerEnd,
+                          ),
+                          confirmDismiss: (_) async {
+                            _startReply(replyPreview);
+                            return false;
+                          },
+                          child: bubble,
+                        ),
+                      );
                     },
                   ),
                 ),
                 _ComposerBar(
                   controller: _messageController,
                   onSend: () => _handleSend(project),
+                  replyingTo: _replyingTo,
+                  replyPrefixText: _replyPrefixText(),
+                  onCancelReply: _clearReply,
+                  attachments: List<UploadedAttachment>.unmodifiable(
+                    _pendingAttachments,
+                  ),
+                  onAttachmentSelected: (source) =>
+                      _handleAttachmentSelected(source),
+                  onAttachmentRemoved: _removePendingAttachment,
+                  isUploading: _isUploadingAttachment,
                   bottomSpacing: CustomNavBar.totalHeight + 24,
                 ),
               ],
@@ -398,13 +705,46 @@ class _ProjectChatScreenState extends State<ProjectChatScreen> {
   }
 }
 
+class _SwipeReplyBackground extends StatelessWidget {
+  const _SwipeReplyBackground({required this.alignment});
+
+  final AlignmentDirectional alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        ),
+        child: const Icon(
+          Icons.reply_outlined,
+          color: AppColors.primary,
+          size: 20,
+        ),
+      ),
+    );
+  }
+}
+
 class _ChatBubble extends StatelessWidget {
   const _ChatBubble({
     required this.message,
     required this.author,
     required this.authorName,
     required this.isMine,
+    required this.viewerId,
+    required this.viewerMemberId,
+    required this.messagesById,
     required this.onReact,
+    required this.onReply,
+    required this.onJumpToMessage,
     required this.members,
     required this.onAuthorTap,
   });
@@ -413,7 +753,12 @@ class _ChatBubble extends StatelessWidget {
   final Member? author;
   final String authorName;
   final bool isMine;
+  final String viewerId;
+  final String? viewerMemberId;
+  final Map<String, Message> messagesById;
   final ValueChanged<String> onReact;
+  final VoidCallback onReply;
+  final ValueChanged<String> onJumpToMessage;
   final List<Member> members;
   final VoidCallback onAuthorTap;
 
@@ -421,14 +766,19 @@ class _ChatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = context.l10n;
-    final statusIndicator = _statusIndicator(context, message, isMine);
+    final statusIndicator = _statusIndicator(
+      context,
+      message,
+      isMine,
+      viewerMemberId,
+    );
 
     final baseTextStyle = theme.textTheme.bodyMedium?.copyWith(
       color: AppColors.secondaryText,
       fontWeight: FontWeight.w600,
     );
     final mentionStyle = baseTextStyle?.copyWith(
-      color: AppColors.secondary,
+      color: AppColors.primary,
       fontWeight: FontWeight.bold,
     );
     final metaStyle = theme.textTheme.labelSmall?.copyWith(
@@ -452,6 +802,8 @@ class _ChatBubble extends StatelessWidget {
             : AppColors.textfieldBorder.withValues(alpha: 0.6),
       ),
     );
+
+    final replyPreview = _resolveReplyPreview(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
@@ -482,6 +834,20 @@ class _ChatBubble extends StatelessWidget {
                             ? CrossAxisAlignment.end
                             : CrossAxisAlignment.start,
                         children: [
+                          if (replyPreview != null) ...[
+                            QuotedReplyBlock(
+                              preview: replyPreview,
+                              isMine: isMine,
+                              onTap: () {
+                                final targetId =
+                                    message.replyToMessageId ??
+                                    replyPreview.messageId;
+                                if (targetId.trim().isEmpty) return;
+                                onJumpToMessage(targetId);
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                          ],
                           if (baseTextStyle != null)
                             RichText(
                               text: TextSpan(
@@ -518,6 +884,7 @@ class _ChatBubble extends StatelessWidget {
                         onTap: () => showEmojiReactionPicker(
                           context: context,
                           onSelected: onReact,
+                          onReply: onReply,
                         ),
                         tooltip: loc.collaborationChatReactTooltip,
                       ),
@@ -569,6 +936,52 @@ class _ChatBubble extends StatelessWidget {
     );
   }
 
+  MessageReplyPreview? _resolveReplyPreview(BuildContext context) {
+    final direct = message.replyPreview;
+    if (direct != null && direct.messageId.isNotEmpty) {
+      return direct;
+    }
+
+    final replyToId = message.replyToMessageId;
+    if (replyToId == null || replyToId.trim().isEmpty) {
+      return null;
+    }
+
+    final original = messagesById[replyToId];
+    final loc = context.l10n;
+
+    if (original == null) {
+      return MessageReplyPreview(
+        messageId: replyToId,
+        authorId: '',
+        authorName: loc.homeCollaboratorFallback,
+        sentAt: DateTime.now(),
+        body: loc.chatMessageNotAvailable,
+        attachments: const [],
+      );
+    }
+
+    Member? author;
+    for (final member in members) {
+      if (member.id == original.authorId) {
+        author = member;
+        break;
+      }
+    }
+
+    final resolvedAuthorName = author?.name ?? loc.homeCollaboratorFallback;
+
+    return MessageReplyPreview(
+      messageId: original.id,
+      authorId: original.authorId,
+      authorName: resolvedAuthorName,
+      authorAvatarUrl: author?.avatarUrl,
+      sentAt: original.sentAt,
+      body: original.body,
+      attachments: original.attachments,
+    );
+  }
+
   List<InlineSpan> _buildBodySpans(
     String body,
     List<String> mentions,
@@ -581,17 +994,20 @@ class _ChatBubble extends StatelessWidget {
     var index = 0;
 
     for (final match in regex.allMatches(body)) {
-      if (match.start > index) {
-        spans.add(
-          TextSpan(text: body.substring(index, match.start), style: base),
-        );
+      var start = match.start;
+      var end = match.end;
+      final mentionToken = match.group(0)!;
+
+      if (start > index) {
+        spans.add(TextSpan(text: body.substring(index, start), style: base));
       }
-      final token = match.group(0)!;
-      final style = mentionSet.isEmpty || mentionSet.contains(token)
+
+      final displayToken = body.substring(start, end);
+      final style = mentionSet.isEmpty || mentionSet.contains(mentionToken)
           ? mentionStyle
           : base;
-      spans.add(TextSpan(text: token, style: style));
-      index = match.end;
+      spans.add(TextSpan(text: displayToken, style: style));
+      index = end;
     }
 
     if (index < body.length) {
@@ -605,14 +1021,21 @@ class _ChatBubble extends StatelessWidget {
     BuildContext context,
     Message message,
     bool isMine,
+    String? viewerMemberId,
   ) {
     final receipts = message.receipts;
     final loc = context.l10n;
+    final viewerKey = viewerMemberId ?? _localMemberFallbackId;
 
     if (isMine) {
       final recipientIds = members
           .map((member) => member.id)
-          .where((id) => id != 'me' && id != message.authorId)
+          .where(
+            (id) =>
+                id != viewerKey &&
+                id != _localMemberFallbackId &&
+                id != message.authorId,
+          )
           .toList(growable: false);
 
       if (recipientIds.isEmpty) {
@@ -643,7 +1066,7 @@ class _ChatBubble extends StatelessWidget {
       return _indicatorForOwn(context, MessageReceiptStatus.sent);
     }
 
-    final myStatus = receipts['me'];
+    final myStatus = receipts[viewerKey] ?? receipts[_localMemberFallbackId];
     switch (myStatus) {
       case MessageReceiptStatus.read:
         return _StatusIndicator(
@@ -753,35 +1176,24 @@ class _BubbleActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = isMine
-        ? AppColors.primary.withValues(alpha: 0.18)
-        : AppColors.secondaryBackground;
-    final borderColor = isMine
-        ? AppColors.primary.withValues(alpha: 0.3)
-        : AppColors.textfieldBorder.withValues(alpha: 0.55);
     final iconColor = isMine ? AppColors.secondary : AppColors.hintTextfiled;
+    final hoverColor = AppColors.primary.withValues(alpha: 0.08);
+    final splashColor = AppColors.primary.withValues(alpha: 0.12);
 
     return Tooltip(
       message: tooltip,
       child: Material(
         color: Colors.transparent,
-        shape: const CircleBorder(),
         child: InkWell(
-          customBorder: const CircleBorder(),
+          borderRadius: BorderRadius.circular(12),
+          hoverColor: hoverColor,
+          splashColor: splashColor,
+          highlightColor: splashColor,
           onTap: onTap,
-          child: Ink(
+          child: SizedBox(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: background,
-              border: Border.all(color: borderColor),
-            ),
-            child: Icon(
-              Icons.emoji_emotions_outlined,
-              size: 20,
-              color: iconColor,
-            ),
+            child: Icon(FeatherIcons.moreVertical, size: 20, color: iconColor),
           ),
         ),
       ),
@@ -797,8 +1209,9 @@ class _AttachmentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lower = filename.toLowerCase();
-    if (_isImage(lower)) {
+    final normalized = AttachmentUtils.normalizedName(filename);
+    final displayName = AttachmentUtils.displayName(filename);
+    if (_isImage(normalized)) {
       return _ImageAttachmentPreview(attachment: filename, isMine: isMine);
     }
 
@@ -806,16 +1219,16 @@ class _AttachmentTile extends StatelessWidget {
     IconData icon;
     Color iconColor;
 
-    if (lower.endsWith('.pdf')) {
+    if (normalized.endsWith('.pdf')) {
       icon = Icons.picture_as_pdf_outlined;
       iconColor = Colors.redAccent;
-    } else if (lower.endsWith('.doc') || lower.endsWith('.docx')) {
+    } else if (normalized.endsWith('.doc') || normalized.endsWith('.docx')) {
       icon = Icons.description_outlined;
       iconColor = AppColors.secondary;
-    } else if (lower.endsWith('.xlsx') || lower.endsWith('.csv')) {
+    } else if (normalized.endsWith('.xlsx') || normalized.endsWith('.csv')) {
       icon = Icons.table_chart_outlined;
       iconColor = Colors.teal;
-    } else if (lower.endsWith('.zip') || lower.endsWith('.rar')) {
+    } else if (normalized.endsWith('.zip') || normalized.endsWith('.rar')) {
       icon = Icons.folder_zip_outlined;
       iconColor = AppColors.secondary;
     } else {
@@ -844,7 +1257,7 @@ class _AttachmentTile extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 160),
             child: Text(
-              filename,
+              displayName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelMedium?.copyWith(
@@ -897,15 +1310,16 @@ class _ImageAttachmentPreview extends StatelessWidget {
 
   Widget _buildImageWidget(BuildContext context) {
     final image = attachment.trim();
+    final label = AttachmentUtils.displayName(attachment);
     if (image.isEmpty) {
-      return _ImageFallback(filename: attachment);
+      return _ImageFallback(label: label);
     }
 
     if (image.startsWith('http://') || image.startsWith('https://')) {
       return Image.network(
         image,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _ImageFallback(filename: attachment),
+        errorBuilder: (_, __, ___) => _ImageFallback(label: label),
       );
     }
 
@@ -913,22 +1327,22 @@ class _ImageAttachmentPreview extends StatelessWidget {
       return Image.asset(
         image,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _ImageFallback(filename: attachment),
+        errorBuilder: (_, __, ___) => _ImageFallback(label: label),
       );
     }
 
     return Image.asset(
       'assets/images/$image',
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _ImageFallback(filename: attachment),
+      errorBuilder: (_, __, ___) => _ImageFallback(label: label),
     );
   }
 }
 
 class _ImageFallback extends StatelessWidget {
-  const _ImageFallback({required this.filename});
+  const _ImageFallback({required this.label});
 
-  final String filename;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -948,7 +1362,7 @@ class _ImageFallback extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
-              filename,
+              label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelSmall?.copyWith(
@@ -1106,11 +1520,25 @@ class _ComposerBar extends StatelessWidget {
   const _ComposerBar({
     required this.controller,
     required this.onSend,
+    this.replyingTo,
+    this.replyPrefixText,
+    this.onCancelReply,
+    required this.attachments,
+    required this.onAttachmentSelected,
+    required this.onAttachmentRemoved,
+    required this.isUploading,
     this.bottomSpacing = 24,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
+  final MessageReplyPreview? replyingTo;
+  final String? replyPrefixText;
+  final VoidCallback? onCancelReply;
+  final List<UploadedAttachment> attachments;
+  final ValueChanged<ChatAttachmentSource> onAttachmentSelected;
+  final ValueChanged<UploadedAttachment> onAttachmentRemoved;
+  final bool isUploading;
   final double bottomSpacing;
 
   @override
@@ -1138,57 +1566,99 @@ class _ComposerBar extends StatelessWidget {
           child: ValueListenableBuilder<TextEditingValue>(
             valueListenable: controller,
             builder: (context, value, _) {
-              final canSend = value.text.trim().isNotEmpty;
+              final hasText = value.text.trim().isNotEmpty;
+              final hasAttachments = attachments.isNotEmpty;
+              final canSend = hasText || hasAttachments;
 
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ComposerActionButton(
-                    icon: FeatherIcons.paperclip,
-                    tooltip: loc.collaborationChatAddAttachment,
-                    onTap: () => _showAttachmentOptions(context),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      minLines: 1,
-                      maxLines: 6,
-                      decoration: InputDecoration(
-                        // contentPadding: const EdgeInsets.symmetric(
-                        //   horizontal: 4,
-                        //   vertical: 0,
-                        // ),
-                        isDense: false,
-                        hintText: loc.collaborationChatComposerHint,
-                        hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.hintTextfiled,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        filled: true,
-                        fillColor: AppColors.textfieldBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                  if (isUploading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: LinearProgressIndicator(minHeight: 3),
+                    ),
+                  if (isUploading) const SizedBox(height: 12),
+                  if (replyingTo != null) ...[
+                    MessageReplyBanner(
+                      preview: replyingTo!,
+                      onCancel: onCancelReply ?? () {},
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (hasAttachments)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: attachments
+                          .map(
+                            (attachment) => _AttachmentChip(
+                              attachment: attachment,
+                              onRemoved: onAttachmentRemoved,
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  if (hasAttachments) const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _ComposerActionButton(
+                        icon: FeatherIcons.paperclip,
+                        tooltip: loc.collaborationChatAddAttachment,
+                        onTap: isUploading
+                            ? null
+                            : () => _showAttachmentOptions(
+                                context,
+                                onSelected: onAttachmentSelected,
+                              ),
+                        enabled: !isUploading,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          minLines: 1,
+                          maxLines: 6,
+                          decoration: InputDecoration(
+                            isDense: false,
+                            hintText: loc.collaborationChatComposerHint,
+                            hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.hintTextfiled,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            prefixText: replyPrefixText,
+                            prefixStyle: theme.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.textfieldBackground,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                          textInputAction: TextInputAction.newline,
+                          onSubmitted: (_) {
+                            if (canSend) onSend();
+                          },
                         ),
                       ),
-                      textInputAction: TextInputAction.newline,
-                      onSubmitted: (_) {
-                        if (canSend) onSend();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  _ComposerActionButton(
-                    icon: FeatherIcons.send,
-                    tooltip: loc.collaborationChatSendMessage,
-                    onTap: canSend ? onSend : null,
-                    enabled: canSend,
-                    variant: _ComposerButtonVariant.primary,
+                      const SizedBox(width: 12),
+                      _ComposerActionButton(
+                        icon: FeatherIcons.send,
+                        tooltip: loc.collaborationChatSendMessage,
+                        onTap: canSend ? onSend : null,
+                        enabled: canSend,
+                        variant: _ComposerButtonVariant.primary,
+                      ),
+                    ],
                   ),
                 ],
               );
@@ -1199,7 +1669,10 @@ class _ComposerBar extends StatelessWidget {
     );
   }
 
-  void _showAttachmentOptions(BuildContext context) {
+  void _showAttachmentOptions(
+    BuildContext context, {
+    required ValueChanged<ChatAttachmentSource> onSelected,
+  }) {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1243,22 +1716,34 @@ class _ComposerBar extends StatelessWidget {
                   _AttachmentOption(
                     icon: FeatherIcons.image,
                     label: loc.collaborationChatAttachPhoto,
-                    onTap: () => Navigator.of(sheetContext).pop(),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      onSelected(ChatAttachmentSource.photoLibrary);
+                    },
                   ),
                   _AttachmentOption(
                     icon: FeatherIcons.fileText,
                     label: loc.collaborationChatAttachDocument,
-                    onTap: () => Navigator.of(sheetContext).pop(),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      onSelected(ChatAttachmentSource.document);
+                    },
                   ),
                   _AttachmentOption(
                     icon: FeatherIcons.file,
                     label: loc.collaborationChatAttachPdf,
-                    onTap: () => Navigator.of(sheetContext).pop(),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      onSelected(ChatAttachmentSource.pdf);
+                    },
                   ),
                   _AttachmentOption(
                     icon: FeatherIcons.camera,
                     label: loc.collaborationChatAttachCamera,
-                    onTap: () => Navigator.of(sheetContext).pop(),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      onSelected(ChatAttachmentSource.camera);
+                    },
                   ),
                 ],
               ),
@@ -1369,6 +1854,41 @@ class _AttachmentOption extends StatelessWidget {
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
       dense: true,
+    );
+  }
+}
+
+class _AttachmentChip extends StatelessWidget {
+  const _AttachmentChip({required this.attachment, required this.onRemoved});
+
+  final UploadedAttachment attachment;
+  final ValueChanged<UploadedAttachment> onRemoved;
+
+  @override
+  Widget build(BuildContext context) {
+    return InputChip(
+      label: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 160),
+        child: Text(
+          attachment.name,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: AppColors.secondaryText,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      onDeleted: () => onRemoved(attachment),
+      deleteIcon: const Icon(Icons.close, size: 16),
+      deleteIconColor: AppColors.hintTextfiled,
+      backgroundColor: AppColors.textfieldBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: AppColors.textfieldBorder.withValues(alpha: 0.6),
+        ),
+      ),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 }

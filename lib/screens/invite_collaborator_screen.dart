@@ -80,7 +80,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
     return null;
   }
 
-  void _sendDirectInvite(ProjectController controller) {
+  Future<void> _sendDirectInvite(ProjectController controller) async {
     final loc = context.l10n;
     final project = _resolveSelectedProject(controller);
     if (project == null) {
@@ -107,26 +107,35 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
       ),
     );
 
-    final bool requiresOnboarding;
-    final String inviteeName;
-    if (existingContact.email.isEmpty) {
-      requiresOnboarding = true;
-      inviteeName = _deriveNameFromEmail(email);
-    } else {
-      requiresOnboarding = false;
-      inviteeName = existingContact.name;
+    final hasContact = existingContact.email.isNotEmpty;
+    final inviteeName = hasContact
+        ? existingContact.name
+        : _deriveNameFromEmail(email);
+    final alreadyRegistered = await controller.emailHasRegisteredUser(email);
+    final requiresOnboarding =
+        (!hasContact && !alreadyRegistered) || !_shareLink;
+
+    try {
+      await controller.addInvitation(
+        projectId: project.id,
+        projectName: project.name,
+        inviteeName: inviteeName,
+        inviteeEmail: email,
+        role: _selectedRole,
+        message: note.isEmpty ? null : note,
+        requiresOnboarding: requiresOnboarding,
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage('Failed to send invitation. Please try again.');
+      return;
     }
 
-    controller.addInvitation(
-      projectId: project.id,
-      projectName: project.name,
-      inviteeName: inviteeName,
-      inviteeEmail: email,
-      role: _selectedRole,
-      message: note.isEmpty ? null : note,
-      requiresOnboarding: requiresOnboarding || !_shareLink,
-    );
-
+    if (!mounted) {
+      return;
+    }
     _emailController.clear();
     _messageController.clear();
     FocusScope.of(context).unfocus();
@@ -158,7 +167,7 @@ class _InviteCollaboratorScreenState extends State<InviteCollaboratorScreen> {
     }
 
     for (final contact in result.contacts) {
-      controller.addInvitation(
+      await controller.addInvitation(
         projectId: project.id,
         projectName: project.name,
         inviteeName: contact.name,

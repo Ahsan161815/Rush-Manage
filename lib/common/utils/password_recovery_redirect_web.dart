@@ -2,28 +2,34 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as html;
 
 Future<bool> handlePasswordRecoveryRedirect(SupabaseClient client) async {
-  final params = _collectRedirectParams();
+  final uri = Uri.parse(html.window.location.href);
+  final params = _collectRedirectParams(uri);
   if (params.isEmpty) {
     return false;
   }
 
   final type = params['type'];
+  final shouldOpenReset = type == 'recovery';
   final code = params['code'];
-  final accessToken = params['access_token'];
   final refreshToken = params['refresh_token'];
 
-  try {
-    if (code != null) {
-      await client.auth.exchangeCodeForSession(code);
-      _clearSensitiveParams();
-      return type == 'recovery';
-    }
+  final hasSessionParams =
+      code != null || (refreshToken != null && refreshToken.isNotEmpty);
+  if (!hasSessionParams) {
+    return false;
+  }
 
-    if (accessToken != null && refreshToken != null) {
+  try {
+    if (code != null && code.isNotEmpty) {
+      await client.auth.exchangeCodeForSession(code);
+    } else if (refreshToken != null && refreshToken.isNotEmpty) {
       await client.auth.setSession(refreshToken);
-      _clearSensitiveParams();
-      return type == 'recovery';
     }
+    _clearSensitiveParams(
+      uri: uri,
+      fragmentOverride: shouldOpenReset ? '/reset-password' : _defaultFragment(uri),
+    );
+    return shouldOpenReset;
   } catch (_) {
     // Swallow errors: fall back to regular flow so the user sees the login UI.
   }
@@ -31,8 +37,20 @@ Future<bool> handlePasswordRecoveryRedirect(SupabaseClient client) async {
   return false;
 }
 
-Map<String, String> _collectRedirectParams() {
-  final uri = Uri.parse(html.window.location.href);
+String _defaultFragment(Uri uri) {
+  final fragment = uri.fragment;
+  if (fragment.isEmpty) {
+    return '/login';
+  }
+  final queryIndex = fragment.indexOf('?');
+  if (queryIndex == -1) {
+    return fragment.startsWith('/') ? fragment : '/$fragment';
+  }
+  final baseFragment = fragment.substring(0, queryIndex);
+  return baseFragment.isEmpty ? '/login' : baseFragment;
+}
+
+Map<String, String> _collectRedirectParams(Uri uri) {
   final params = <String, String>{...uri.queryParameters};
   final fragment = uri.fragment;
   if (fragment.isEmpty) {
@@ -61,15 +79,7 @@ String? _extractQueryFromFragment(String fragment) {
   return working;
 }
 
-void _clearSensitiveParams() {
-  final location = html.window.location;
-  final uri = Uri.parse(location.href);
-  final sanitized = Uri(
-    scheme: uri.scheme,
-    host: uri.host,
-    port: uri.hasPort ? uri.port : null,
-    path: uri.path,
-    fragment: '/reset-password',
-  );
+void _clearSensitiveParams({required Uri uri, required String fragmentOverride}) {
+  final sanitized = uri.replace(queryParameters: const {}, fragment: fragmentOverride);
   html.window.history.replaceState(null, '', sanitized.toString());
 }

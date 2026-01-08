@@ -2,27 +2,41 @@ import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/app_form_fields.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
+import 'package:myapp/common/models/user.dart';
 import 'package:myapp/controllers/locale_controller.dart';
+import 'package:myapp/controllers/user_controller.dart';
 import 'package:myapp/l10n/app_localizations.dart';
+import 'package:myapp/services/auth_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  static const _profile = _ProfileSnapshot(
-    name: 'Alex Carter',
-    role: 'Operations Lead',
-    email: 'alex.carter@example.com',
-    phone: '+1 (555) 010-9988',
-    location: 'San Francisco, CA',
-    focusArea: 'Logistics',
-    bio:
-        'Coordinates cross-functional teams to keep every project milestone moving.',
-  );
+  Future<void> _handleLogout(BuildContext context) async {
+    final loc = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.read<AuthService>().signOut();
+      if (!context.mounted) return;
+      context.goNamed('welcome');
+    } on AuthException catch (error) {
+      final message = error.message.isNotEmpty
+          ? error.message
+          : loc.profileLogoutError;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    } catch (_) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(loc.profileLogoutError)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +48,10 @@ class ProfileScreen extends StatelessWidget {
       languageOptions,
       localeController.locale,
     );
+    final userController = context.watch<UserController>();
+    final snapshot = _ProfileSnapshot.fromProfile(userController.profile, loc);
+    final isLoadingProfile =
+        userController.isLoading && userController.profile == null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -65,7 +83,7 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: loc.profileEditTooltip,
-            onPressed: () => context.pushNamed('setupProfile'),
+            onPressed: () => context.pushNamed('editProfile'),
             icon: const Icon(FeatherIcons.edit, color: AppColors.secondaryText),
           ),
         ],
@@ -75,88 +93,102 @@ class ProfileScreen extends StatelessWidget {
           Positioned.fill(
             child: SafeArea(
               bottom: false,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  24,
-                  16,
-                  24,
-                  CustomNavBar.totalHeight + 56,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _ProfileHeader(snapshot: _profile),
-                    const SizedBox(height: 20),
-                    _InfoSection(
-                      title: loc.profileContactSection,
-                      children: [
-                        _InfoRow(
-                          icon: FeatherIcons.mail,
-                          label: loc.profileEmailLabel,
-                          value: _profile.email,
-                        ),
-                        _InfoRow(
-                          icon: FeatherIcons.phone,
-                          label: loc.profilePhoneLabel,
-                          value: _profile.phone,
-                        ),
-                        _InfoRow(
-                          icon: FeatherIcons.mapPin,
-                          label: loc.profileLocationLabel,
-                          value: _profile.location,
-                        ),
-                      ],
+              child: isLoadingProfile
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        16,
+                        24,
+                        CustomNavBar.totalHeight + 56,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _ProfileHeader(snapshot: snapshot),
+                          const SizedBox(height: 20),
+                          _InfoSection(
+                            title: loc.profileContactSection,
+                            children: [
+                              _InfoRow(
+                                icon: FeatherIcons.mail,
+                                label: loc.profileEmailLabel,
+                                value: snapshot.email,
+                              ),
+                              _InfoRow(
+                                icon: FeatherIcons.phone,
+                                label: loc.profilePhoneLabel,
+                                value: snapshot.phone,
+                              ),
+                              _InfoRow(
+                                icon: FeatherIcons.mapPin,
+                                label: loc.profileLocationLabel,
+                                value: snapshot.location,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          _LanguagePreferenceCard(
+                            title: loc.languageLabel,
+                            description: loc.languageDescription,
+                            options: languageOptions,
+                            selected: selectedLanguage,
+                            hintText: loc.languageDropdownHint,
+                            onChanged: (option) {
+                              if (option == null) {
+                                localeController.updateLocale(null);
+                                return;
+                              }
+                              localeController.updateLocale(option.locale);
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          _InfoSection(
+                            title: loc.profileFocusAreaSection,
+                            children: [
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  _FocusBadge(label: snapshot.focusArea),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          GradientButton(
+                            onPressed: () => context.pushNamed('setupProfile'),
+                            text: loc.profileEditButton,
+                            width: double.infinity,
+                            height: 52,
+                          ),
+                          const SizedBox(height: 12),
+                          _SecondaryActionButton(
+                            icon: FeatherIcons.barChart2,
+                            label: loc.profileViewAnalytics,
+                            onTap: () => context.pushNamed('analytics'),
+                            accentColor: AppColors.secondary,
+                          ),
+                          const SizedBox(height: 12),
+                          _SecondaryActionButton(
+                            icon: FeatherIcons.bell,
+                            label: loc.profileInvitationNotifications,
+                            onTap: () =>
+                                context.pushNamed('invitationNotifications'),
+                            accentColor: AppColors.primary,
+                          ),
+                          const SizedBox(height: 12),
+                          _SecondaryActionButton(
+                            icon: FeatherIcons.logOut,
+                            label: loc.profileLogoutButton,
+                            onTap: () {
+                              _handleLogout(context);
+                            },
+                            accentColor: AppColors.error,
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    _LanguagePreferenceCard(
-                      title: loc.languageLabel,
-                      description: loc.languageDescription,
-                      options: languageOptions,
-                      selected: selectedLanguage,
-                      hintText: loc.languageDropdownHint,
-                      onChanged: (option) {
-                        if (option == null) {
-                          localeController.updateLocale(null);
-                          return;
-                        }
-                        localeController.updateLocale(option.locale);
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    _InfoSection(
-                      title: loc.profileFocusAreaSection,
-                      children: [
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [_FocusBadge(label: _profile.focusArea)],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    GradientButton(
-                      onPressed: () => context.pushNamed('setupProfile'),
-                      text: loc.profileEditButton,
-                      width: double.infinity,
-                      height: 52,
-                    ),
-                    const SizedBox(height: 12),
-                    _SecondaryActionButton(
-                      icon: FeatherIcons.barChart2,
-                      label: loc.profileViewAnalytics,
-                      onTap: () => context.pushNamed('analytics'),
-                      accentColor: AppColors.secondary,
-                    ),
-                    const SizedBox(height: 12),
-                    _SecondaryActionButton(
-                      icon: FeatherIcons.bell,
-                      label: loc.profileInvitationNotifications,
-                      onTap: () => context.pushNamed('invitationNotifications'),
-                      accentColor: AppColors.primary,
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
           const Positioned(
@@ -275,7 +307,7 @@ class _SecondaryActionButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: AppColors.secondaryBackground,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: (accentColor ?? AppColors.textfieldBorder).withValues(
               alpha: 0.55,
@@ -334,36 +366,7 @@ class _ProfileHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 84,
-            height: 84,
-            padding: const EdgeInsets.all(4),
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [AppColors.secondary, AppColors.primary],
-                begin: AlignmentDirectional(1.0, 0.34),
-                end: AlignmentDirectional(-1.0, -0.34),
-              ),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.textfieldBackground,
-                border: Border.all(
-                  color: AppColors.textfieldBorder.withValues(alpha: 0.4),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                snapshot.initials,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: AppColors.secondaryText,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
+          _ProfileAvatar(snapshot: snapshot),
           const SizedBox(width: 18),
           Expanded(
             child: Column(
@@ -530,8 +533,48 @@ class _ProfileSnapshot {
     required this.phone,
     required this.location,
     required this.focusArea,
-    required this.bio,
+    required this.avatarUrl,
   });
+
+  factory _ProfileSnapshot.fromProfile(
+    UserProfile? profile,
+    AppLocalizations loc,
+  ) {
+    const placeholder = '—';
+    if (profile == null) {
+      return const _ProfileSnapshot(
+        name: placeholder,
+        role: placeholder,
+        email: placeholder,
+        phone: placeholder,
+        location: placeholder,
+        focusArea: placeholder,
+        avatarUrl: null,
+      );
+    }
+
+    String valueOrPlaceholder(String? value) {
+      final trimmed = value?.trim() ?? '';
+      return trimmed.isEmpty ? placeholder : trimmed;
+    }
+
+    final displayName = valueOrPlaceholder(profile.displayName);
+    final roleLabel = valueOrPlaceholder(profile.roleTitle);
+    final email = valueOrPlaceholder(profile.email);
+    final phone = valueOrPlaceholder(profile.phone);
+    final location = valueOrPlaceholder(profile.location);
+    final focusArea = _focusAreaLabel(loc, profile.focusArea);
+
+    return _ProfileSnapshot(
+      name: displayName,
+      role: roleLabel,
+      email: email,
+      phone: phone,
+      location: location,
+      focusArea: focusArea,
+      avatarUrl: profile.avatarUrl,
+    );
+  }
 
   final String name;
   final String role;
@@ -539,7 +582,7 @@ class _ProfileSnapshot {
   final String phone;
   final String location;
   final String focusArea;
-  final String bio;
+  final String? avatarUrl;
 
   String get initials {
     final parts = name
@@ -559,5 +602,87 @@ class _ProfileSnapshot {
 
     final lastInitial = parts.last[0].toUpperCase();
     return '$firstInitial$lastInitial';
+  }
+
+  static String _focusAreaLabel(AppLocalizations loc, String? key) {
+    const placeholder = '—';
+    if (key == null || key.trim().isEmpty) {
+      return placeholder;
+    }
+    switch (key.trim().toLowerCase()) {
+      case 'planning':
+        return loc.commonFocusPlanning;
+      case 'engineering':
+        return loc.commonFocusEngineering;
+      case 'finance':
+        return loc.commonFocusFinance;
+      case 'logistics':
+        return loc.commonFocusLogistics;
+      default:
+        final normalized = key.trim();
+        return normalized[0].toUpperCase() + normalized.substring(1);
+    }
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({required this.snapshot});
+
+  final _ProfileSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasAvatar =
+        snapshot.avatarUrl != null && snapshot.avatarUrl!.isNotEmpty;
+    return Container(
+      width: 84,
+      height: 84,
+      padding: const EdgeInsets.all(4),
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [AppColors.secondary, AppColors.primary],
+          begin: AlignmentDirectional(1.0, 0.34),
+          end: AlignmentDirectional(-1.0, -0.34),
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.textfieldBackground,
+          border: Border.all(
+            color: AppColors.textfieldBorder.withValues(alpha: 0.4),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: hasAvatar
+            ? Image.network(
+                snapshot.avatarUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    _InitialsFallback(snapshot: snapshot),
+              )
+            : _InitialsFallback(snapshot: snapshot),
+      ),
+    );
+  }
+}
+
+class _InitialsFallback extends StatelessWidget {
+  const _InitialsFallback({required this.snapshot});
+
+  final _ProfileSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        snapshot.initials,
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: AppColors.secondaryText,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }

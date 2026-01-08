@@ -17,10 +17,7 @@ class LocaleController extends ChangeNotifier {
     if (savedCode != null && savedCode.isNotEmpty) {
       _locale = Locale(savedCode);
     } else {
-      final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
-      if (_isSupported(systemLocale.languageCode)) {
-        _locale = Locale(systemLocale.languageCode);
-      }
+      _locale = null; // default handled by resolver (English)
     }
     notifyListeners();
   }
@@ -40,18 +37,28 @@ class LocaleController extends ChangeNotifier {
     if (_locale != null) {
       return _locale!;
     }
-    if (locale != null) {
-      final match = supported.firstWhere(
-        (supportedLocale) =>
-            supportedLocale.languageCode == locale.languageCode,
-        orElse: () => supported.first,
-      );
-      return match;
-    }
-    return supported.first;
-  }
 
-  bool _isSupported(String code) {
-    return const ['en', 'fr'].contains(code);
+    // Prefer the locale passed by Flutter (device/app locale). If that's
+    // null, fall back to the framework window locale. Try to find the best
+    // matching supported locale (exact match, then language-only), otherwise
+    // return the first supported locale as a last resort.
+    final preferred =
+        locale ?? WidgetsBinding.instance.platformDispatcher.locale;
+
+    // Exact match (language + country)
+    for (final s in supported) {
+      if (s.languageCode == preferred.languageCode &&
+          (s.countryCode ?? '') == (preferred.countryCode ?? '')) {
+        return s;
+      }
+    }
+    // Match by language only
+    for (final s in supported) {
+      if (s.languageCode == preferred.languageCode) {
+        return s;
+      }
+    }
+
+    return supported.first;
   }
 }

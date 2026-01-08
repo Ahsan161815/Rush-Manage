@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/common/models/plan_package.dart';
+import 'package:myapp/controllers/finance_controller.dart';
+import 'package:myapp/controllers/user_controller.dart';
+import 'package:myapp/widgets/plan_upgrade_sheet.dart';
 
 enum _PaymentTerm { dueOnReceipt, due15Days, due30Days }
 
@@ -23,6 +29,7 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
 
   String _selectedCurrency = 'EUR';
   _PaymentTerm _selectedPaymentTerm = _PaymentTerm.due15Days;
+  bool _isSubmitting = false;
 
   static const List<String> _currencies = ['EUR', 'USD', 'GBP'];
   static const List<_PaymentTerm> _paymentTerms = [
@@ -259,10 +266,11 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                     ),
                     const SizedBox(height: 28),
                     GradientButton(
-                      onPressed: () {},
+                      onPressed: _submitQuote,
                       text: loc.financeCreateQuotePrimaryCta,
                       width: double.infinity,
                       height: 52,
+                      isLoading: _isSubmitting,
                     ),
                   ],
                 ),
@@ -278,6 +286,90 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _submitQuote() async {
+    if (_isSubmitting) return;
+    FocusScope.of(context).unfocus();
+    final amount = _parseAmount(_amountController.text);
+    if (amount == null || amount <= 0) {
+      const snackBar = SnackBar(
+        content: Text('Enter a valid amount to continue.'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      return;
+    }
+    final finance = context.read<FinanceController>();
+    final userController = context.read<UserController?>();
+    final docCount = finance.quotes.length + finance.invoices.length;
+    if (userController != null && !userController.canCreateDocument(docCount)) {
+      final unlocked = await showPlanUpgradeSheet(
+        context,
+        quotaType: PlanQuotaType.documents,
+      );
+      if (!mounted || !unlocked) {
+        return;
+      }
+      if (!userController.canCreateDocument(docCount)) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.planUpgradeTrialActivated)),
+      );
+    }
+    setState(() => _isSubmitting = true);
+    final clientName = _projectController.text.trim().isEmpty
+        ? context.l10n.financeQuoteFallbackClient
+        : _projectController.text.trim();
+    try {
+      final quote = await finance.createDraftQuote(
+        clientName: clientName,
+        description: _buildQuoteDescription(context),
+        subtotal: amount,
+      );
+      if (!mounted) return;
+      context.push('/finance/quote/${quote.id}/preview');
+    } catch (_) {
+      if (!mounted) return;
+      const snackBar = SnackBar(
+        content: Text('Unable to create quote. Try again.'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  double? _parseAmount(String raw) {
+    final sanitized = raw.replaceAll(RegExp(r'[^0-9.,]'), '');
+    if (sanitized.isEmpty) {
+      return null;
+    }
+    final normalized = sanitized.replaceAll(',', '.');
+    final segments = normalized.split('.');
+    if (segments.length <= 2) {
+      return double.tryParse(normalized);
+    }
+    final decimalPart = segments.removeLast();
+    final integerPart = segments.join();
+    return double.tryParse('$integerPart.$decimalPart');
+  }
+
+  String _buildQuoteDescription(BuildContext context) {
+    final loc = context.l10n;
+    final scope = _serviceController.text.trim();
+    final notes = _notesController.text.trim();
+    final parts = <String>[
+      scope.isEmpty ? loc.financeQuoteFallbackDescription : scope,
+      '${_selectedCurrency.toUpperCase()} • '
+          '${_paymentTermLabel(context, _selectedPaymentTerm)}',
+    ];
+    if (notes.isNotEmpty) {
+      parts.add(notes);
+    }
+    return parts.join(' • ');
   }
 
   InputDecoration _inputDecoration(String hint) {

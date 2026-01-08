@@ -220,7 +220,10 @@ class _CollaboratorCard extends StatelessWidget {
               _OutlineChip(
                 label: loc.collaboratorsActionConversation,
                 icon: FeatherIcons.messageCircle,
-                onTap: () => context.pushNamed('collaborationChat'),
+                onTap: () => context.pushNamed(
+                  'collaborationChat',
+                  queryParameters: {'contactId': collaborator.id},
+                ),
               ),
               _OutlineChip(
                 label: loc.collaboratorsActionInvite,

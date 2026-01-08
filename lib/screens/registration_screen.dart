@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/widgets/custom_text_field.dart';
 
@@ -19,14 +20,13 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -35,11 +35,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Future<void> _handleRegister() async {
     if (_isLoading) return;
     final loc = context.l10n;
-    final fullName = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (fullName.isEmpty || email.isEmpty || password.length < 6) {
+    if (email.isEmpty || password.length < 6) {
       final errorMessage = password.length < 6
           ? loc.registrationPasswordTooShort
           : loc.registrationMissingFields;
@@ -51,13 +50,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() => _isLoading = true);
     try {
       final authService = context.read<AuthService>();
-      await authService.signUp(
-        email: email,
-        password: password,
-        fullName: fullName,
-      );
+      await authService.signUp(email: email, password: password);
+      // await authService.sendVerificationOtp(email: email);
+      // print('Verification email sent to $email');
       if (!mounted) return;
-      context.goNamed('setupProfile');
+      context.goNamed('verifyEmail', queryParameters: {'email': email});
+    } on DuplicateAccountException {
+      _showError(loc.registrationEmailConflict);
     } on AuthException catch (error) {
       _showError(error.message);
     } catch (_) {
@@ -73,6 +72,84 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showNotice(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isGoogleLoading || _isLoading) {
+      return;
+    }
+    final loc = context.l10n;
+    FocusScope.of(context).unfocus();
+    setState(() => _isGoogleLoading = true);
+    try {
+      final authService = context.read<AuthService>();
+      final result = await authService.signInWithGoogle();
+      if (!mounted || result == null) {
+        return;
+      }
+      await _processSignInResult(result);
+    } on AuthException catch (error) {
+      _showError(error.message);
+    } catch (_) {
+      _showError(loc.registrationGenericError);
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
+      }
+    }
+  }
+
+  Future<void> _processSignInResult(SignInResult result) async {
+    final emailForVerification = result.emailForVerification;
+    if (!result.isVerified) {
+      final message =
+          (emailForVerification == null || emailForVerification.isEmpty)
+          ? 'Check your inbox for the verification email we already sent and enter the code to continue.'
+          : 'Check your inbox for the verification email we already sent to $emailForVerification and enter the code to continue.';
+      _showNotice(message);
+      context.goNamed(
+        'verifyEmail',
+        queryParameters:
+            (emailForVerification == null || emailForVerification.isEmpty)
+            ? const {}
+            : {'email': emailForVerification},
+      );
+      return;
+    }
+
+    if (result.needsProfileSetup) {
+      _showNotice('Complete your profile to unlock the dashboard.');
+      context.goNamed('setupProfile');
+      return;
+    }
+    final redirected = await _maybeLaunchInvitationInbox();
+    if (redirected || !mounted) {
+      return;
+    }
+    context.goNamed('home');
+  }
+
+  Future<bool> _maybeLaunchInvitationInbox() async {
+    if (!mounted) {
+      return false;
+    }
+    final controller = context.read<ProjectController>();
+    final email = controller.currentUserEmail;
+    if (email == null || email.isEmpty) {
+      return false;
+    }
+    final hasInvites = await controller.loadInvitationsForEmail(email);
+    if (!hasInvites || !mounted) {
+      return false;
+    }
+    context.goNamed('invitationNotifications');
+    return true;
   }
 
   @override
@@ -108,12 +185,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                   ),
                   const SizedBox(height: 60),
-                  CustomTextField(
-                    controller: _nameController,
-                    hintText: loc.commonName,
-                    iconPath: 'assets/images/fullname.svg',
-                  ),
-                  const SizedBox(height: 14),
                   CustomTextField(
                     controller: _emailController,
                     hintText: loc.commonEmailAddress,
@@ -165,6 +236,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     loc.loginSocialGoogle,
                     AppColors.lightGrey,
                     AppColors.black,
+                    _handleGoogleSignIn,
+                    isLoading: _isGoogleLoading,
                   ),
                   const SizedBox(height: 20),
                   _buildSocialButton(
@@ -173,6 +246,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     loc.loginSocialApple,
                     AppColors.black,
                     AppColors.white,
+                    () => _showNotice(loc.loginAppleUnavailable),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -188,19 +262,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                       InkWell(
                         onTap: () => context.goNamed('login'),
-                        child: Opacity(
-                          opacity: 0.5,
-                          child: GradientText(
-                            loc.registrationLoginNow,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                            ),
-                            colors: const [
-                              AppColors.primary,
-                              AppColors.secondary,
-                            ],
+                        child: GradientText(
+                          loc.registrationLoginNow,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
                           ),
+                          colors: const [
+                            AppColors.primary,
+                            AppColors.secondary,
+                          ],
                         ),
                       ),
                     ],
@@ -221,19 +292,45 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     String text,
     Color backgroundColor,
     Color textColor,
-  ) {
-    return ElevatedButton.icon(
-      onPressed: () {},
-      icon: SvgPicture.asset(iconPath, width: 25, height: 25),
-      label: Text(
-        text,
-        style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
-      ),
+    VoidCallback? onPressed, {
+    bool isLoading = false,
+  }) {
+    final buttonWidth = MediaQuery.of(context).size.width * 0.79;
+    return ElevatedButton(
+      onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor,
-        minimumSize: Size(MediaQuery.of(context).size.width * 0.79, 58),
+        minimumSize: Size(buttonWidth, 58),
         padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+      ),
+      child: SizedBox(
+        width: buttonWidth,
+        child: Center(
+          child: isLoading
+              ? SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                  ),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset(iconPath, width: 25, height: 25),
+                    const SizedBox(width: 12),
+                    Text(
+                      text,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }

@@ -19,7 +19,7 @@ class _FinanceRecordPaymentScreenState
     extends State<FinanceRecordPaymentScreen> {
   String? _selectedInvoiceId;
 
-  void _submit(BuildContext context) {
+  Future<void> _submit(BuildContext context) async {
     final loc = context.l10n;
     if (_selectedInvoiceId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -27,11 +27,22 @@ class _FinanceRecordPaymentScreenState
       );
       return;
     }
-    context.read<FinanceController>().markInvoicePaid(_selectedInvoiceId!);
-    setState(() => _selectedInvoiceId = null);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(loc.financeRecordPaymentSuccess)));
+    try {
+      await context.read<FinanceController>().markInvoicePaid(
+        _selectedInvoiceId!,
+      );
+      if (!context.mounted) return;
+      setState(() => _selectedInvoiceId = null);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(loc.financeRecordPaymentSuccess)));
+    } catch (_) {
+      if (!context.mounted) return;
+      const snackBar = SnackBar(
+        content: Text('Unable to record payment right now.'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    }
   }
 
   @override

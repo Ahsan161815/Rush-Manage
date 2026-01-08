@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
@@ -381,46 +382,63 @@ class _PendingActions extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Container(
+          child: GradientButton(
+            onPressed: () => controller.acceptInvitation(invitation.id),
+            text: loc.invitationNotificationsAcceptCta,
             height: 52,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.secondary, AppColors.primary],
-                begin: AlignmentDirectional(1.0, 0.34),
-                end: AlignmentDirectional(-1.0, -0.34),
-              ),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              loc.invitationNotificationsAcceptCta,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: AppColors.primaryText,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: OutlinedButton(
-            onPressed: decline,
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(
-                color: AppColors.textfieldBorder,
-                width: 2,
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: decline,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(
+                      color: AppColors.textfieldBorder,
+                      width: 2,
+                    ),
+                    minimumSize: const Size.fromHeight(52),
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    foregroundColor: AppColors.secondaryText,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  child: Text(loc.invitationNotificationsDeclineCta),
+                ),
               ),
-              minimumSize: const Size.fromHeight(52),
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              foregroundColor: AppColors.secondaryText,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+              const SizedBox(width: 8),
+              Container(
+                height: 52,
+                width: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.textfieldBorder,
+                    width: 1.5,
+                  ),
+                ),
+                child: IconButton(
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final link = 'https://rush.manage/invite/${invitation.id}';
+                    await Clipboard.setData(ClipboardData(text: link));
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(loc.sharedFilesCopySuccess)),
+                    );
+                  },
+                  icon: const Icon(FeatherIcons.link),
+                  color: AppColors.secondaryText,
+                ),
               ),
-              textStyle: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            child: Text(loc.invitationNotificationsDeclineCta),
+            ],
           ),
         ),
       ],

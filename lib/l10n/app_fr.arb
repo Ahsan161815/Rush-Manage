@@ -28,6 +28,10 @@
   "collaboratorSectionSkills": "Compétences clés",
   "collaboratorSectionAbout": "À propos",
   "collaboratorSectionHistory": "Historique de collaboration",
+  "collaboratorStatProjectsLabel": "Projets",
+  "collaboratorStatCompletedTasksLabel": "Tâches terminées",
+  "collaboratorStatActiveTasksLabel": "Tâches en cours",
+  "collaboratorStatOverdueTasksLabel": "En retard",
   "collaboratorSendMessage": "Envoyer un message",
   "collaboratorReviewsMeta": "{rating} • {count} avis",
   "@collaboratorReviewsMeta": {
@@ -49,11 +53,25 @@
   "profileEditButton": "Modifier le profil",
   "profileViewAnalytics": "Voir les analyses",
   "profileInvitationNotifications": "Notifications d'invitation",
+  "editProfileTitle": "Modifier le profil",
+  "editProfileHeadline": "Actualisez vos informations pour garder l'équipe alignée.",
+  "editProfileSubtitle": "Chaque modification est partagée instantanément dans Rush Manage.",
+  "editProfileSave": "Enregistrer les modifications",
+  "editProfileSuccess": "Profil mis à jour",
+  "profileLogoutButton": "Se déconnecter",
+  "profileLogoutError": "Nous n'avons pas pu vous déconnecter. Veuillez réessayer.",
   "profileContactSection": "Contact",
   "profileFocusAreaSection": "Domaine d'expertise",
   "profileEmailLabel": "E-mail",
   "profilePhoneLabel": "Téléphone",
   "profileLocationLabel": "Localisation",
+  "profileErrorFullName": "Ajoutez votre nom complet avant de continuer.",
+  "profileErrorRole": "Indiquez votre rôle ou titre.",
+  "profileErrorLocation": "Précisez votre localisation.",
+  "profileErrorFocus": "Choisissez au moins un domaine d'expertise.",
+  "profileErrorIndustry": "Sélectionnez l'industrie principale que vous servez.",
+  "profileErrorAvatar": "Ajoutez une photo de profil pour continuer.",
+  "profileErrorGeneric": "Impossible d'enregistrer le profil, veuillez réessayer.",
   "commonOr": "OU",
   "commonEmailAddress": "Adresse e-mail",
   "commonPassword": "Mot de passe",
@@ -68,10 +86,21 @@
   "commonUploadPhoto": "Télécharger une photo",
   "commonSkip": "Ignorer pour l'instant",
   "commonSearchContacts": "Rechercher des contacts par nom ou projet",
+  "commonTryAgain": "Réessayer",
   "commonSearchThreads": "Rechercher des fils ou des contacts",
   "commonAllFilter": "Tous",
   "commonClientsFilter": "Clients",
   "commonCollaboratorsFilter": "Collaborateurs",
+  "commonSuppliersFilter": "Fournisseurs",
+  "planUpgradeProjectsTitle": "Limite de l'offre gratuite atteinte",
+  "planUpgradeProjectsDescription": "L'espace gratuit permet de gérer jusqu'à 2 projets actifs. Passez à l'offre supérieure pour continuer.",
+  "planUpgradeDocumentsTitle": "Limite de documents atteinte",
+  "planUpgradeDocumentsDescription": "L'espace gratuit permet d'envoyer jusqu'à 5 devis ou factures au total. Passez à l'offre supérieure pour continuer à facturer.",
+  "planUpgradeGeneralHeading": "Offres générales",
+  "planUpgradeAddOnHeading": "Modules par profession",
+  "planUpgradeTrialCta": "Ajouter 1 jour Pro",
+  "planUpgradeTrialFooter": "Paiements disponibles bientôt. Cette période d'essai débloque tout temporairement.",
+  "planUpgradeTrialActivated": "Accès Pro activé pendant 1 jour.",
   "commonProjectsFilter": "Projets",
   "commonContactsFilter": "Contacts",
   "commonAddContact": "Ajouter un contact",
@@ -90,6 +119,7 @@
   "loginButton": "Se connecter",
   "loginSocialGoogle": "Continuer avec Google",
   "loginSocialApple": "Continuer avec Apple",
+  "loginAppleUnavailable": "La connexion Apple n'est pas encore configurée.",
   "loginNoAccountPrompt": "Pas encore de compte ?",
   "loginCreateNow": "Créer maintenant",
   "loginMissingFields": "Veuillez saisir votre email et votre mot de passe.",
@@ -101,6 +131,7 @@
     "registrationLoginNow": "Connectez-vous maintenant",
     "registrationMissingFields": "Veuillez renseigner votre nom, email et mot de passe.",
     "registrationPasswordTooShort": "Le mot de passe doit contenir au moins 6 caractères.",
+    "registrationEmailConflict": "Un compte existe déjà avec cet e-mail. Essayez de vous connecter.",
     "registrationGenericError": "Impossible de créer votre compte. Veuillez réessayer.",
   "forgotTitle": "Réinitialiser le mot de passe",
   "forgotSubtitle": "Saisissez votre e-mail pour réinitialiser votre mot de passe",
@@ -139,6 +170,11 @@
   "chatsTitle": "Discussions projets",
   "chatsBadgeProject": "Projet",
   "chatsBadgeContact": "Contact",
+  "chatsEmptyTitle": "Aucun fil de projet",
+  "chatsEmptySubtitle": "Les collaborateurs apparaîtront ici dès qu'un chat démarre.",
+  "chatsNoMessagesYet": "Pas encore de mises à jour. Ouvrez le projet pour commencer à échanger.",
+  "chatsUnnamedProject": "Projet sans nom",
+  "chatsSearchEmpty": "Aucune conversation ne correspond à vos filtres.",
   "homeGreeting": "Salut, {name}",
   "@homeGreeting": {
     "placeholders": {
@@ -238,6 +274,27 @@
       "timestamp": {}
     }
   },
+    "sharedFilesWorkspaceLibrary": "Bibliothèque de l'espace de travail",
+    "sharedFilesOriginLibrary": "Bibliothèque partagée",
+    "sharedFilesUploadSuccess": "Fichier ajouté à la bibliothèque partagée.",
+    "sharedFilesUploadFailure": "Impossible de téléverser le fichier. Réessayez.",
+    "sharedFilesPickerTitle": "Choisissez une source de fichier",
+    "sharedFilesDestinationTitle": "Où devons-nous stocker ce fichier ?",
+    "sharedFilesDestinationWorkspaceSubtitle": "Le conserver dans la bibliothèque de l'espace",
+    "sharedFilesDestinationProjectSubtitle": "L'associer à ce projet",
+    "sharedFilesDownloadError": "Impossible d'ouvrir le lien du fichier.",
+    "sharedFilesMenuCopyLink": "Copier le lien",
+    "sharedFilesMenuOpen": "Ouvrir dans le navigateur",
+    "sharedFilesMenuRemove": "Retirer de la bibliothèque",
+    "sharedFilesCopySuccess": "Lien copié dans le presse-papiers.",
+    "sharedFilesRemoveConfirm": "Retirer {name} des fichiers partagés ?",
+    "@sharedFilesRemoveConfirm": {
+      "placeholders": {
+        "name": {}
+      }
+    },
+    "sharedFilesRemoveSuccess": "Fichier retiré de la bibliothèque partagée.",
+    "sharedFilesRemoveFailure": "Impossible de retirer ce fichier.",
   "analyticsTitle": "Analyses",
   "analyticsUpdatedLabel": "Mis à jour le {date}",
   "@analyticsUpdatedLabel": {
@@ -311,6 +368,26 @@
   "collaborationChatAttachPdf": "PDF",
   "collaborationChatAttachCamera": "Prendre avec l'appareil photo",
   "collaborationChatReactTooltip": "Réagir au message",
+  "emojiReactionPickerTitle": "Réagir avec un emoji",
+  "chatReplyAction": "Répondre",
+  "chatReplyingTo": "Réponse à {name}",
+  "@chatReplyingTo": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "chatCancelReplyTooltip": "Annuler la réponse",
+  "chatMessageNotAvailable": "Message indisponible",
+  "chatQuotedFallbackMessage": "Message",
+  "chatAttachmentUploadError": "Impossible d'envoyer la pièce jointe. Veuillez réessayer.",
+  "chatAttachmentCount": "{count, plural, one {# pièce jointe} other {# pièces jointes}}",
+  "@chatAttachmentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "contactDetailTitle": "Fiche contact",
   "contactDetailStartChat": "Démarrer une discussion",
   "contactDetailSectionContact": "Contact",
@@ -357,6 +434,7 @@
       "link": {}
     }
   },
+  "createProjectErrorGeneric": "Impossible de créer le projet. Veuillez réessayer.",
   "createProjectPrimaryCta": "Créer le projet",
   "financeNewQuoteTooltip": "Nouveau devis",
   "financePrimaryCta": "Créer un devis / facture",
@@ -576,6 +654,33 @@
   "projectDetailMenuDelete": "Supprimer le projet",
   "projectDetailScheduleTitle": "Planning",
   "projectDetailScheduleCta": "Ouvrir le planning",
+  "projectDetailIndustryTitle": "Contexte événement & traiteur",
+  "projectDetailIndustryGuests": "Invités",
+  "projectDetailIndustryGuestsValue": "{count} invités",
+  "@projectDetailIndustryGuestsValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectDetailIndustryMenu": "Style de menu",
+  "projectDetailIndustryAllergies": "Allergies & restrictions",
+  "projectDetailIndustryService": "Déroulé du service",
+  "projectDetailIndustryTasting": "Dégustation",
+  "projectDetailIndustryTastingScheduled": "Prévue le {date}",
+  "@projectDetailIndustryTastingScheduled": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "projectDetailIndustryTastingPending": "Date à confirmer",
+  "projectDetailIndustryKitchen": "Support cuisine",
+  "projectDetailIndustryKitchenRequired": "Cuisine sur place requise",
+  "projectDetailIndustryKitchenOptional": "Support cuisine optionnel",
+  "projectDetailIndustryKitchenNotes": "Notes cuisine",
+  "projectDetailIndustryEmptyLabel": "Détails industrie",
+  "projectDetailIndustryEmptyValue": "Aucun contexte supplémentaire pour l'instant.",
   "projectDetailTeamTitle": "Équipe",
   "projectDetailTeamCount": "{count, plural, one {# membre} other {# membres}}",
   "@projectDetailTeamCount": {
@@ -759,6 +864,7 @@
   "managementCreateProjectTooltip": "Créer un projet",
   "crmContactTypeClient": "Client",
   "crmContactTypeCollaborator": "Collaborateur",
+  "crmContactTypeSupplier": "Fournisseur",
   "crmRowInsights": "Aperçus",
   "crmRowEditContact": "Modifier le contact",
   "crmSectionLinkedProjects": "Projets liés",

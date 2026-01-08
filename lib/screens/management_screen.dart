@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/app/app_theme.dart';
@@ -55,7 +56,11 @@ class _ManagementScreenState extends State<ManagementScreen> {
         ? Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.folder_open, size: 80, color: AppColors.hintTextfiled),
+              const Icon(
+                FeatherIcons.folder,
+                size: 80,
+                color: AppColors.hintTextfiled,
+              ),
               const SizedBox(height: 12),
               Text(
                 loc.managementEmptyTitle,

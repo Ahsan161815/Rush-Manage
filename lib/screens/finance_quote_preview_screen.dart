@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
@@ -23,24 +25,33 @@ class FinanceQuotePreviewScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          loc.financeQuotePreviewTitle(quote?.id.substring(1) ?? '—'),
+          loc.financeQuotePreviewTitle(quote.id.substring(1)),
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
-          if (quote?.status == QuoteStatus.draft)
+          if (quote.status == QuoteStatus.draft)
             IconButton(
               tooltip: loc.financeQuotePreviewSendTooltip,
-              onPressed: () {
-                finance.updateQuoteStatus(
-                  quote!.id,
-                  QuoteStatus.pendingSignature,
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(loc.financeQuotePreviewSendSnack)),
-                );
+              onPressed: () async {
+                try {
+                  await context.read<FinanceController>().updateQuoteStatus(
+                    quote.id,
+                    QuoteStatus.pendingSignature,
+                  );
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(loc.financeQuotePreviewSendSnack)),
+                  );
+                } catch (_) {
+                  if (!context.mounted) return;
+                  const snackBar = SnackBar(
+                    content: Text('Unable to send quote.'),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                }
               },
               icon: const Icon(Icons.send, color: AppColors.secondaryText),
             ),
@@ -51,9 +62,9 @@ class FinanceQuotePreviewScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (quote != null) _QuoteSummaryCard(quote: quote),
+            _QuoteSummaryCard(quote: quote),
             const SizedBox(height: 24),
-            _QuoteDocumentCard(),
+            _QuoteDocumentCard(quoteId: quote.id),
             const SizedBox(height: 32),
             GradientButton(
               onPressed: () =>
@@ -173,7 +184,67 @@ class _QuoteStatusBadge extends StatelessWidget {
   }
 }
 
-class _QuoteDocumentCard extends StatelessWidget {
+class _QuoteDocumentCard extends StatefulWidget {
+  final String quoteId;
+  const _QuoteDocumentCard({required this.quoteId});
+
+  @override
+  State<_QuoteDocumentCard> createState() => _QuoteDocumentCardState();
+}
+
+class _QuoteDocumentCardState extends State<_QuoteDocumentCard> {
+  String? _url;
+  bool _isLoading = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDocument();
+  }
+
+  Future<void> _loadDocument() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final url = await context.read<FinanceController>().generateQuoteDocument(
+        widget.quoteId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _url = url;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Unable to generate document.';
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _openUrl() async {
+    if (_url == null) return;
+    final uri = Uri.parse(_url!);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _copyLink() async {
+    if (_url == null) return;
+    await Clipboard.setData(ClipboardData(text: _url!));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.sharedFilesCopySuccess)),
+    );
+  }
+
+  Future<void> _download() async {
+    await _openUrl();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -188,14 +259,64 @@ class _QuoteDocumentCard extends StatelessWidget {
           color: AppColors.textfieldBorder.withValues(alpha: 0.5),
         ),
       ),
-      alignment: Alignment.center,
-      child: Text(
-        loc.financeQuotePreviewDocumentPlaceholder,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: AppColors.hintTextfiled,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      padding: const EdgeInsets.all(20),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(
+              child: Text(
+                _error!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.hintTextfiled,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          : _url == null
+          ? Center(
+              child: Text(
+                loc.financeQuotePreviewDocumentPlaceholder,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.hintTextfiled,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      'Preview available — open to view the full document.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: _openUrl,
+                      icon: const Icon(Icons.open_in_new),
+                      label: Text(loc.sharedFilesMenuOpen),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: _copyLink,
+                      icon: const Icon(Icons.copy),
+                      tooltip: loc.sharedFilesCopySuccess,
+                    ),
+                    IconButton(
+                      onPressed: _download,
+                      icon: const Icon(Icons.download),
+                      tooltip: 'Download',
+                    ),
+                  ],
+                ),
+              ],
+            ),
     );
   }
 }

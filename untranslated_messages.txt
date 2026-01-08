@@ -1,1 +1,23 @@
-{}
+{
+  "fr": [
+    "contactsEmptyMessage",
+    "setupIndustrySectionTitle",
+    "setupIndustrySectionSubtitle",
+    "setupIndustryOptionCore",
+    "setupIndustryOptionCaterer",
+    "createProjectCatererSectionTitle",
+    "createProjectCatererSectionSubtitle",
+    "createProjectCatererGuestCountLabel",
+    "createProjectCatererGuestCountHint",
+    "createProjectCatererMenuLabel",
+    "createProjectCatererMenuHint",
+    "createProjectCatererAllergyLabel",
+    "createProjectCatererAllergyHint",
+    "createProjectCatererServiceLabel",
+    "createProjectCatererServiceHint",
+    "createProjectCatererTastingToggle",
+    "createProjectCatererKitchenToggle",
+    "createProjectCatererKitchenLabel",
+    "createProjectCatererKitchenHint"
+  ]
+}

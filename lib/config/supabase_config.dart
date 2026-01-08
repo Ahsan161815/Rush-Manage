@@ -8,4 +8,11 @@ class SupabaseConfig {
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlibGNhaGN4eW1lb3B5Z2Fpd3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTM2NDU0NCwiZXhwIjoyMDgwOTQwNTQ0fQ.mSpdygDf4OPm9s6Rsk4T2kVxDO_XjuiXYM6spdr3S1s';
   static const String passwordResetRedirectUrl =
       'https://ahsan161815.github.io/Rush-Manage/#/reset-password';
+  static const String oauthRedirectUrl = 'rushmanage://login-callback';
+  static const String inviteLandingUrl = 'https://rush.manage/invite';
+  static const String inviteEmailSecret = 'pK3c9hJ2uT8vF4qL6wX0';
+  static const String inviteAppStoreUrl =
+      'https://apps.apple.com/app/rush-manage';
+  static const String invitePlayStoreUrl =
+      'https://play.google.com/store/apps/details?id=com.rush.manage';
 }

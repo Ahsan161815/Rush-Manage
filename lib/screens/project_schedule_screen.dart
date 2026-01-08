@@ -129,7 +129,9 @@ class _ProjectScheduleScreenState extends State<ProjectScheduleScreen> {
       );
     }
 
-    final memberLookup = {for (final m in project.members) m.id: m};
+    final Map<String, Member> memberLookup = {
+      for (final member in project.members) member.id: member,
+    };
     final appointments = _buildAppointments(project, memberLookup);
     final unscheduled = project.tasks
         .where((t) => t.startDate == null && t.endDate == null)

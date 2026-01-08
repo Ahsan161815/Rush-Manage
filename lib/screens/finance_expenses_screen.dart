@@ -37,7 +37,7 @@ class _FinanceExpensesScreenState extends State<FinanceExpensesScreen> {
     }
   }
 
-  void _submit(BuildContext context) {
+  Future<void> _submit(BuildContext context) async {
     final loc = context.l10n;
     final description = _descriptionController.text.trim();
     final parsedAmount = double.tryParse(
@@ -50,17 +50,25 @@ class _FinanceExpensesScreenState extends State<FinanceExpensesScreen> {
       return;
     }
 
-    context.read<FinanceController>().addExpense(
-      description: description,
-      amount: parsedAmount,
-      date: _selectedDate,
-    );
-
-    _descriptionController.clear();
-    _amountController.clear();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(loc.financeExpensesAddSuccess)));
+    try {
+      await context.read<FinanceController>().addExpense(
+        description: description,
+        amount: parsedAmount,
+        date: _selectedDate,
+      );
+      _descriptionController.clear();
+      _amountController.clear();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(loc.financeExpensesAddSuccess)));
+    } catch (_) {
+      if (!context.mounted) return;
+      const snackBar = SnackBar(
+        content: Text('Unable to add expense right now.'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    }
   }
 
   @override

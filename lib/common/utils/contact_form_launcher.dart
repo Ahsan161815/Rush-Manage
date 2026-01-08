@@ -6,10 +6,11 @@ import 'package:myapp/widgets/contact_request_sheet.dart';
 class ContactFormLauncher {
   const ContactFormLauncher._();
 
-  static Future<void> show(
+  static Future<ContactFormSubmission?> show(
     BuildContext context, {
     ContactFormMode mode = ContactFormMode.create,
     ContactFormData data = const ContactFormData(),
+    String? contactId,
   }) async {
     final nameController = TextEditingController(text: data.name ?? '');
     final emailController = TextEditingController(text: data.email ?? '');
@@ -19,7 +20,7 @@ class ContactFormLauncher {
     final notesController = TextEditingController(text: data.notes ?? '');
 
     try {
-      await showModalBottomSheet<void>(
+      final submission = await showModalBottomSheet<ContactFormSubmission>(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
@@ -28,6 +29,7 @@ class ContactFormLauncher {
           return SafeArea(
             top: false,
             child: ContactRequestSheet(
+              contactId: contactId,
               nameController: nameController,
               emailController: emailController,
               phoneController: phoneController,
@@ -40,6 +42,7 @@ class ContactFormLauncher {
           );
         },
       );
+      return submission;
     } finally {
       nameController.dispose();
       emailController.dispose();

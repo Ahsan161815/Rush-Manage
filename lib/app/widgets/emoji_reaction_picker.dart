@@ -3,8 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/common/localization/l10n_extensions.dart';
 
 typedef EmojiReactionSelected = void Function(String emoji);
+typedef EmojiReplySelected = void Function();
 
 class _EmojiEntry {
   const _EmojiEntry(this.emoji, this.keywords);
@@ -373,19 +375,22 @@ const List<_EmojiCategory> _emojiCategories = [
 Future<void> showEmojiReactionPicker({
   required BuildContext context,
   required EmojiReactionSelected onSelected,
+  EmojiReplySelected? onReply,
 }) async {
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (sheetContext) => _EmojiBottomSheet(onSelected: onSelected),
+    builder: (sheetContext) =>
+        _EmojiBottomSheet(onSelected: onSelected, onReply: onReply),
   );
 }
 
 class _EmojiBottomSheet extends StatefulWidget {
-  const _EmojiBottomSheet({required this.onSelected});
+  const _EmojiBottomSheet({required this.onSelected, this.onReply});
 
   final EmojiReactionSelected onSelected;
+  final EmojiReplySelected? onReply;
 
   @override
   State<_EmojiBottomSheet> createState() => _EmojiBottomSheetState();
@@ -470,12 +475,50 @@ class _EmojiBottomSheetState extends State<_EmojiBottomSheet> {
               ),
               const SizedBox(height: 16),
               Text(
-                'React with emoji',
+                context.l10n.emojiReactionPickerTitle,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: AppColors.secondaryText,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              if (widget.onReply != null) ...[
+                const SizedBox(height: 12),
+                Material(
+                  color: AppColors.textfieldBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      widget.onReply?.call();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.reply_outlined,
+                            size: 18,
+                            color: AppColors.secondary,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            context.l10n.chatReplyAction,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: AppColors.secondaryText,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               _EmojiSearchField(
                 controller: _searchController,

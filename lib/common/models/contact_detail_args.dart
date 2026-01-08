@@ -1,9 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-enum ContactCategory { client, collaborator }
+typedef JsonMap = Map<String, dynamic>;
+
+enum ContactCategory { client, collaborator, supplier }
 
 extension ContactCategoryX on ContactCategory {
   bool get isClient => this == ContactCategory.client;
+  bool get isCollaborator => this == ContactCategory.collaborator;
+  bool get isSupplier => this == ContactCategory.supplier;
 }
 
 class ContactProjectSummary extends Equatable {
@@ -18,6 +22,20 @@ class ContactProjectSummary extends Equatable {
   final String name;
   final String role;
   final String? statusLabel;
+
+  factory ContactProjectSummary.fromJson(JsonMap json) => ContactProjectSummary(
+    id: json['id'] as String? ?? '',
+    name: json['name'] as String? ?? '',
+    role: json['role'] as String? ?? '',
+    statusLabel: json['status_label'] as String?,
+  );
+
+  JsonMap toJson() => {
+    'id': id,
+    'name': name,
+    'role': role,
+    if (statusLabel != null) 'status_label': statusLabel,
+  };
 
   @override
   List<Object?> get props => [id, name, role, statusLabel];
@@ -104,6 +122,8 @@ class ContactDetailArgs extends Equatable {
   ];
 
   bool get isClient => category.isClient;
+  bool get isCollaborator => category.isCollaborator;
+  bool get isSupplier => category.isSupplier;
 }
 
 class ContactProjectSeed extends Equatable {

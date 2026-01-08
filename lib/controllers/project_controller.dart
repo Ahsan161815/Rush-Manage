@@ -1,312 +1,322 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:myapp/common/models/collaborator_contact.dart';
 import 'package:myapp/common/models/contact_detail_args.dart';
 import 'package:myapp/common/models/invitation.dart';
 import 'package:myapp/common/models/message.dart';
+import 'package:myapp/common/models/shared_file_record.dart';
+import 'package:myapp/models/industry.dart';
 import 'package:myapp/models/project.dart';
+import 'package:myapp/services/industry_module_service.dart';
+import 'package:myapp/services/invitation_service.dart';
+import 'package:myapp/services/project_data_service.dart';
 
 class ProjectController extends ChangeNotifier {
+  ProjectController({
+    required SupabaseClient client,
+    ProjectDataService? dataService,
+    IndustryModuleService? industryService,
+    InvitationService? invitationService,
+  }) : _client = client,
+       _dataService = dataService ?? ProjectDataService(client),
+       _industryService = industryService ?? IndustryModuleService(client),
+       _invitationService = invitationService ?? InvitationService(client);
+
+  final SupabaseClient _client;
+  final ProjectDataService _dataService;
+  final IndustryModuleService _industryService;
+  final InvitationService _invitationService;
+
   final List<Project> _projects = [];
   final Map<String, List<Message>> _projectMessages = {};
   final List<CollaboratorContact> _contacts = [];
   final List<Invitation> _invitations = [];
-  final Map<String, String> _memberContactMap = {};
+  final List<SharedFileRecord> _sharedFiles = [];
+  final Set<String> _pendingMessageFetches = <String>{};
+  final Map<String, ProjectIndustryExtension> _industryExtensions = {};
+  IndustryProfile _industryProfile = const IndustryProfile.core();
 
-  ProjectController() {
-    // mock data
-    _projects.addAll([
-      Project(
-        id: 'p1',
-        name: 'Dupont Wedding',
-        client: 'Dupont Family',
-        startDate: DateTime.now().subtract(const Duration(days: 5)),
-        endDate: DateTime.now().add(const Duration(days: 25)),
-        status: ProjectStatus.ongoing,
-        progress: 42,
-        description: 'Full wedding coordination and photography',
-        members: const [
-          Member(id: 'm1', name: 'Sarah'),
-          Member(id: 'm2', name: 'Alex'),
-        ],
-        tasks: [
-          Task(
-            id: 't1',
-            title: 'Book the venue',
-            assigneeId: 'm1',
-            status: TaskStatus.completed,
-            startDate: DateTime.now().subtract(const Duration(days: 14)),
-            endDate: DateTime.now().subtract(const Duration(days: 2)),
-            description:
-                'Confirm the preferred ballroom reservation and deposit payment.',
-            attachments: const ['venue_proposal.pdf'],
+  bool _hasInitialized = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  String? get currentUserId => _client.auth.currentUser?.id;
+  String? get currentUserEmail => _client.auth.currentUser?.email;
+  IndustryProfile get industryProfile => _industryProfile;
+  bool get isCatererWorkspace =>
+      _industryProfile.industry == IndustryKey.caterer;
+
+  ProjectIndustryExtension? industryExtensionFor(String projectId) =>
+      _industryExtensions[projectId];
+
+  CatererProjectExtension? catererExtensionFor(String projectId) {
+    final extension = _industryExtensions[projectId];
+    return extension is CatererProjectExtension ? extension : null;
+  }
+
+  Future<void> initialize() async {
+    if (_hasInitialized) {
+      return;
+    }
+    if (_client.auth.currentUser?.id == null) {
+      return;
+    }
+    _hasInitialized = true;
+    await refresh();
+  }
+
+  Future<void> refresh() async {
+    final ownerId = _requireUserId();
+    _setLoading(true);
+    try {
+      final projects = await _dataService.fetchProjects(ownerId);
+      final contacts = await _dataService.fetchContacts(ownerId);
+      final invitations = await _dataService.fetchInvitations(ownerId);
+      final sharedFiles = await _dataService.fetchSharedFiles(ownerId);
+
+      _projects
+        ..clear()
+        ..addAll(projects);
+      _contacts
+        ..clear()
+        ..addAll(contacts);
+      _invitations
+        ..clear()
+        ..addAll(invitations);
+      _sharedFiles
+        ..clear()
+        ..addAll(sharedFiles);
+      _sortSharedFiles();
+
+      _projectMessages.clear();
+      if (projects.isNotEmpty) {
+        final messagePairs = await Future.wait(
+          projects.map(
+            (project) async => MapEntry(
+              project.id,
+              await _dataService.fetchMessages(project.id),
+            ),
           ),
-          Task(
-            id: 't2',
-            title: 'Confirm catering',
-            assigneeId: 'm2',
-            status: TaskStatus.inProgress,
-            startDate: DateTime.now().subtract(const Duration(days: 1)),
-            endDate: DateTime.now().add(const Duration(days: 6)),
-            description:
-                'Finalize the dinner menu selections and guest dietary requirements.',
-            attachments: const ['menu_options.xlsx'],
-          ),
-          Task(
-            id: 't3',
-            title: 'Create photo quote',
-            assigneeId: 'm1',
-            status: TaskStatus.planned,
-            startDate: DateTime.now().add(const Duration(days: 2)),
-            endDate: DateTime.now().add(const Duration(days: 12)),
-            description:
-                'Provide detailed pricing for ceremony, reception, and album add-ons.',
-            attachments: const ['photo_package.pdf'],
-          ),
-        ],
-      ),
-      Project(
-        id: 'p2',
-        name: 'Pro Trade Show – January',
-        client: 'Pro Trade',
-        startDate: DateTime.now().add(const Duration(days: 10)),
-        endDate: DateTime.now().add(const Duration(days: 40)),
-        status: ProjectStatus.inPreparation,
-        progress: 12,
-        description: 'Stand design and logistics',
-        members: const [Member(id: 'm3', name: 'Paul')],
-        tasks: [
-          Task(
-            id: 't4',
-            title: 'Design stand',
-            assigneeId: 'm3',
-            status: TaskStatus.planned,
-            startDate: DateTime.now().add(const Duration(days: 12)),
-            endDate: DateTime.now().add(const Duration(days: 18)),
-            description:
-                'Produce concept sketches and final 3D renders for the trade stand.',
-            attachments: const ['booth_brief.pdf'],
-          ),
-        ],
-      ),
-      Project(
-        id: 'p3',
-        name: 'Photo Shoot – Completed',
-        client: 'StudioX',
-        startDate: DateTime.now().subtract(const Duration(days: 90)),
-        endDate: DateTime.now().subtract(const Duration(days: 60)),
-        status: ProjectStatus.completed,
-        progress: 100,
-        description: 'Product catalog shoot',
-        members: const [Member(id: 'm4', name: 'Nina')],
-        tasks: [
-          Task(
-            id: 't5',
-            title: 'Finalize shots',
-            assigneeId: 'm4',
-            status: TaskStatus.completed,
-            startDate: DateTime.now().subtract(const Duration(days: 68)),
-            endDate: DateTime.now().subtract(const Duration(days: 62)),
-            description:
-                'Retouch and deliver the approved product imagery set.',
-            attachments: const ['final_shots.zip'],
-          ),
-        ],
-      ),
-    ]);
+        );
+        _projectMessages.addEntries(messagePairs);
+      }
 
-    _projectMessages['p1'] = [
-      Message(
-        id: 'msg1',
-        authorId: 'm1',
-        body: 'Venue deposit confirmed with the coordinator.',
-        sentAt: DateTime.now().subtract(const Duration(hours: 5)),
-        attachments: const ['venue_contract.pdf', 'deposit_receipt.jpeg'],
-        reactions: const {'👍': 3, '✅': 1},
-        receipts: const {
-          'me': MessageReceiptStatus.read,
-          'm1': MessageReceiptStatus.read,
-          'm2': MessageReceiptStatus.received,
-        },
-      ),
-      Message(
-        id: 'msg2',
-        authorId: 'm2',
-        body: 'Great! I will update the catering vendor today. @Sarah',
-        sentAt: DateTime.now().subtract(const Duration(hours: 3, minutes: 30)),
-        mentions: const ['@Sarah'],
-        reactions: const {'❤️': 2},
-        receipts: const {
-          'me': MessageReceiptStatus.received,
-          'm1': MessageReceiptStatus.read,
-          'm2': MessageReceiptStatus.read,
-        },
-      ),
-      Message(
-        id: 'msg3',
-        authorId: 'm1',
-        body: 'Reminder: send final photo package pricing before Friday. @Alex',
-        sentAt: DateTime.now().subtract(const Duration(hours: 1, minutes: 10)),
-        attachments: const ['pricing_draft.pdf'],
-        mentions: const ['@Alex'],
-        reactions: const {'👍': 1, '❤️': 1, '✅': 1},
-        receipts: const {
-          'me': MessageReceiptStatus.received,
-          'm1': MessageReceiptStatus.read,
-          'm2': MessageReceiptStatus.sent,
-        },
-      ),
-    ];
+      await _syncIndustryContext(ownerId, projects);
 
-    _projectMessages['p2'] = [
-      Message(
-        id: 'msg4',
-        authorId: 'm3',
-        body: 'Waiting on booth dimensions from the client.',
-        sentAt: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
-        reactions: const {'👍': 1},
-        receipts: const {
-          'me': MessageReceiptStatus.received,
-          'm3': MessageReceiptStatus.read,
-        },
-      ),
-      Message(
-        id: 'msg5',
-        authorId: 'm3',
-        body: 'Received measurements—starting layout draft tonight.',
-        sentAt: DateTime.now().subtract(const Duration(hours: 11)),
-        attachments: const ['layout_brief.pdf'],
-        receipts: const {
-          'me': MessageReceiptStatus.sent,
-          'm3': MessageReceiptStatus.read,
-        },
-      ),
-    ];
-
-    _projectMessages['p3'] = [
-      Message(
-        id: 'msg6',
-        authorId: 'm4',
-        body: 'All edited files delivered to client folder.',
-        sentAt: DateTime.now().subtract(const Duration(days: 70)),
-        attachments: const ['deliverables.zip'],
-        receipts: const {
-          'me': MessageReceiptStatus.read,
-          'm4': MessageReceiptStatus.read,
-        },
-      ),
-      Message(
-        id: 'msg7',
-        authorId: 'm4',
-        body: 'Client approved the color grading—project closed.',
-        sentAt: DateTime.now().subtract(const Duration(days: 65)),
-        reactions: const {'❤️': 3},
-        receipts: const {
-          'me': MessageReceiptStatus.received,
-          'm4': MessageReceiptStatus.read,
-        },
-      ),
-    ];
-
-    _contacts.addAll([
-      const CollaboratorContact(
-        id: 'c1',
-        name: 'Sarah Collins',
-        profession: 'Photographer',
-        availability: CollaboratorAvailability.available,
-        location: 'Paris, FR',
-        email: 'sarah.collins@studiox.com',
-        phone: '+33 1 23 45 67 89',
-        lastProject: 'Dupont Wedding',
-        tags: ['Lead shooter', 'Gallery editing'],
-      ),
-      const CollaboratorContact(
-        id: 'c2',
-        name: 'Gourmet Caterer',
-        profession: 'Caterer',
-        availability: CollaboratorAvailability.busy,
-        location: 'Lyon, FR',
-        email: 'hello@gourmetcaterer.fr',
-        phone: '+33 2 11 22 33 44',
-        lastProject: 'Corporate Dinner',
-        tags: ['Fine dining', 'Vegan friendly'],
-      ),
-      const CollaboratorContact(
-        id: 'c3',
-        name: 'Laura Design',
-        profession: 'Decorator',
-        availability: CollaboratorAvailability.offline,
-        location: 'Marseille, FR',
-        email: 'studio@lauradesign.fr',
-        phone: '+33 4 55 66 77 88',
-        lastProject: 'Art Expo Launch',
-        tags: ['Scenography', 'Florals'],
-      ),
-      const CollaboratorContact(
-        id: 'c4',
-        name: 'Karim Haddad',
-        profession: 'Videographer',
-        availability: CollaboratorAvailability.available,
-        location: 'Toulouse, FR',
-        email: 'karim@filmcrafted.com',
-        phone: '+33 6 98 76 54 32',
-        lastProject: 'Product Launch',
-        tags: ['Cinematic', 'Drone'],
-      ),
-    ]);
-
-    _memberContactMap.addAll({'m1': 'c1', 'm2': 'c2', 'm3': 'c3', 'm4': 'c4'});
-
-    _invitations.addAll([
-      Invitation(
-        id: 'inv1',
-        projectId: 'p1',
-        projectName: 'Dupont Wedding',
-        inviteeEmail: 'alex.turner@creativehub.co',
-        inviteeName: 'Alex Turner',
-        role: 'Gallery Editor',
-        status: InvitationStatus.pending,
-        sentAt: DateTime.now().subtract(const Duration(hours: 12)),
-        requiresOnboarding: true,
-        message: 'We would love your eye on the final print selection.',
-        receiptStatus: MessageReceiptStatus.received,
-      ),
-      Invitation(
-        id: 'inv2',
-        projectId: 'p2',
-        projectName: 'Pro Trade Show – January',
-        inviteeEmail: 'marie@stagedesign.fr',
-        inviteeName: 'Marie Curie',
-        role: 'Lighting Designer',
-        status: InvitationStatus.accepted,
-        sentAt: DateTime.now().subtract(const Duration(days: 3)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 2, hours: 6)),
-        requiresOnboarding: false,
-        message: 'Thanks for joining again this season!',
-        readByInvitee: true,
-        receiptStatus: MessageReceiptStatus.read,
-      ),
-      Invitation(
-        id: 'inv3',
-        projectId: 'p3',
-        projectName: 'Photo Shoot – Completed',
-        inviteeEmail: 'paul@logisticsteam.fr',
-        inviteeName: 'Paul Martin',
-        role: 'Logistics Support',
-        status: InvitationStatus.declined,
-        sentAt: DateTime.now().subtract(const Duration(days: 10)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 9, hours: 5)),
-        requiresOnboarding: false,
-        message: 'Catch you next time, Paul gave notice.',
-        readByInvitee: true,
-        receiptStatus: MessageReceiptStatus.received,
-      ),
-    ]);
+      _errorMessage = null;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      _errorMessage = 'Unable to sync workspace data';
+      _logError('refresh', error, stackTrace);
+    } finally {
+      _setLoading(false);
+    }
   }
 
   List<Project> get projects => List.unmodifiable(_projects);
   List<CollaboratorContact> get contacts => List.unmodifiable(_contacts);
   List<Invitation> get invitations => List.unmodifiable(_invitations);
+  List<SharedFileRecord> get sharedFiles => List.unmodifiable(_sharedFiles);
+
+  Future<void> updateCollaboratorRole({
+    required String inviteeEmail,
+    required String role,
+  }) async {
+    final normalized = inviteeEmail.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      throw ArgumentError.value(inviteeEmail, 'inviteeEmail', 'Email required');
+    }
+
+    final ownerId = _requireUserId();
+
+    final matches = <(int, Invitation)>[];
+    for (var i = 0; i < _invitations.length; i++) {
+      if (_invitations[i].inviteeEmail.trim().toLowerCase() == normalized) {
+        matches.add((i, _invitations[i]));
+      }
+    }
+    if (matches.isEmpty) {
+      return;
+    }
+
+    final now = DateTime.now();
+    for (final (index, original) in matches) {
+      _invitations[index] = original.copyWith(role: role, updatedAt: now);
+    }
+    notifyListeners();
+
+    try {
+      final updated = await _dataService.updateInvitationRolesForInvitee(
+        ownerId: ownerId,
+        inviteeEmail: normalized,
+        role: role,
+      );
+      if (updated.isNotEmpty) {
+        for (final invitation in updated) {
+          _replaceInvitation(invitation);
+        }
+      }
+      // Also update existing project members that match the invitee email
+      // so role changes persist for already-added collaborators.
+      final originals = <int, Project>{};
+      CollaboratorContact? matchedContact;
+      try {
+        matchedContact = _contacts.firstWhere(
+          (c) => c.email.trim().toLowerCase() == normalized,
+        );
+      } catch (_) {
+        matchedContact = null;
+      }
+      if (matchedContact != null) {
+        final contact = matchedContact;
+        for (var i = 0; i < _projects.length; i++) {
+          final project = _projects[i];
+          var changed = false;
+          final newMembers = project.members
+              .map((m) {
+                final contactId = m.contactId;
+                if ((contactId != null && contactId == contact.id) ||
+                    m.id == contact.id ||
+                    (contact.email.isNotEmpty &&
+                        (m.name.trim().toLowerCase() ==
+                            contact.name.trim().toLowerCase()))) {
+                  changed = true;
+                  return m.copyWith(role: role);
+                }
+                return m;
+              })
+              .toList(growable: false);
+          if (changed) {
+            originals[i] = project;
+            _projects[i] = project.copyWith(members: newMembers);
+          }
+        }
+      }
+      if (originals.isNotEmpty) {
+        notifyListeners();
+        try {
+          await Future.wait(
+            originals.keys.map((i) {
+              final proj = _projects[i];
+              return _dataService.updateProjectMembers(
+                projectId: proj.id,
+                members: proj.members,
+              );
+            }),
+          );
+        } catch (error, stackTrace) {
+          // rollback to originals
+          for (final entry in originals.entries) {
+            _projects[entry.key] = entry.value;
+          }
+          notifyListeners();
+          _logError('updateCollaboratorRole', error, stackTrace);
+          rethrow;
+        }
+      }
+      notifyListeners();
+    } catch (error, stackTrace) {
+      for (final (index, original) in matches) {
+        _invitations[index] = original;
+      }
+      notifyListeners();
+      _logError('updateCollaboratorRole', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> reloadSharedFiles() async {
+    final ownerId = _requireUserId();
+    try {
+      final records = await _dataService.fetchSharedFiles(ownerId);
+      _sharedFiles
+        ..clear()
+        ..addAll(records);
+      _sortSharedFiles();
+      notifyListeners();
+    } catch (error, stackTrace) {
+      _logError('reloadSharedFiles', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<SharedFileRecord?> saveSharedFile(SharedFileDraft draft) async {
+    if (draft.fileUrl.trim().isEmpty) {
+      return null;
+    }
+    final ownerId = _requireUserId();
+    final recordId = (draft.id != null && draft.id!.trim().isNotEmpty)
+        ? draft.id!.trim()
+        : _generateSharedFileId();
+    try {
+      final created = await _dataService.createSharedFile(
+        draft: draft,
+        recordId: recordId,
+        ownerId: ownerId,
+      );
+      _insertOrReplaceSharedFile(created);
+      notifyListeners();
+      return created;
+    } catch (error, stackTrace) {
+      _logError('saveSharedFile', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteSharedFile(String fileId) async {
+    final index = _sharedFiles.indexWhere((file) => file.id == fileId);
+    if (index == -1) {
+      return;
+    }
+    final removed = _sharedFiles.removeAt(index);
+    notifyListeners();
+    try {
+      await _dataService.deleteSharedFile(fileId);
+    } catch (error, stackTrace) {
+      _sharedFiles.insert(index, removed);
+      notifyListeners();
+      _logError('deleteSharedFile', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<bool> emailHasRegisteredUser(String email) async {
+    final normalized = email.trim();
+    if (normalized.isEmpty) {
+      return false;
+    }
+    try {
+      return await _invitationService.emailHasAccount(normalized);
+    } catch (error, stackTrace) {
+      _logError('emailHasRegisteredUser', error, stackTrace);
+      return false;
+    }
+  }
+
+  Future<bool> loadInvitationsForEmail(String email) async {
+    final normalized = email.trim();
+    if (normalized.isEmpty) {
+      return false;
+    }
+    try {
+      final invites = await _invitationService.fetchInvitationsForEmail(
+        normalized,
+      );
+      _invitations
+        ..clear()
+        ..addAll(invites);
+      notifyListeners();
+      return invites.isNotEmpty;
+    } catch (error, stackTrace) {
+      _logError('loadInvitationsForEmail', error, stackTrace);
+      return false;
+    }
+  }
 
   CollaboratorContact? contactById(String id) {
     try {
@@ -328,9 +338,8 @@ class ProjectController extends ChangeNotifier {
   }
 
   CollaboratorContact? contactForMember(Member member) {
-    final mappedId = _memberContactMap[member.id];
-    if (mappedId != null) {
-      final contact = contactById(mappedId);
+    if (member.contactId != null) {
+      final contact = contactById(member.contactId!);
       if (contact != null) {
         return contact;
       }
@@ -360,13 +369,15 @@ class ProjectController extends ChangeNotifier {
       );
     }
 
-    if (resolvedContact?.lastProject != null &&
-        (currentProject == null ||
-            currentProject.name != resolvedContact!.lastProject)) {
+    final previousProjectName = resolvedContact?.lastProject;
+    final shouldShowLastProject =
+        previousProjectName != null &&
+        (currentProject == null || currentProject.name != previousProjectName);
+    if (shouldShowLastProject) {
       projects.add(
         ContactProjectSummary(
-          id: 'last-${resolvedContact!.lastProject}',
-          name: resolvedContact.lastProject!,
+          id: 'last-$previousProjectName',
+          name: previousProjectName,
           role: 'Recent project',
           statusLabel: 'Completed',
         ),
@@ -409,111 +420,199 @@ class ProjectController extends ChangeNotifier {
     }
   }
 
-  void addProject(Project p) {
-    _projects.add(p);
-    notifyListeners();
-  }
-
-  void updateProject(Project updated) {
-    final idx = _projects.indexWhere((p) => p.id == updated.id);
-    if (idx != -1) {
-      _projects[idx] = updated;
+  Future<Project> addProject(
+    Project project, {
+    ProjectIndustryExtension? extension,
+  }) async {
+    final ownerId = _requireUserId();
+    final sanitized = project.copyWith(
+      progress: _calculateProgress(project.tasks),
+    );
+    try {
+      final created = await _dataService.createProject(
+        sanitized,
+        ownerId: ownerId,
+      );
+      _projects.add(created);
+      await _persistIndustryExtension(ownerId, created.id, extension);
       notifyListeners();
+      _ensureMessagesLoaded(created.id);
+      return created;
+    } catch (error, stackTrace) {
+      _logError('addProject', error, stackTrace);
+      rethrow;
     }
   }
 
-  void removeProject(String id) {
-    _projects.removeWhere((p) => p.id == id);
+  Future<Project?> updateProject(Project updated) async {
+    final idx = _projects.indexWhere((p) => p.id == updated.id);
+    if (idx == -1) {
+      return null;
+    }
+    try {
+      final saved = await _dataService.updateProject(updated);
+      _projects[idx] = saved;
+      notifyListeners();
+      return saved;
+    } catch (error, stackTrace) {
+      _logError('updateProject', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> removeProject(String id) async {
+    final index = _projects.indexWhere((project) => project.id == id);
+    if (index == -1) {
+      return;
+    }
+    final removed = _projects.removeAt(index);
     _projectMessages.remove(id);
     notifyListeners();
-  }
-
-  void addTask(String projectId, Task task) {
-    final p = getById(projectId);
-    if (p != null) {
-      final tasks = List<Task>.from(p.tasks)..add(task);
-      final updated = p.copyWith(
-        tasks: tasks,
-        progress: _calculateProgress(tasks),
-      );
-      updateProject(updated);
+    try {
+      await _dataService.deleteProject(id);
+    } catch (error, stackTrace) {
+      _projects.insert(index, removed);
+      notifyListeners();
+      _logError('removeProject', error, stackTrace);
+      rethrow;
     }
   }
 
-  void toggleTask(String projectId, String taskId) {
-    final p = getById(projectId);
-    if (p != null) {
-      final tasks = p.tasks
-          .map(
-            (t) =>
-                t.id == taskId ? t.copyWith(status: _nextStatus(t.status)) : t,
-          )
-          .toList();
-      final updated = p.copyWith(
-        tasks: tasks,
-        progress: _calculateProgress(tasks),
+  Future<void> addTask(String projectId, Task task) async {
+    final project = getById(projectId);
+    if (project == null) {
+      return;
+    }
+    final updatedTasks = List<Task>.from(project.tasks)..add(task);
+    final updatedProject = project.copyWith(
+      tasks: updatedTasks,
+      progress: _calculateProgress(updatedTasks),
+    );
+    final index = _projects.indexOf(project);
+    _projects[index] = updatedProject;
+    notifyListeners();
+    try {
+      await _dataService.updateProjectTasks(
+        projectId: projectId,
+        tasks: updatedTasks,
+        progress: updatedProject.progress,
       );
-      updateProject(updated);
+    } catch (error, stackTrace) {
+      _projects[index] = project;
+      notifyListeners();
+      _logError('addTask', error, stackTrace);
+      rethrow;
     }
   }
 
-  void updateTaskStatus(String projectId, String taskId, TaskStatus status) {
-    final p = getById(projectId);
-    if (p == null) {
+  Future<void> toggleTask(String projectId, String taskId) async {
+    final project = getById(projectId);
+    if (project == null) {
+      return;
+    }
+    final updatedTasks = project.tasks
+        .map(
+          (task) => task.id == taskId
+              ? task.copyWith(status: _nextStatus(task.status))
+              : task,
+        )
+        .toList(growable: false);
+    await _persistTaskUpdate(project, updatedTasks);
+  }
+
+  Future<void> updateTaskStatus(
+    String projectId,
+    String taskId,
+    TaskStatus status,
+  ) async {
+    final project = getById(projectId);
+    if (project == null) {
       return;
     }
 
-    final tasks = p.tasks
+    final updatedTasks = project.tasks
         .map((task) => task.id == taskId ? task.copyWith(status: status) : task)
         .toList(growable: false);
-
-    final updated = p.copyWith(
-      tasks: tasks,
-      progress: _calculateProgress(tasks),
-    );
-    updateProject(updated);
+    await _persistTaskUpdate(project, updatedTasks);
   }
 
-  void updateTaskSchedule(
+  Future<void> updateTaskSchedule(
     String projectId,
     String taskId, {
     required DateTime start,
     required DateTime end,
-  }) {
+  }) async {
     if (!end.isAfter(start)) {
       return;
     }
 
-    final p = getById(projectId);
-    if (p == null) {
+    final project = getById(projectId);
+    if (project == null) {
       return;
     }
 
-    final tasks = p.tasks
+    final updatedTasks = project.tasks
         .map(
           (task) => task.id == taskId
               ? task.copyWith(startDate: start, endDate: end)
               : task,
         )
         .toList(growable: false);
+    await _persistTaskUpdate(project, updatedTasks, recomputeProgress: false);
+  }
 
-    final updated = p.copyWith(tasks: tasks);
-    updateProject(updated);
+  Future<void> upsertIndustryExtension(
+    String projectId,
+    ProjectIndustryExtension extension,
+  ) async {
+    final ownerId = _requireUserId();
+    final didPersist = await _persistIndustryExtension(
+      ownerId,
+      projectId,
+      extension,
+    );
+    if (didPersist) {
+      notifyListeners();
+    }
   }
 
   List<Message> messagesFor(String projectId) {
+    if (!_projectMessages.containsKey(projectId) &&
+        !_pendingMessageFetches.contains(projectId)) {
+      _ensureMessagesLoaded(projectId);
+    }
     final messages = _projectMessages[projectId];
     if (messages == null) {
       return const [];
     }
-    return List.unmodifiable(messages);
+    final sorted = List<Message>.from(messages)
+      ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+    return List.unmodifiable(sorted);
   }
 
-  void addMessage(String projectId, Message message) {
-    final messages = List<Message>.from(_projectMessages[projectId] ?? [])
+  Future<Message> addMessage(String projectId, Message message) async {
+    final ownerId = _requireUserId();
+    final pending = List<Message>.from(_projectMessages[projectId] ?? [])
       ..add(message);
-    _projectMessages[projectId] = messages;
+    _projectMessages[projectId] = pending;
     notifyListeners();
+    try {
+      final persisted = await _dataService.createMessage(
+        projectId,
+        message,
+        ownerId: ownerId,
+      );
+      final updated = List<Message>.from(_projectMessages[projectId] ?? [])
+        ..removeWhere((msg) => msg.id == message.id)
+        ..add(persisted)
+        ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+      _projectMessages[projectId] = updated;
+      notifyListeners();
+      return persisted;
+    } catch (error, stackTrace) {
+      _logError('addMessage', error, stackTrace);
+      rethrow;
+    }
   }
 
   Invitation? invitationById(String id) {
@@ -524,7 +623,7 @@ class ProjectController extends ChangeNotifier {
     }
   }
 
-  void markInvitationRead(String id) {
+  Future<void> markInvitationRead(String id) async {
     final index = _invitations.indexWhere((invitation) => invitation.id == id);
     if (index == -1) {
       return;
@@ -535,11 +634,11 @@ class ProjectController extends ChangeNotifier {
       return;
     }
 
-    _invitations[index] = invitation.copyWith(readByInvitee: true);
-    notifyListeners();
+    final updated = invitation.copyWith(readByInvitee: true);
+    await _persistInvitationUpdate(index, updated);
   }
 
-  void acceptInvitation(String id) {
+  Future<void> acceptInvitation(String id) async {
     final index = _invitations.indexWhere((invitation) => invitation.id == id);
     if (index == -1) {
       return;
@@ -550,7 +649,7 @@ class ProjectController extends ChangeNotifier {
       return;
     }
 
-    _invitations[index] = invitation.copyWith(
+    final updatedInvitation = invitation.copyWith(
       status: InvitationStatus.accepted,
       updatedAt: DateTime.now(),
       receiptStatus: MessageReceiptStatus.read,
@@ -569,14 +668,14 @@ class ProjectController extends ChangeNotifier {
           ..add(
             Member(id: 'member-${invitation.id}', name: invitation.inviteeName),
           );
-        updateProject(project.copyWith(members: updatedMembers));
+        await _persistMemberUpdate(project, updatedMembers);
       }
     }
 
-    notifyListeners();
+    await _persistInvitationUpdate(index, updatedInvitation);
   }
 
-  void declineInvitation(String id) {
+  Future<void> declineInvitation(String id) async {
     final index = _invitations.indexWhere((invitation) => invitation.id == id);
     if (index == -1) {
       return;
@@ -587,17 +686,17 @@ class ProjectController extends ChangeNotifier {
       return;
     }
 
-    _invitations[index] = invitation.copyWith(
+    final updated = invitation.copyWith(
       status: InvitationStatus.declined,
       updatedAt: DateTime.now(),
       receiptStatus: MessageReceiptStatus.received,
       readByInvitee: true,
       requiresOnboarding: false,
     );
-    notifyListeners();
+    await _persistInvitationUpdate(index, updated);
   }
 
-  void addInvitation({
+  Future<void> addInvitation({
     required String projectId,
     required String projectName,
     required String inviteeName,
@@ -605,12 +704,13 @@ class ProjectController extends ChangeNotifier {
     required String role,
     InvitationNote? message,
     bool requiresOnboarding = false,
-  }) {
+  }) async {
+    final normalizedEmail = inviteeEmail.trim().toLowerCase();
     final invitation = Invitation(
       id: 'inv-${DateTime.now().microsecondsSinceEpoch}',
       projectId: projectId,
       projectName: projectName,
-      inviteeEmail: inviteeEmail,
+      inviteeEmail: normalizedEmail,
       inviteeName: inviteeName,
       role: role,
       status: InvitationStatus.pending,
@@ -622,14 +722,31 @@ class ProjectController extends ChangeNotifier {
 
     _invitations.insert(0, invitation);
     notifyListeners();
+    try {
+      final persisted = await _dataService.createInvitation(
+        invitation: invitation,
+        ownerId: _requireUserId(),
+      );
+      _replaceInvitation(persisted);
+      if (requiresOnboarding) {
+        try {
+          await _invitationService.sendInviteEmail(persisted);
+        } catch (error, stackTrace) {
+          _logError('sendInviteEmail', error, stackTrace);
+        }
+      }
+    } catch (error, stackTrace) {
+      _logError('addInvitation', error, stackTrace);
+      rethrow;
+    }
   }
 
-  void markReceipt({
+  Future<void> markReceipt({
     required String projectId,
     required String messageId,
     required String memberId,
     required MessageReceiptStatus status,
-  }) {
+  }) async {
     final messages = _projectMessages[projectId];
     if (messages == null) {
       return;
@@ -654,14 +771,14 @@ class ProjectController extends ChangeNotifier {
       message.receipts,
     )..[memberId] = status;
     final updatedMessage = message.copyWith(receipts: updatedReceipts);
-    final updatedMessages = List<Message>.from(messages)
-      ..[index] = updatedMessage;
-
-    _projectMessages[projectId] = updatedMessages;
-    notifyListeners();
+    await _persistMessageUpdate(projectId, index, updatedMessage);
   }
 
-  void addReaction(String projectId, String messageId, String emoji) {
+  Future<void> addReaction(
+    String projectId,
+    String messageId,
+    String emoji,
+  ) async {
     final messages = _projectMessages[projectId];
     if (messages == null) {
       return;
@@ -677,11 +794,260 @@ class ProjectController extends ChangeNotifier {
       ..update(emoji, (count) => count + 1, ifAbsent: () => 1);
 
     final updatedMessage = message.copyWith(reactions: updatedReactions);
-    final updatedMessages = List<Message>.from(messages)
-      ..[index] = updatedMessage;
+    await _persistMessageUpdate(projectId, index, updatedMessage);
+  }
 
-    _projectMessages[projectId] = updatedMessages;
+  Future<void> _persistTaskUpdate(
+    Project original,
+    List<Task> updatedTasks, {
+    bool recomputeProgress = true,
+  }) async {
+    final updatedProject = original.copyWith(
+      tasks: updatedTasks,
+      progress: recomputeProgress
+          ? _calculateProgress(updatedTasks)
+          : original.progress,
+    );
+    final index = _projects.indexOf(original);
+    _projects[index] = updatedProject;
     notifyListeners();
+    try {
+      await _dataService.updateProjectTasks(
+        projectId: original.id,
+        tasks: updatedTasks,
+        progress: updatedProject.progress,
+      );
+    } catch (error, stackTrace) {
+      _projects[index] = original;
+      notifyListeners();
+      _logError('updateTask', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> _persistMemberUpdate(
+    Project project,
+    List<Member> members,
+  ) async {
+    final index = _projects.indexOf(project);
+    final updatedProject = project.copyWith(members: members);
+    _projects[index] = updatedProject;
+    notifyListeners();
+    try {
+      await _dataService.updateProjectMembers(
+        projectId: project.id,
+        members: members,
+      );
+    } on PostgrestException catch (error, stackTrace) {
+      if (_shouldAttemptPrivilegedUpdate(error)) {
+        try {
+          await _dataService.updateProjectMembersPrivileged(
+            projectId: project.id,
+            members: members,
+          );
+          return;
+        } catch (fallbackError, fallbackStack) {
+          _logError('updateMembersPrivileged', fallbackError, fallbackStack);
+        }
+      }
+      _projects[index] = project;
+      notifyListeners();
+      _logError('updateMembers', error, stackTrace);
+      rethrow;
+    } catch (error, stackTrace) {
+      _projects[index] = project;
+      notifyListeners();
+      _logError('updateMembers', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> _persistInvitationUpdate(int index, Invitation updated) async {
+    final previous = _invitations[index];
+    _invitations[index] = updated;
+    notifyListeners();
+    try {
+      final saved = await _dataService.updateInvitation(updated);
+      _invitations[index] = saved;
+      notifyListeners();
+    } on PostgrestException catch (error, stackTrace) {
+      final inviteeEmail = _client.auth.currentUser?.email;
+      if (_shouldAttemptPrivilegedUpdate(error) && inviteeEmail != null) {
+        try {
+          final saved = await _dataService.updateInvitationPrivileged(
+            updated,
+            inviteeEmail: inviteeEmail,
+          );
+          _invitations[index] = saved;
+          notifyListeners();
+          return;
+        } catch (fallbackError, fallbackStack) {
+          _logError('updateInvitationPrivileged', fallbackError, fallbackStack);
+        }
+      }
+      _invitations[index] = previous;
+      notifyListeners();
+      _logError('updateInvitation', error, stackTrace);
+      rethrow;
+    } catch (error, stackTrace) {
+      _invitations[index] = previous;
+      notifyListeners();
+      _logError('updateInvitation', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  bool _shouldAttemptPrivilegedUpdate(PostgrestException error) {
+    if (error.code == '42501') {
+      return true;
+    }
+    final message = error.message.toLowerCase();
+    return message.contains('permission denied');
+  }
+
+  Future<void> _persistMessageUpdate(
+    String projectId,
+    int index,
+    Message updated,
+  ) async {
+    final messages = List<Message>.from(_projectMessages[projectId] ?? []);
+    if (messages.length <= index) {
+      return;
+    }
+    final previous = messages[index];
+    messages[index] = updated;
+    _projectMessages[projectId] = messages;
+    notifyListeners();
+    try {
+      await _dataService.updateMessage(updated);
+    } catch (error, stackTrace) {
+      messages[index] = previous;
+      _projectMessages[projectId] = messages;
+      notifyListeners();
+      _logError('updateMessage', error, stackTrace);
+    }
+  }
+
+  void _replaceInvitation(Invitation updated) {
+    final index = _invitations.indexWhere((inv) => inv.id == updated.id);
+    if (index == -1) {
+      _invitations.insert(0, updated);
+    } else {
+      _invitations[index] = updated;
+    }
+    notifyListeners();
+  }
+
+  void _ensureMessagesLoaded(String projectId) {
+    _pendingMessageFetches.add(projectId);
+    scheduleMicrotask(() async {
+      try {
+        final messages = await _dataService.fetchMessages(projectId);
+        _projectMessages[projectId] = messages;
+        notifyListeners();
+      } catch (error, stackTrace) {
+        _logError('fetchMessages($projectId)', error, stackTrace);
+      } finally {
+        _pendingMessageFetches.remove(projectId);
+      }
+    });
+  }
+
+  void _setLoading(bool value) {
+    if (_isLoading == value) {
+      return;
+    }
+    _isLoading = value;
+    notifyListeners();
+  }
+
+  void reset() {
+    _hasInitialized = false;
+    _projects.clear();
+    _projectMessages.clear();
+    _contacts.clear();
+    _invitations.clear();
+    _sharedFiles.clear();
+    _pendingMessageFetches.clear();
+    _errorMessage = null;
+    _industryProfile = const IndustryProfile.core();
+    _industryExtensions.clear();
+    notifyListeners();
+  }
+
+  String _requireUserId() {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) {
+      throw const AuthException('User not authenticated');
+    }
+    return userId;
+  }
+
+  Future<void> _syncIndustryContext(
+    String ownerId,
+    List<Project> projects,
+  ) async {
+    try {
+      _industryProfile = await _industryService.fetchProfile(ownerId);
+      final extensions = await _industryService.fetchProjectExtensions(
+        ownerId: ownerId,
+        projectIds: projects.map((project) => project.id).toList(),
+      );
+      _industryExtensions
+        ..clear()
+        ..addAll(extensions);
+    } catch (error, stackTrace) {
+      _logError('syncIndustryContext', error, stackTrace);
+    }
+  }
+
+  Future<bool> _persistIndustryExtension(
+    String ownerId,
+    String projectId,
+    ProjectIndustryExtension? extension,
+  ) async {
+    if (extension == null || !extension.hasData) {
+      return false;
+    }
+    try {
+      final saved = await _industryService.upsertProjectExtension(
+        ownerId: ownerId,
+        projectId: projectId,
+        extension: extension,
+      );
+      if (saved != null) {
+        _industryExtensions[projectId] = saved;
+        return true;
+      }
+    } catch (error, stackTrace) {
+      _logError('persistIndustryExtension', error, stackTrace);
+    }
+    return false;
+  }
+
+  void _insertOrReplaceSharedFile(SharedFileRecord record) {
+    final index = _sharedFiles.indexWhere((file) => file.id == record.id);
+    if (index == -1) {
+      _sharedFiles.insert(0, record);
+    } else {
+      _sharedFiles[index] = record;
+    }
+    _sortSharedFiles();
+  }
+
+  void _sortSharedFiles() {
+    _sharedFiles.sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+  }
+
+  String _generateSharedFileId() {
+    final seed = DateTime.now().microsecondsSinceEpoch;
+    final suffix = currentUserId ?? currentUserEmail ?? 'anonymous';
+    return 'shared-$seed-${suffix.hashCode}';
+  }
+
+  void _logError(String action, Object error, StackTrace stackTrace) {
+    debugPrint('ProjectController.$action failed: $error');
+    debugPrint(stackTrace.toString());
   }
 }
 

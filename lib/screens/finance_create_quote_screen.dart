@@ -1,13 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
-import '../controllers/finance_controller.dart';
+import 'package:myapp/common/models/plan_package.dart';
+import 'package:myapp/controllers/finance_controller.dart';
+import 'package:myapp/controllers/user_controller.dart';
+import 'package:myapp/widgets/plan_upgrade_sheet.dart';
 
 class FinanceCreateQuoteScreen extends StatefulWidget {
-  const FinanceCreateQuoteScreen({super.key});
+  const FinanceCreateQuoteScreen({
+    super.key,
+    this.initialClientName,
+    this.initialClientEmail,
+    this.contactId,
+  });
+
+  final String? initialClientName;
+  final String? initialClientEmail;
+  final String? contactId;
   @override
   State<FinanceCreateQuoteScreen> createState() =>
       _FinanceCreateQuoteScreenState();
@@ -18,12 +31,22 @@ class _FinanceCreateQuoteScreenState extends State<FinanceCreateQuoteScreen> {
   final _referenceController = TextEditingController();
   final GlobalKey<_LineItemsEditorState> _lineItemsKey =
       GlobalKey<_LineItemsEditorState>();
+  bool _requireSignature = true;
 
   @override
   void dispose() {
     _clientController.dispose();
     _referenceController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final seededName = widget.initialClientName?.trim();
+    if (seededName != null && seededName.isNotEmpty) {
+      _clientController.text = seededName;
+    }
   }
 
   @override
@@ -107,7 +130,10 @@ class _FinanceCreateQuoteScreenState extends State<FinanceCreateQuoteScreen> {
                   title: loc.financeQuoteOptionsTitle,
                   child: Row(
                     children: [
-                      Switch(value: true, onChanged: (_) {}),
+                      Switch(
+                        value: _requireSignature,
+                        onChanged: (v) => setState(() => _requireSignature = v),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         loc.financeQuoteRequireSignature,
@@ -121,18 +147,58 @@ class _FinanceCreateQuoteScreenState extends State<FinanceCreateQuoteScreen> {
                 ),
                 const SizedBox(height: 32),
                 GradientButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final subtotal = _lineItemsKey.currentState?._total ?? 0.0;
-                    final quote = finance.createDraftQuote(
-                      clientName: _clientController.text.trim().isEmpty
-                          ? loc.financeQuoteFallbackClient
-                          : _clientController.text.trim(),
-                      description: _referenceController.text.trim().isEmpty
-                          ? loc.financeQuoteFallbackDescription
-                          : _referenceController.text.trim(),
-                      subtotal: subtotal,
-                    );
-                    context.push('/finance/quote/${quote.id}/preview');
+                    final userController = context.read<UserController?>();
+                    final docCount =
+                        finance.quotes.length + finance.invoices.length;
+                    if (userController != null &&
+                        !userController.canCreateDocument(docCount)) {
+                      final unlocked = await showPlanUpgradeSheet(
+                        context,
+                        quotaType: PlanQuotaType.documents,
+                      );
+                      if (!context.mounted) {
+                        return;
+                      }
+                      if (!unlocked) {
+                        return;
+                      }
+                      if (!userController.canCreateDocument(docCount)) {
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(context.l10n.planUpgradeTrialActivated),
+                        ),
+                      );
+                    }
+                    try {
+                      final quote = await finance.createDraftQuote(
+                        clientName: _clientController.text.trim().isEmpty
+                            ? loc.financeQuoteFallbackClient
+                            : _clientController.text.trim(),
+                        description: _referenceController.text.trim().isEmpty
+                            ? loc.financeQuoteFallbackDescription
+                            : _referenceController.text.trim(),
+                        subtotal: subtotal,
+                        requireSignature: _requireSignature,
+                        contactId: widget.contactId,
+                        clientEmail: widget.initialClientEmail,
+                      );
+                      if (!context.mounted) {
+                        return;
+                      }
+                      context.push('/finance/quote/${quote.id}/preview');
+                    } catch (_) {
+                      if (!context.mounted) {
+                        return;
+                      }
+                      const snackBar = SnackBar(
+                        content: Text('Unable to create quote. Try again.'),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                    }
                   },
                   text: loc.financeQuoteGenerateCta,
                   height: 56,

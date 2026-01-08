@@ -1,83 +1,70 @@
+import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:myapp/config/supabase_config.dart';
+
 import 'package:myapp/models/finance.dart';
+import 'package:myapp/services/finance_data_service.dart';
 
 class FinanceController extends ChangeNotifier {
+  FinanceController({
+    required SupabaseClient client,
+    FinanceDataService? dataService,
+  }) : _client = client,
+       _service = dataService ?? FinanceDataService(client);
+
+  final SupabaseClient _client;
+  final FinanceDataService _service;
+
   final List<Quote> _quotes = [];
   final List<Invoice> _invoices = [];
   final List<Expense> _expenses = [];
 
   // Global time filter (applies to invoices, quotes, expenses)
   TimeFilter _timeFilter = TimeFilter.month;
+  bool _hasInitialized = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
-  FinanceController() {
-    _seed();
+  Future<void> initialize() async {
+    if (_hasInitialized) {
+      return;
+    }
+    if (_client.auth.currentUser?.id == null) {
+      return;
+    }
+    _hasInitialized = true;
+    await refresh();
   }
 
-  void _seed() {
-    _quotes.addAll([
-      Quote(
-        id: 'q145',
-        clientName: 'Dupont Family',
-        description: 'Catering service — Dupont Wedding',
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-        status: QuoteStatus.pendingSignature,
-        total: 3200,
-        vat: 640,
-      ),
-      Quote(
-        id: 'q146',
-        clientName: 'StudioX',
-        description: 'Photo package extended',
-        createdAt: DateTime.now().subtract(const Duration(days: 12)),
-        status: QuoteStatus.signed,
-        total: 1850,
-        vat: 370,
-      ),
-    ]);
-    _invoices.addAll([
-      Invoice(
-        id: 'inv243',
-        quoteId: 'q146',
-        clientName: 'StudioX',
-        issuedAt: DateTime.now().subtract(const Duration(days: 10)),
-        status: InvoiceStatus.paid,
-        amount: 2220,
-        dueDate: DateTime.now().subtract(const Duration(days: 5)),
-      ),
-      Invoice(
-        id: 'inv244',
-        quoteId: 'q145',
-        clientName: 'Dupont Family',
-        issuedAt: DateTime.now().subtract(const Duration(days: 14)),
-        status: InvoiceStatus.unpaid,
-        amount: 3840,
-        dueDate: DateTime.now().subtract(const Duration(days: 7)),
-      ),
-    ]);
-    _expenses.addAll([
-      Expense(
-        id: 'exp101',
-        projectId: 'p1',
-        description: 'Equipment rental',
-        amount: 240,
-        date: DateTime.now().subtract(const Duration(days: 2)),
-        recurrence: ExpenseRecurrence.oneTime,
-      ),
-      Expense(
-        id: 'exp102',
-        description: 'Fuel',
-        amount: 90,
-        date: DateTime.now().subtract(const Duration(days: 6)),
-      ),
-      Expense(
-        id: 'exp103',
-        description: 'Snacks for crew',
-        amount: 45,
-        date: DateTime.now().subtract(const Duration(days: 15)),
-      ),
-    ]);
+  Future<void> refresh() async {
+    final ownerId = _requireUserId();
+    _setLoading(true);
+    try {
+      final snapshot = await _service.fetchSnapshot(ownerId);
+      _quotes
+        ..clear()
+        ..addAll(snapshot.quotes);
+      _invoices
+        ..clear()
+        ..addAll(snapshot.invoices);
+      _expenses
+        ..clear()
+        ..addAll(snapshot.expenses);
+      _errorMessage = null;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      _errorMessage = 'Unable to load finance data';
+      _logError('refresh', error, stackTrace);
+    } finally {
+      _setLoading(false);
+    }
   }
 
   List<Quote> get quotes => List.unmodifiable(_quotes);
@@ -228,18 +215,21 @@ class FinanceController extends ChangeNotifier {
     if (filter == TimeFilter.year) {
       final values = <double>[];
       for (int i = 11; i >= 0; i--) {
-        final sampleIndex = 11 - i;
         final date = DateTime(now.year, now.month - i, 1);
         double value = _sumPaidInvoicesByMonth(date.year, date.month);
-        if (value == 0) value = _syntheticTrendValue(sampleIndex, 620);
         values.add(value);
+      }
+      final hasRealData = values.any((v) => v > 0);
+      if (hasRealData) {
+        for (int i = 0; i < values.length; i++) {
+          if (values[i] == 0) values[i] = _syntheticTrendValue(i, 620);
+        }
       }
       return values;
     }
 
     final values = <double>[];
     for (int i = 7; i >= 0; i--) {
-      final sampleIndex = 7 - i;
       final day = now.subtract(Duration(days: i));
       double daily = _invoices
           .where(
@@ -250,10 +240,45 @@ class FinanceController extends ChangeNotifier {
                 inv.issuedAt.day == day.day,
           )
           .fold(0.0, (s, inv) => s + inv.amount);
-      if (daily == 0) daily = _syntheticTrendValue(sampleIndex, 320);
       values.add(daily);
     }
+    final hasRealData = values.any((v) => v > 0);
+    if (hasRealData) {
+      for (int i = 0; i < values.length; i++) {
+        if (values[i] == 0) values[i] = _syntheticTrendValue(i, 320);
+      }
+    }
     return values;
+  }
+
+  void _replaceQuote(Quote quote) {
+    final index = _quotes.indexWhere((item) => item.id == quote.id);
+    if (index == -1) {
+      _quotes.insert(0, quote);
+    } else {
+      _quotes[index] = quote;
+    }
+    notifyListeners();
+  }
+
+  void _replaceInvoice(Invoice invoice) {
+    final index = _invoices.indexWhere((item) => item.id == invoice.id);
+    if (index == -1) {
+      _invoices.insert(0, invoice);
+    } else {
+      _invoices[index] = invoice;
+    }
+    notifyListeners();
+  }
+
+  void _replaceExpense(Expense expense) {
+    final index = _expenses.indexWhere((item) => item.id == expense.id);
+    if (index == -1) {
+      _expenses.insert(0, expense);
+    } else {
+      _expenses[index] = expense;
+    }
+    notifyListeners();
   }
 
   double _syntheticTrendValue(int index, double amplitude) {
@@ -281,15 +306,16 @@ class FinanceController extends ChangeNotifier {
     return monthExpenses.first;
   }
 
-  Expense addExpense({
+  Future<Expense> addExpense({
     required String description,
     required double amount,
     DateTime? date,
     String? projectId,
     ExpenseRecurrence recurrence = ExpenseRecurrence.oneTime,
-  }) {
+  }) async {
+    final ownerId = _requireUserId();
     final expense = Expense(
-      id: 'exp${DateTime.now().millisecondsSinceEpoch}',
+      id: _generateExpenseId(),
       projectId: projectId,
       description: description,
       amount: amount,
@@ -298,7 +324,16 @@ class FinanceController extends ChangeNotifier {
     );
     _expenses.insert(0, expense);
     notifyListeners();
-    return expense;
+    try {
+      final saved = await _service.insertExpense(expense, ownerId: ownerId);
+      _replaceExpense(saved);
+      return saved;
+    } catch (error, stackTrace) {
+      _expenses.removeWhere((item) => item.id == expense.id);
+      notifyListeners();
+      _logError('addExpense', error, stackTrace);
+      rethrow;
+    }
   }
 
   List<Invoice> get unpaidInvoices => _invoices
@@ -312,64 +347,178 @@ class FinanceController extends ChangeNotifier {
   }
 
   // --- Quote lifecycle methods ---
-  Quote createDraftQuote({
+  Future<Quote> createDraftQuote({
     required String clientName,
     required String description,
     required double subtotal,
     double vatRate = 0.20,
-  }) {
-    final id = 'q${DateTime.now().millisecondsSinceEpoch}';
+    bool requireSignature = true,
+    String? contactId,
+    String? clientEmail,
+  }) async {
+    final ownerId = _requireUserId();
     final vat = subtotal * vatRate;
     final quote = Quote(
-      id: id,
+      id: _generateQuoteId(),
+      contactId: contactId,
       clientName: clientName,
+      clientEmail: clientEmail,
       description: description,
       createdAt: DateTime.now(),
       status: QuoteStatus.draft,
       total: subtotal + vat,
       vat: vat,
+      requireSignature: requireSignature,
     );
     _quotes.insert(0, quote);
     notifyListeners();
-    return quote;
-  }
-
-  void updateQuoteStatus(String quoteId, QuoteStatus status) {
-    final index = _quotes.indexWhere((q) => q.id == quoteId);
-    if (index == -1) return;
-    _quotes[index] = _quotes[index].copyWith(status: status);
-    // Auto-convert to invoice draft when signed
-    if (status == QuoteStatus.signed) {
-      _convertQuoteToInvoice(_quotes[index]);
+    try {
+      final saved = await _service.insertQuote(quote, ownerId: ownerId);
+      _replaceQuote(saved);
+      return saved;
+    } catch (error, stackTrace) {
+      _quotes.removeWhere((item) => item.id == quote.id);
+      notifyListeners();
+      _logError('createDraftQuote', error, stackTrace);
+      rethrow;
     }
-    notifyListeners();
   }
 
-  void _convertQuoteToInvoice(Quote quote) {
-    // Avoid duplicate invoice
+  Future<Quote> updateQuoteStatus(String quoteId, QuoteStatus status) async {
+    final index = _quotes.indexWhere((q) => q.id == quoteId);
+    if (index == -1) {
+      throw StateError('Quote $quoteId not found');
+    }
+    final previous = _quotes[index];
+    final next = previous.copyWith(status: status);
+    _quotes[index] = next;
+    notifyListeners();
+    try {
+      final saved = await _service.updateQuoteStatus(quoteId, status);
+      _quotes[index] = saved;
+      notifyListeners();
+      if (status == QuoteStatus.signed) {
+        await _convertQuoteToInvoice(saved);
+      }
+      return saved;
+    } catch (error, stackTrace) {
+      _quotes[index] = previous;
+      notifyListeners();
+      _logError('updateQuoteStatus', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> _convertQuoteToInvoice(Quote quote) async {
     final exists = _invoices.any((inv) => inv.quoteId == quote.id);
     if (exists) return;
+    final ownerId = _requireUserId();
     final invoice = Invoice(
-      id: 'inv${DateTime.now().millisecondsSinceEpoch}',
+      id: _generateInvoiceId(),
       quoteId: quote.id,
+      contactId: quote.contactId,
       clientName: quote.clientName,
+      clientEmail: quote.clientEmail,
+      projectId: null,
       issuedAt: DateTime.now(),
       status: InvoiceStatus.draft,
       amount: quote.total,
     );
     _invoices.insert(0, invoice);
+    notifyListeners();
+    try {
+      final saved = await _service.insertInvoice(invoice, ownerId: ownerId);
+      _replaceInvoice(saved);
+    } catch (error, stackTrace) {
+      _invoices.removeWhere((inv) => inv.id == invoice.id);
+      notifyListeners();
+      _logError('convertQuoteToInvoice', error, stackTrace);
+      rethrow;
+    }
   }
 
-  Invoice createInvoice({
+  /// Generate a simple HTML representation of a quote and upload it to
+  /// Supabase Storage under the `documents` bucket. Returns a public URL
+  /// that can be opened/downloaded by the client.
+  Future<String> generateQuoteDocument(String quoteId) async {
+    final quote = getQuote(quoteId);
+    if (quote.id == 'missing') {
+      throw StateError('Quote $quoteId not found');
+    }
+
+    final ownerId = _requireUserId();
+    final html =
+        '''
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Quote ${quote.id}</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial; color: #222; padding: 24px; }
+      .header { display:flex; justify-content:space-between; align-items:center }
+      .items { margin-top:18px }
+      .total { margin-top:22px; font-weight:700; font-size:1.2rem }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div>
+        <h2>Quote</h2>
+        <div>Client: ${quote.clientName}</div>
+        <div>Description: ${quote.description}</div>
+      </div>
+      <div>
+        <div>Quote ID: ${quote.id}</div>
+        <div>Date: ${quote.createdAt.toIso8601String()}</div>
+      </div>
+    </div>
+    <div class="items">
+      <div>Subtotal: €${(quote.total - (quote.vat)).toStringAsFixed(2)}</div>
+      <div>VAT: €${quote.vat.toStringAsFixed(2)}</div>
+    </div>
+    <div class="total">Total: €${quote.total.toStringAsFixed(2)}</div>
+  </body>
+</html>
+''';
+
+    final bytes = Uint8List.fromList(utf8.encode(html));
+    const bucketName = 'documents';
+    final objectPath = 'quotes/$ownerId/${quote.id}.html';
+    final bucket = _client.storage.from(bucketName);
+    try {
+      await bucket.uploadBinary(
+        objectPath,
+        bytes,
+        fileOptions: FileOptions(upsert: true, contentType: 'text/html'),
+      );
+    } catch (error, stackTrace) {
+      _logError('generateQuoteDocument', error, stackTrace);
+      rethrow;
+    }
+
+    final publicUrl = bucket.getPublicUrl(objectPath);
+    return publicUrl;
+  }
+
+  Future<Invoice> createInvoice({
     required String clientName,
     required double amount,
     DateTime? dueDate,
     String? referenceId,
-  }) {
+    String? projectId,
+    String? contactId,
+    String? clientEmail,
+  }) async {
+    final ownerId = _requireUserId();
     final invoice = Invoice(
-      id: 'inv${DateTime.now().millisecondsSinceEpoch}',
+      id: _generateInvoiceId(),
       quoteId: referenceId ?? 'manual',
+      contactId: contactId,
       clientName: clientName,
+      clientEmail: clientEmail,
+      projectId: projectId,
       issuedAt: DateTime.now(),
       status: InvoiceStatus.unpaid,
       amount: amount,
@@ -377,17 +526,72 @@ class FinanceController extends ChangeNotifier {
     );
     _invoices.insert(0, invoice);
     notifyListeners();
-    return invoice;
+    try {
+      final saved = await _service.insertInvoice(invoice, ownerId: ownerId);
+      _replaceInvoice(saved);
+      return saved;
+    } catch (error, stackTrace) {
+      _invoices.removeWhere((inv) => inv.id == invoice.id);
+      notifyListeners();
+      _logError('createInvoice', error, stackTrace);
+      rethrow;
+    }
   }
 
-  void markInvoicePaid(String invoiceId) {
+  Future<Invoice> markInvoicePaid(String invoiceId) async {
     final index = _invoices.indexWhere((inv) => inv.id == invoiceId);
-    if (index == -1) return;
-    _invoices[index] = _invoices[index].copyWith(status: InvoiceStatus.paid);
+    if (index == -1) {
+      throw StateError('Invoice $invoiceId not found');
+    }
+    final previous = _invoices[index];
+    final next = previous.copyWith(status: InvoiceStatus.paid);
+    _invoices[index] = next;
     notifyListeners();
+    try {
+      final saved = await _service.updateInvoice(next);
+      _invoices[index] = saved;
+      notifyListeners();
+      return saved;
+    } catch (error, stackTrace) {
+      _invoices[index] = previous;
+      notifyListeners();
+      _logError('markInvoicePaid', error, stackTrace);
+      rethrow;
+    }
   }
 
-  Invoice? getInvoice(String id) => _invoices.firstWhere(
+  Future<Invoice> updateInvoiceMetadata(
+    String invoiceId, {
+    DateTime? issuedAt,
+    DateTime? dueDate,
+    PaymentMethod? paymentMethod,
+  }) async {
+    final index = _invoices.indexWhere((inv) => inv.id == invoiceId);
+    if (index == -1) {
+      throw StateError('Invoice $invoiceId not found');
+    }
+    final previous = _invoices[index];
+    final next = previous.copyWith(
+      issuedAt: issuedAt,
+      dueDate: dueDate,
+      paymentMethod: paymentMethod,
+    );
+    _invoices[index] = next;
+    notifyListeners();
+    try {
+      final saved = await _service.updateInvoice(next);
+      _invoices[index] = saved;
+      notifyListeners();
+      return saved;
+    } catch (error, stackTrace) {
+      _invoices[index] = previous;
+      notifyListeners();
+      _logError('updateInvoiceMetadata', error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Invoice getInvoice(String id) => _invoices.firstWhere(
     (inv) => inv.id == id,
     orElse: () => Invoice(
       id: 'missing',
@@ -399,7 +603,7 @@ class FinanceController extends ChangeNotifier {
     ),
   );
 
-  Quote? getQuote(String id) => _quotes.firstWhere(
+  Quote getQuote(String id) => _quotes.firstWhere(
     (q) => q.id == id,
     orElse: () => Quote(
       id: 'missing',
@@ -411,6 +615,142 @@ class FinanceController extends ChangeNotifier {
       vat: 0,
     ),
   );
+
+  void _setLoading(bool value) {
+    if (_isLoading == value) {
+      return;
+    }
+    _isLoading = value;
+    notifyListeners();
+  }
+
+  void reset() {
+    _hasInitialized = false;
+    _quotes.clear();
+    _invoices.clear();
+    _expenses.clear();
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  String _requireUserId() {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) {
+      throw const AuthException('User not authenticated');
+    }
+    return userId;
+  }
+
+  void _logError(String action, Object error, StackTrace stackTrace) {
+    debugPrint('FinanceController.$action failed: $error');
+    debugPrint(stackTrace.toString());
+  }
+
+  String _generateQuoteId() => 'q${DateTime.now().millisecondsSinceEpoch}';
+
+  String _generateInvoiceId() => 'inv${DateTime.now().millisecondsSinceEpoch}';
+
+  String _generateExpenseId() => 'exp${DateTime.now().millisecondsSinceEpoch}';
+
+  /// Send an invoice reminder via an Edge Function.
+  ///
+  /// This looks up the client's email by matching the invoice.clientName
+  /// against the `crm_contacts` table (case-insensitive), then invokes the
+  /// `invoice-reminder` Edge Function with a payload containing HTML and a
+  /// push notification payload. The Edge Function is responsible for sending
+  /// the email and delivering push notifications to any registered devices.
+  Future<void> sendInvoiceReminder(String invoiceId) async {
+    final invoice = getInvoice(invoiceId);
+    if (invoice.id == 'missing') {
+      throw StateError('Invoice $invoiceId not found');
+    }
+
+    // Resolve an email address for the invoice.
+    // Prefer persisted metadata, then CRM lookup by contact ID, then legacy
+    // case-insensitive name match.
+    String? email = invoice.clientEmail?.trim();
+    if (email != null && email.isEmpty) {
+      email = null;
+    }
+    try {
+      if (email == null && invoice.contactId != null) {
+        final resp = await _client
+            .from('crm_contacts')
+            .select('email')
+            .eq('id', invoice.contactId as Object)
+            .maybeSingle();
+        if (resp is Map<String, dynamic>) {
+          email = (resp['email'] as String?)?.trim();
+        }
+      }
+      if (email == null || email.isEmpty) {
+        final resp = await _client
+            .from('crm_contacts')
+            .select('email')
+            .ilike('name', invoice.clientName)
+            .maybeSingle();
+        if (resp is Map<String, dynamic>) {
+          email = (resp['email'] as String?)?.trim();
+        }
+      }
+    } catch (error, stackTrace) {
+      _logError('lookupClientEmail', error, stackTrace);
+    }
+
+    if (email == null || email.isEmpty) {
+      throw StateError('No email found for client "${invoice.clientName}"');
+    }
+
+    final due = invoice.dueDate?.toIso8601String();
+    final invoiceDeepLink = 'rushmanage://invoice/${invoice.id}';
+
+    final html =
+        '''
+<html>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color: #222;">
+    <h2>Invoice Reminder</h2>
+    <p>Hi ${invoice.clientName},</p>
+    <p>This is a friendly reminder that invoice <strong>${invoice.id}</strong> for <strong>€${invoice.amount.toStringAsFixed(2)}</strong> is ${invoice.status == InvoiceStatus.unpaid ? 'still unpaid' : invoice.status.name}.</p>
+    ${due != null ? '<p>Due date: <strong>${invoice.dueDate}</strong></p>' : ''}
+    <p>You can view the invoice in your app: <a href="$invoiceDeepLink">Open invoice</a></p>
+    <p>Thanks,<br/>Rush Manage</p>
+  </body>
+</html>
+''';
+
+    final payload = {
+      'to': email,
+      'client_name': invoice.clientName,
+      'invoice_id': invoice.id,
+      'amount': invoice.amount,
+      'due_date': due,
+      'invoice_link': invoiceDeepLink,
+      'html': html,
+      'push': {
+        'title': 'Invoice reminder',
+        'body':
+            'Invoice ${invoice.id} — €${invoice.amount.toStringAsFixed(2)} is due',
+        'deep_link': invoiceDeepLink,
+      },
+    };
+
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      if (SupabaseConfig.inviteEmailSecret.isNotEmpty)
+        'x-invite-secret': SupabaseConfig.inviteEmailSecret,
+    };
+
+    try {
+      await _client.functions.invoke(
+        'invoice-reminder',
+        headers: headers,
+        body: jsonEncode(payload),
+      );
+    } catch (error, stackTrace) {
+      _logError('sendInvoiceReminder', error, stackTrace);
+      rethrow;
+    }
+  }
 }
 
 enum TimeFilter { week, month, year }

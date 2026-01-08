@@ -9,6 +9,7 @@ import 'package:myapp/common/localization/l10n_extensions.dart';
 import 'package:myapp/common/models/message.dart';
 import 'package:myapp/controllers/finance_controller.dart';
 import 'package:myapp/controllers/project_controller.dart';
+import 'package:myapp/controllers/user_controller.dart';
 import 'package:myapp/l10n/app_localizations.dart';
 import 'package:myapp/models/project.dart';
 
@@ -20,13 +21,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const _greetingName = 'Dream';
-
   @override
   Widget build(BuildContext context) {
     final projectController = context.watch<ProjectController>();
     final financeController = context.watch<FinanceController>();
+    final userController = context.watch<UserController>();
     final loc = context.l10n;
+    final userName =
+        userController.profile?.firstName ??
+        userController.profile?.displayName ??
+        'Crew';
+    final avatarUrl = userController.profile?.avatarUrl;
+    final userInitials = _initialsFromName(userName);
     final unreadMessages = _unreadCount(projectController);
     final financeSnapshot = _FinanceSnapshot(
       collectedTotal: financeController.globalBalance,
@@ -57,7 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _HomeHeader(
-                      userName: _greetingName,
+                      userName: userName,
+                      avatarUrl: avatarUrl,
+                      initials: userInitials,
                       loc: loc,
                       onNotificationsTap: () =>
                           context.pushNamed('invitationNotifications'),
@@ -67,7 +75,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     _FinanceOverviewCard(
                       snapshot: financeSnapshot,
                       loc: loc,
-                      onCreateInvoice: () => context.goNamed('finance'),
+                      onCreateInvoice: () =>
+                          context.pushNamed('financeCreateInvoiceForm'),
                       onOpenFinance: () => context.goNamed('finance'),
                     ),
                     const SizedBox(height: 18),
@@ -98,6 +107,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  String _initialsFromName(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((segment) => segment.isNotEmpty)
+        .toList(growable: false);
+
+    if (parts.isEmpty) {
+      return 'RM';
+    }
+    if (parts.length == 1) {
+      return parts.first[0].toUpperCase();
+    }
+    final first = parts.first[0].toUpperCase();
+    final last = parts.last[0].toUpperCase();
+    return '$first$last';
   }
 
   int _unreadCount(ProjectController controller) {
@@ -160,12 +187,16 @@ String _truncatePreview(String text, [int maxLength = 85]) {
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.userName,
+    required this.avatarUrl,
+    required this.initials,
     required this.loc,
     required this.onNotificationsTap,
     required this.onProfileTap,
   });
 
   final String userName;
+  final String? avatarUrl;
+  final String initials;
   final AppLocalizations loc;
   final VoidCallback onNotificationsTap;
   final VoidCallback onProfileTap;
@@ -173,6 +204,7 @@ class _HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final hasAvatar = avatarUrl != null && avatarUrl!.isNotEmpty;
 
     return Container(
       width: double.infinity,
@@ -262,14 +294,21 @@ class _HomeHeader extends StatelessWidget {
                     const SizedBox(width: 6),
                     GestureDetector(
                       onTap: onProfileTap,
-                      child: const CircleAvatar(
+                      child: CircleAvatar(
                         radius: 16,
                         backgroundColor: AppColors.primaryText,
-                        child: Icon(
-                          Icons.person,
-                          size: 18,
-                          color: AppColors.primary,
-                        ),
+                        child: hasAvatar
+                            ? ClipOval(
+                                child: Image.network(
+                                  avatarUrl!,
+                                  fit: BoxFit.cover,
+                                  width: 32,
+                                  height: 32,
+                                  errorBuilder: (_, __, ___) =>
+                                      _InitialsBadge(initials: initials),
+                                ),
+                              )
+                            : _InitialsBadge(initials: initials),
                       ),
                     ),
                   ],
@@ -305,6 +344,28 @@ class _HeaderIconButton extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(6),
         child: Icon(icon, color: AppColors.primaryText, size: 20),
+      ),
+    );
+  }
+}
+
+class _InitialsBadge extends StatelessWidget {
+  const _InitialsBadge({required this.initials});
+
+  final String initials;
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle =
+        Theme.of(context).textTheme.labelLarge ??
+        Theme.of(context).textTheme.bodyMedium ??
+        const TextStyle();
+
+    return Text(
+      initials,
+      style: labelStyle.copyWith(
+        color: AppColors.primary,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -432,6 +493,7 @@ class _FinanceOverviewCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 foregroundColor: AppColors.primary,
                 backgroundColor: AppColors.primaryText,
+                minimumSize: const Size.fromHeight(54),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
@@ -566,6 +628,7 @@ class _ProjectsHealthCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.primaryText,
+                minimumSize: const Size.fromHeight(54),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
@@ -712,6 +775,7 @@ class _MessagesActivityCard extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.secondary,
                 side: const BorderSide(color: AppColors.secondary, width: 1.2),
+                minimumSize: const Size.fromHeight(54),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),

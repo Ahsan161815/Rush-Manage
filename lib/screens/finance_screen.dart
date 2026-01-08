@@ -28,6 +28,17 @@ class FinanceScreen extends StatefulWidget {
 class _FinanceScreenState extends State<FinanceScreen> {
   TimeFilter _balanceFilter = TimeFilter.month;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      context.read<FinanceController>().initialize();
+    });
+  }
+
   void _openQuickActionsSheet() {
     final loc = context.l10n;
     showModalBottomSheet<void>(

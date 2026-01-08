@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/common/localization/formatters.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/common/models/message.dart';
+import 'package:myapp/common/utils/project_ui.dart';
+import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/l10n/app_localizations.dart';
+import 'package:myapp/models/project.dart';
 import 'package:myapp/widgets/custom_text_field.dart';
 
 class ChatsScreen extends StatefulWidget {
@@ -42,9 +47,9 @@ class _ChatsScreenState extends State<ChatsScreen> {
     setState(() => _selectedFilter = filter);
   }
 
-  List<_ChatPreview> get _visibleThreads {
+  List<_ChatPreview> _filterThreads(List<_ChatPreview> threads) {
     final query = _searchController.text.trim().toLowerCase();
-    return _threads
+    return threads
         .where((thread) {
           final matchesFilter = switch (_selectedFilter) {
             _ChatFilter.all => true,
@@ -62,53 +67,72 @@ class _ChatsScreenState extends State<ChatsScreen> {
         .toList(growable: false);
   }
 
-  static final List<_ChatPreview> _threads = _buildThreads();
-
-  static List<_ChatPreview> _buildThreads() {
-    final now = DateTime.now();
-    return [
-      _ChatPreview(
-        title: 'Apollo Station Build',
-        lastMessage: 'Sarai • Uploaded the updated permits.',
-        unreadCount: 3,
-        projectId: 'p1',
-        contextDetail: 'Dupont Wedding · Coordination',
-        lastActivity: now.subtract(const Duration(minutes: 2)),
-        isProject: true,
-      ),
-      _ChatPreview(
-        title: 'Fleet Maintenance',
-        lastMessage: 'You • Let me know when the vans are back.',
-        projectId: 'p2',
-        contextDetail: 'Karim Haddad · Logistic partner',
-        lastActivity: now.subtract(const Duration(minutes: 45)),
-        isProject: false,
-      ),
-      _ChatPreview(
-        title: 'Finance Squad',
-        lastMessage: 'Robin • Budget review call moved to 3pm.',
-        unreadCount: 1,
-        projectId: 'p3',
-        contextDetail: 'Cobalt Logistics · Budgeting',
-        lastActivity: now.subtract(const Duration(hours: 1)),
-        isProject: true,
-      ),
-      _ChatPreview(
-        title: 'Cobalt Logistics',
-        lastMessage: 'Hassan • Thanks for sharing the manifest!',
-        projectId: 'p1',
-        contextDetail: 'Vendor · Freight forwarding',
-        lastActivity: now.subtract(const Duration(days: 1)),
-        isProject: false,
-      ),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final controller = context.watch<ProjectController>();
     final loc = context.l10n;
-    final visibleThreads = _visibleThreads;
+    final threads = _buildThreads(controller: controller, loc: loc);
+    final hasContactThreads = threads.any((thread) => !thread.isProject);
+    if (!hasContactThreads && _selectedFilter == _ChatFilter.contacts) {
+      // Revert to supported filters until DM threads exist for this user.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _selectedFilter != _ChatFilter.contacts) {
+          return;
+        }
+        setState(() => _selectedFilter = _ChatFilter.all);
+      });
+    }
+    final visibleThreads = _filterThreads(threads);
+    final hasVisibleThreads = visibleThreads.isNotEmpty;
+    final placeholderConfig = hasVisibleThreads
+        ? null
+        : _resolvePlaceholderConfig(
+            controller: controller,
+            loc: loc,
+            hasAnyThreads: threads.isNotEmpty,
+            hasContactsFilter: hasContactThreads,
+          );
+    final listItemCount = hasVisibleThreads ? visibleThreads.length + 1 : 2;
+    final isInitialLoading = controller.isLoading && threads.isEmpty;
+
+    final listView = RefreshIndicator(
+      onRefresh: controller.refresh,
+      color: AppColors.secondary,
+      child: ListView.separated(
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        itemCount: listItemCount,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _ChatsListHeader(
+              searchController: _searchController,
+              selectedFilter: _selectedFilter,
+              onFilterChanged: _handleFilterChanged,
+              showContactsFilter: hasContactThreads,
+            );
+          }
+          if (!hasVisibleThreads) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 48),
+              child: _EmptyThreadsState(config: placeholderConfig!),
+            );
+          }
+          final thread = visibleThreads[index - 1];
+          return _ChatTile(
+            chat: thread,
+            onTap: () => context.pushNamed(
+              'projectChat',
+              pathParameters: {'id': thread.projectId},
+            ),
+          );
+        },
+        separatorBuilder: (_, index) => index == 0
+            ? const SizedBox(height: 20)
+            : const SizedBox(height: 16),
+      ),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -127,7 +151,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
         ),
         title: Text(
           loc.chatsTitle,
-          style: theme.textTheme.titleLarge?.copyWith(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.w800,
           ),
@@ -135,30 +159,266 @@ class _ChatsScreenState extends State<ChatsScreen> {
       ),
       body: SafeArea(
         bottom: false,
-        child: ListView.separated(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return _ChatsListHeader(
-                searchController: _searchController,
-                selectedFilter: _selectedFilter,
-                onFilterChanged: _handleFilterChanged,
-              );
-            }
-            final thread = visibleThreads[index - 1];
-            return _ChatTile(
-              chat: thread,
-              onTap: () => context.pushNamed(
-                'projectChat',
-                pathParameters: {'id': thread.projectId},
+        child: isInitialLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.secondary,
+                  ),
+                ),
+              )
+            : listView,
+      ),
+    );
+  }
+
+  List<_ChatPreview> _buildThreads({
+    required ProjectController controller,
+    required AppLocalizations loc,
+  }) {
+    final threads = controller.projects
+        .map((project) {
+          final messages = controller.messagesFor(project.id);
+          final lastMessage = messages.isNotEmpty ? messages.last : null;
+          final title = project.name.trim().isEmpty
+              ? loc.chatsUnnamedProject
+              : project.name.trim();
+          final lastActivity =
+              lastMessage?.sentAt ??
+              project.endDate ??
+              project.startDate ??
+              DateTime.now();
+          return _ChatPreview(
+            title: title,
+            lastMessage: _lastMessageLabel(
+              message: lastMessage,
+              project: project,
+              controller: controller,
+              loc: loc,
+            ),
+            projectId: project.id,
+            contextDetail: _contextDetail(project, loc),
+            lastActivity: lastActivity,
+            isProject: true,
+            unreadCount: _unreadCount(
+              messages: messages,
+              controller: controller,
+            ),
+          );
+        })
+        .toList(growable: false);
+
+    threads.sort((a, b) => b.lastActivity.compareTo(a.lastActivity));
+    return threads;
+  }
+
+  String _contextDetail(Project project, AppLocalizations loc) {
+    final clientLabel = project.client.trim().isEmpty
+        ? loc.projectDetailClientPlaceholder
+        : project.client.trim();
+    final statusLabel = projectStatusMeta(project.status).label;
+    return '$clientLabel · $statusLabel';
+  }
+
+  String _lastMessageLabel({
+    required Message? message,
+    required Project project,
+    required ProjectController controller,
+    required AppLocalizations loc,
+  }) {
+    if (message == null) {
+      return loc.chatsNoMessagesYet;
+    }
+    final authorLabel = _resolveAuthorLabel(
+      message: message,
+      project: project,
+      controller: controller,
+      loc: loc,
+    );
+    final body = message.body.trim().isEmpty
+        ? loc.projectDetailDiscussionEmpty
+        : _truncate(message.body.trim(), 140);
+    return '$authorLabel • $body';
+  }
+
+  String _resolveAuthorLabel({
+    required Message message,
+    required Project project,
+    required ProjectController controller,
+    required AppLocalizations loc,
+  }) {
+    final userId = controller.currentUserId;
+    if (message.authorId == 'me' ||
+        (userId != null && userId.isNotEmpty && message.authorId == userId)) {
+      return loc.homeAuthorYou;
+    }
+    for (final member in project.members) {
+      if (member.id == message.authorId) {
+        return member.name;
+      }
+    }
+    return loc.homeCollaboratorFallback;
+  }
+
+  String _truncate(String value, int maxLength) {
+    if (value.length <= maxLength) {
+      return value;
+    }
+    return '${value.substring(0, maxLength)}...';
+  }
+
+  int _unreadCount({
+    required List<Message> messages,
+    required ProjectController controller,
+  }) {
+    if (messages.isEmpty) {
+      return 0;
+    }
+    final keys = <String>[];
+    final userId = controller.currentUserId;
+    if (userId != null && userId.isNotEmpty) {
+      keys.add(userId);
+    }
+    if (!keys.contains('me')) {
+      keys.add('me');
+    }
+    final authoredKeys = <String>{
+      if (userId != null && userId.isNotEmpty) userId,
+      'me',
+    };
+    var unread = 0;
+    for (final message in messages) {
+      if (authoredKeys.contains(message.authorId)) {
+        continue;
+      }
+      final receipt = _receiptFor(message, keys);
+      if (receipt == null || receipt != MessageReceiptStatus.read) {
+        unread++;
+      }
+    }
+    return unread;
+  }
+
+  MessageReceiptStatus? _receiptFor(
+    Message message,
+    List<String> candidateKeys,
+  ) {
+    for (final key in candidateKeys) {
+      final receipt = message.receipts[key];
+      if (receipt != null) {
+        return receipt;
+      }
+    }
+    return null;
+  }
+
+  _PlaceholderConfig _resolvePlaceholderConfig({
+    required ProjectController controller,
+    required AppLocalizations loc,
+    required bool hasAnyThreads,
+    required bool hasContactsFilter,
+  }) {
+    final hasError = controller.errorMessage != null;
+    final hasQuery = _hasActiveQuery;
+    final hasCustomFilter = _selectedFilter != _ChatFilter.all;
+    if (hasError && !hasAnyThreads) {
+      return _PlaceholderConfig(
+        title: controller.errorMessage!,
+        subtitle: loc.commonTryAgain,
+        icon: FeatherIcons.alertTriangle,
+        onRetry: () => controller.refresh(),
+      );
+    }
+    if (!hasAnyThreads) {
+      return _PlaceholderConfig(
+        title: loc.chatsEmptyTitle,
+        subtitle: loc.chatsEmptySubtitle,
+        icon: FeatherIcons.messageSquare,
+      );
+    }
+    if (_selectedFilter == _ChatFilter.contacts && hasContactsFilter) {
+      return _PlaceholderConfig(
+        title: loc.contactsEmptyMessage,
+        subtitle: '',
+        icon: FeatherIcons.users,
+      );
+    }
+    if (hasQuery || hasCustomFilter) {
+      return _PlaceholderConfig(
+        title: loc.chatsSearchEmpty,
+        subtitle: loc.commonSearchThreads,
+        icon: FeatherIcons.search,
+      );
+    }
+    return _PlaceholderConfig(
+      title: loc.chatsNoMessagesYet,
+      subtitle: loc.chatsEmptySubtitle,
+      icon: FeatherIcons.messageSquare,
+    );
+  }
+
+  bool get _hasActiveQuery => _searchController.text.trim().isNotEmpty;
+}
+
+class _PlaceholderConfig {
+  const _PlaceholderConfig({
+    required this.title,
+    required this.icon,
+    this.subtitle,
+    this.onRetry,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData icon;
+  final VoidCallback? onRetry;
+}
+
+class _EmptyThreadsState extends StatelessWidget {
+  const _EmptyThreadsState({required this.config});
+
+  final _PlaceholderConfig config;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(config.icon, size: 48, color: AppColors.hintTextfiled),
+          const SizedBox(height: 16),
+          Text(
+            config.title,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColors.secondaryText,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (config.subtitle != null && config.subtitle!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              config.subtitle!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.hintTextfiled,
+                fontWeight: FontWeight.w600,
               ),
-            );
-          },
-          separatorBuilder: (_, index) => index == 0
-              ? const SizedBox(height: 20)
-              : const SizedBox(height: 16),
-          itemCount: visibleThreads.length + 1,
-        ),
+            ),
+          ],
+          if (config.onRetry != null) ...[
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: config.onRetry,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.secondary,
+                side: const BorderSide(color: AppColors.secondary),
+              ),
+              child: Text(context.l10n.commonTryAgain),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -296,11 +556,13 @@ class _ChatsListHeader extends StatelessWidget {
     required this.searchController,
     required this.selectedFilter,
     required this.onFilterChanged,
+    required this.showContactsFilter,
   });
 
   final TextEditingController searchController;
   final _ChatFilter selectedFilter;
   final ValueChanged<_ChatFilter> onFilterChanged;
+  final bool showContactsFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -309,7 +571,11 @@ class _ChatsListHeader extends StatelessWidget {
       children: [
         _ChatsSearchField(controller: searchController),
         const SizedBox(height: 12),
-        _FilterRow(selected: selectedFilter, onChanged: onFilterChanged),
+        _FilterRow(
+          selected: selectedFilter,
+          onChanged: onFilterChanged,
+          showContactsFilter: showContactsFilter,
+        ),
       ],
     );
   }
@@ -332,18 +598,22 @@ class _ChatsSearchField extends StatelessWidget {
 }
 
 class _FilterRow extends StatelessWidget {
-  const _FilterRow({required this.selected, required this.onChanged});
+  const _FilterRow({
+    required this.selected,
+    required this.onChanged,
+    required this.showContactsFilter,
+  });
 
   final _ChatFilter selected;
   final ValueChanged<_ChatFilter> onChanged;
+  final bool showContactsFilter;
 
   @override
   Widget build(BuildContext context) {
-    const filters = [
-      _ChatFilter.all,
-      _ChatFilter.projects,
-      _ChatFilter.contacts,
-    ];
+    final filters = <_ChatFilter>[_ChatFilter.all, _ChatFilter.projects];
+    if (showContactsFilter) {
+      filters.add(_ChatFilter.contacts);
+    }
     final loc = context.l10n;
 
     return SingleChildScrollView(

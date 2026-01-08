@@ -3,9 +3,12 @@ import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
+import 'package:myapp/common/localization/formatters.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
+import 'package:myapp/controllers/finance_controller.dart';
 import 'package:myapp/controllers/project_controller.dart';
 import 'package:myapp/l10n/app_localizations.dart';
+import 'package:myapp/models/finance.dart';
 import 'package:myapp/models/project.dart';
 
 class AnalyticsScreen extends StatelessWidget {
@@ -16,6 +19,7 @@ class AnalyticsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final loc = context.l10n;
     final projects = context.watch<ProjectController>().projects;
+    final invoices = context.watch<FinanceController>().invoices;
     final now = DateTime.now();
 
     final completedThisMonth = projects.where((p) {
@@ -27,7 +31,12 @@ class AnalyticsScreen extends StatelessWidget {
     }).length;
 
     final durations = projects
-        .where((p) => p.startDate != null && p.endDate != null)
+        .where(
+          (p) =>
+              p.status == ProjectStatus.completed &&
+              p.startDate != null &&
+              p.endDate != null,
+        )
         .map((p) => p.endDate!.difference(p.startDate!).inDays)
         .where((d) => d >= 0)
         .toList(growable: false);
@@ -35,11 +44,14 @@ class AnalyticsScreen extends StatelessWidget {
         ? null
         : (durations.reduce((a, b) => a + b) / durations.length);
 
-    // On-time delivery rate: requires target due dates and actual completion timestamps.
-    // Not available in current model, so display N/A with hint.
-    final onTimeRate = null;
-
-    // Revenue: depends on Finance module integration (placeholder shown below).
+    final onTimeStats = _calculateOnTimeStats(projects);
+    final paidInvoices = invoices
+        .where((invoice) => invoice.status == InvoiceStatus.paid)
+        .toList(growable: false);
+    final revenueTotal = paidInvoices.fold<double>(
+      0,
+      (sum, invoice) => sum + invoice.amount,
+    );
 
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -93,20 +105,26 @@ class AnalyticsScreen extends StatelessWidget {
                   _MetricCard(
                     icon: FeatherIcons.trendingUp,
                     label: loc.analyticsMetricOnTime,
-                    value: onTimeRate == null
+                    value: onTimeStats == null
                         ? loc.analyticsValueNotAvailable
                         : loc.analyticsPercentValue(
-                            onTimeRate.toStringAsFixed(0),
+                            onTimeStats.rate.toStringAsFixed(0),
                           ),
                     accent: const Color(0xFF5C7CFA),
-                    sublabel: loc.analyticsOnTimeHint,
+                    sublabel: onTimeStats == null
+                        ? loc.analyticsOnTimeHint
+                        : '${loc.analyticsInsightCompletedProjects}: '
+                              '${onTimeStats.onTime}/${onTimeStats.total}',
                   ),
                   _MetricCard(
                     icon: FeatherIcons.dollarSign,
                     label: loc.analyticsMetricRevenue,
-                    value: '—',
+                    value: formatCurrency(context, revenueTotal),
                     accent: const Color(0xFF2FBF71),
-                    sublabel: loc.analyticsRevenueHint,
+                    sublabel: paidInvoices.isEmpty
+                        ? loc.analyticsRevenueHint
+                        : '${loc.financeMetricPaidInvoices}: '
+                              '${paidInvoices.length}',
                   ),
                 ],
               ),
@@ -345,4 +363,52 @@ class _InsightRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _OnTimeStats {
+  const _OnTimeStats({required this.total, required this.onTime});
+
+  final int total;
+  final int onTime;
+
+  double get rate => total == 0 ? 0 : (onTime / total) * 100;
+}
+
+_OnTimeStats? _calculateOnTimeStats(List<Project> projects) {
+  var total = 0;
+  var onTime = 0;
+
+  for (final project in projects) {
+    if (project.status != ProjectStatus.completed) {
+      continue;
+    }
+    final dueDate = project.endDate;
+    final completionDate = _projectCompletionDate(project);
+    if (dueDate == null || completionDate == null) {
+      continue;
+    }
+    total += 1;
+    if (!completionDate.isAfter(dueDate)) {
+      onTime += 1;
+    }
+  }
+
+  if (total == 0) {
+    return null;
+  }
+  return _OnTimeStats(total: total, onTime: onTime);
+}
+
+DateTime? _projectCompletionDate(Project project) {
+  final taskDates = project.tasks
+      .where(
+        (task) => task.status == TaskStatus.completed && task.endDate != null,
+      )
+      .map((task) => task.endDate!)
+      .toList(growable: false);
+  if (taskDates.isEmpty) {
+    return null;
+  }
+  taskDates.sort();
+  return taskDates.last;
 }

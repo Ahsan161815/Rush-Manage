@@ -9,6 +9,7 @@ class CustomTextField extends StatefulWidget {
   final bool isPassword;
   final TextEditingController? controller;
   final double widthFactor;
+  final TextInputType keyboardType;
 
   const CustomTextField({
     super.key,
@@ -17,6 +18,7 @@ class CustomTextField extends StatefulWidget {
     this.isPassword = false,
     this.controller,
     this.widthFactor = 0.82,
+    this.keyboardType = TextInputType.text,
   });
 
   @override
@@ -110,6 +112,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                 controller: _controller,
                 focusNode: _focusNode,
                 obscureText: widget.isPassword ? _obscureText : false,
+                keyboardType: widget.keyboardType,
                 decoration: InputDecoration(
                   hintText: widget.hintText,
                   isDense: false,

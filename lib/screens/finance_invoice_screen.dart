@@ -18,6 +18,7 @@ class _FinanceInvoiceScreenState extends State<FinanceInvoiceScreen> {
   DateTime? _issueDate;
   DateTime? _dueDate;
   PaymentMethod _method = PaymentMethod.bankTransfer;
+  bool _initialized = false;
 
   Future<void> _pickDate(bool issue) async {
     final picked = await showDatePicker(
@@ -34,7 +35,40 @@ class _FinanceInvoiceScreenState extends State<FinanceInvoiceScreen> {
           _dueDate = picked;
         }
       });
+      // Persist change to backend — ensure we're still mounted
+      if (!mounted) return;
+      try {
+        final finance = context.read<FinanceController>();
+        if (issue) {
+          await finance.updateInvoiceMetadata(
+            widget.invoiceId,
+            issuedAt: picked,
+          );
+        } else {
+          await finance.updateInvoiceMetadata(
+            widget.invoiceId,
+            dueDate: picked,
+          );
+        }
+      } catch (e) {
+        // ignore errors for now; controller logs them
+      }
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    final finance = context.read<FinanceController>();
+    final invoice = finance.getInvoice(widget.invoiceId);
+    if (invoice.id == 'missing') return;
+    setState(() {
+      _issueDate = invoice.issuedAt;
+      _dueDate = invoice.dueDate;
+      _method = invoice.paymentMethod ?? PaymentMethod.bankTransfer;
+      _initialized = true;
+    });
   }
 
   @override
@@ -49,7 +83,9 @@ class _FinanceInvoiceScreenState extends State<FinanceInvoiceScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          loc.financeInvoiceTitle(invoice?.id.substring(3) ?? '—'),
+          loc.financeInvoiceTitle(
+            invoice.id == 'missing' ? '—' : invoice.id.substring(3),
+          ),
           style: theme.textTheme.titleLarge?.copyWith(
             color: AppColors.secondaryText,
             fontWeight: FontWeight.bold,
@@ -69,14 +105,25 @@ class _FinanceInvoiceScreenState extends State<FinanceInvoiceScreen> {
               method: _method,
               onPickIssue: () => _pickDate(true),
               onPickDue: () => _pickDate(false),
-              onMethodChanged: (m) => setState(() => _method = m),
+              onMethodChanged: (m) async {
+                setState(() => _method = m);
+                try {
+                  final finance = context.read<FinanceController>();
+                  await finance.updateInvoiceMetadata(
+                    widget.invoiceId,
+                    paymentMethod: m,
+                  );
+                } catch (e) {
+                  // ignore; controller handles logging and revert on failure
+                }
+              },
             ),
             const SizedBox(height: 32),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: invoice == null
+                    onPressed: invoice.id == 'missing'
                         ? null
                         : () => finance.markInvoicePaid(invoice.id),
                     style: OutlinedButton.styleFrom(
@@ -90,7 +137,7 @@ class _FinanceInvoiceScreenState extends State<FinanceInvoiceScreen> {
                       ),
                     ),
                     child: Text(
-                      invoice?.status == InvoiceStatus.paid
+                      invoice.status == InvoiceStatus.paid
                           ? loc.financeInvoiceButtonAlreadyPaid
                           : loc.financeInvoiceButtonMarkPaid,
                       style: theme.textTheme.labelLarge?.copyWith(
@@ -103,7 +150,29 @@ class _FinanceInvoiceScreenState extends State<FinanceInvoiceScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: GradientButton(
-                    onPressed: () {},
+                    onPressed: invoice.id == 'missing'
+                        ? () {}
+                        : () {
+                            final messenger = ScaffoldMessenger.of(context);
+                            finance
+                                .sendInvoiceReminder(invoice.id)
+                                .then((_) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        loc.financeReminderSentSnack,
+                                      ),
+                                    ),
+                                  );
+                                })
+                                .catchError((_) {
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Failed to send reminder'),
+                                    ),
+                                  );
+                                });
+                          },
                     text: loc.financeInvoiceButtonSendReminder,
                     height: 54,
                     width: double.infinity,

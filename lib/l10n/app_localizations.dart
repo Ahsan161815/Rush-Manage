@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'Add contact'**
   String get contactsAdd;
 
+  /// No description provided for @contactsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts yet. Add your first client or collaborator to get started.'**
+  String get contactsEmptyMessage;
+
   /// No description provided for @collaboratorsTitle.
   ///
   /// In en, this message translates to:
@@ -236,6 +242,30 @@ abstract class AppLocalizations {
   /// **'Collaboration History'**
   String get collaboratorSectionHistory;
 
+  /// No description provided for @collaboratorStatProjectsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get collaboratorStatProjectsLabel;
+
+  /// No description provided for @collaboratorStatCompletedTasksLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks completed'**
+  String get collaboratorStatCompletedTasksLabel;
+
+  /// No description provided for @collaboratorStatActiveTasksLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Active tasks'**
+  String get collaboratorStatActiveTasksLabel;
+
+  /// No description provided for @collaboratorStatOverdueTasksLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get collaboratorStatOverdueTasksLabel;
+
   /// No description provided for @collaboratorSendMessage.
   ///
   /// In en, this message translates to:
@@ -314,6 +344,48 @@ abstract class AppLocalizations {
   /// **'Invitation Notifications'**
   String get profileInvitationNotifications;
 
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfileTitle;
+
+  /// No description provided for @editProfileHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh your details to keep teammates aligned.'**
+  String get editProfileHeadline;
+
+  /// No description provided for @editProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates sync across Rush Manage instantly.'**
+  String get editProfileSubtitle;
+
+  /// No description provided for @editProfileSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get editProfileSave;
+
+  /// No description provided for @editProfileSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated'**
+  String get editProfileSuccess;
+
+  /// No description provided for @profileLogoutButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out'**
+  String get profileLogoutButton;
+
+  /// No description provided for @profileLogoutError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t sign you out. Please try again.'**
+  String get profileLogoutError;
+
   /// No description provided for @profileContactSection.
   ///
   /// In en, this message translates to:
@@ -343,6 +415,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Location'**
   String get profileLocationLabel;
+
+  /// No description provided for @profileErrorFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your full name before continuing.'**
+  String get profileErrorFullName;
+
+  /// No description provided for @profileErrorRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us your role or title.'**
+  String get profileErrorRole;
+
+  /// No description provided for @profileErrorLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Share where you\'re based.'**
+  String get profileErrorLocation;
+
+  /// No description provided for @profileErrorFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least one focus area.'**
+  String get profileErrorFocus;
+
+  /// No description provided for @profileErrorIndustry.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the primary industry you serve.'**
+  String get profileErrorIndustry;
+
+  /// No description provided for @profileErrorAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a profile photo to continue.'**
+  String get profileErrorAvatar;
+
+  /// No description provided for @profileErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save profile, please try again.'**
+  String get profileErrorGeneric;
 
   /// No description provided for @commonOr.
   ///
@@ -422,6 +536,12 @@ abstract class AppLocalizations {
   /// **'Skip for now'**
   String get commonSkip;
 
+  /// No description provided for @commonTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get commonTryAgain;
+
   /// No description provided for @commonSearchContacts.
   ///
   /// In en, this message translates to:
@@ -451,6 +571,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Collaborators'**
   String get commonCollaboratorsFilter;
+
+  /// No description provided for @commonSuppliersFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppliers'**
+  String get commonSuppliersFilter;
+
+  /// No description provided for @planUpgradeProjectsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Free plan limit reached'**
+  String get planUpgradeProjectsTitle;
+
+  /// No description provided for @planUpgradeProjectsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'You can manage up to 2 active projects on the free workspace. Upgrade to keep moving without interruptions.'**
+  String get planUpgradeProjectsDescription;
+
+  /// No description provided for @planUpgradeDocumentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Document limit reached'**
+  String get planUpgradeDocumentsTitle;
+
+  /// No description provided for @planUpgradeDocumentsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The free workspace lets you send up to 5 quotes or invoices in total. Upgrade to keep billing.'**
+  String get planUpgradeDocumentsDescription;
+
+  /// No description provided for @planUpgradeGeneralHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'General packages'**
+  String get planUpgradeGeneralHeading;
+
+  /// No description provided for @planUpgradeAddOnHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Profession add-ons'**
+  String get planUpgradeAddOnHeading;
+
+  /// No description provided for @planUpgradeTrialCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Add 1 day Pro'**
+  String get planUpgradeTrialCta;
+
+  /// No description provided for @planUpgradeTrialFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments arrive soon. Trials unlock everything temporarily.'**
+  String get planUpgradeTrialFooter;
+
+  /// No description provided for @planUpgradeTrialActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro access activated for 1 day.'**
+  String get planUpgradeTrialActivated;
 
   /// No description provided for @commonProjectsFilter.
   ///
@@ -560,6 +740,12 @@ abstract class AppLocalizations {
   /// **'Continue with Apple'**
   String get loginSocialApple;
 
+  /// No description provided for @loginAppleUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple sign-in isn\'t set up yet.'**
+  String get loginAppleUnavailable;
+
   /// No description provided for @loginNoAccountPrompt.
   ///
   /// In en, this message translates to:
@@ -625,6 +811,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password must be at least 6 characters.'**
   String get registrationPasswordTooShort;
+
+  /// No description provided for @registrationEmailConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with this email already exists. Try signing in instead.'**
+  String get registrationEmailConflict;
 
   /// No description provided for @registrationGenericError.
   ///
@@ -770,6 +962,30 @@ abstract class AppLocalizations {
   /// **'Add a face, role, and focus areas so teammates know who you are.'**
   String get setupSubtitle;
 
+  /// No description provided for @setupIndustrySectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary industry'**
+  String get setupIndustrySectionTitle;
+
+  /// No description provided for @setupIndustrySectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate an industry module to unlock tailored workflows.'**
+  String get setupIndustrySectionSubtitle;
+
+  /// No description provided for @setupIndustryOptionCore.
+  ///
+  /// In en, this message translates to:
+  /// **'General workspace'**
+  String get setupIndustryOptionCore;
+
+  /// No description provided for @setupIndustryOptionCaterer.
+  ///
+  /// In en, this message translates to:
+  /// **'Events & catering'**
+  String get setupIndustryOptionCaterer;
+
   /// No description provided for @setupFinish.
   ///
   /// In en, this message translates to:
@@ -823,6 +1039,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contact'**
   String get chatsBadgeContact;
+
+  /// No description provided for @chatsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No project threads yet'**
+  String get chatsEmptyTitle;
+
+  /// No description provided for @chatsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Collaborators will show up here once a chat starts.'**
+  String get chatsEmptySubtitle;
+
+  /// No description provided for @chatsNoMessagesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No updates yet. Open the project to start messaging.'**
+  String get chatsNoMessagesYet;
+
+  /// No description provided for @chatsUnnamedProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled project'**
+  String get chatsUnnamedProject;
+
+  /// No description provided for @chatsSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No threads match your filters.'**
+  String get chatsSearchEmpty;
 
   /// No description provided for @homeGreeting.
   ///
@@ -1075,6 +1321,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Uploaded by {uploader} · {timestamp}'**
   String sharedFilesUploadedMeta(Object uploader, Object timestamp);
+
+  /// No description provided for @sharedFilesWorkspaceLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace library'**
+  String get sharedFilesWorkspaceLibrary;
+
+  /// No description provided for @sharedFilesOriginLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared library'**
+  String get sharedFilesOriginLibrary;
+
+  /// No description provided for @sharedFilesUploadSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'File added to shared library.'**
+  String get sharedFilesUploadSuccess;
+
+  /// No description provided for @sharedFilesUploadFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to upload file. Please try again.'**
+  String get sharedFilesUploadFailure;
+
+  /// No description provided for @sharedFilesPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a file source'**
+  String get sharedFilesPickerTitle;
+
+  /// No description provided for @sharedFilesDestinationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where should we store this file?'**
+  String get sharedFilesDestinationTitle;
+
+  /// No description provided for @sharedFilesDestinationWorkspaceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it in the workspace library'**
+  String get sharedFilesDestinationWorkspaceSubtitle;
+
+  /// No description provided for @sharedFilesDestinationProjectSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to this project'**
+  String get sharedFilesDestinationProjectSubtitle;
+
+  /// No description provided for @sharedFilesDownloadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the file link.'**
+  String get sharedFilesDownloadError;
+
+  /// No description provided for @sharedFilesMenuCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get sharedFilesMenuCopyLink;
+
+  /// No description provided for @sharedFilesMenuOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in browser'**
+  String get sharedFilesMenuOpen;
+
+  /// No description provided for @sharedFilesMenuRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from library'**
+  String get sharedFilesMenuRemove;
+
+  /// No description provided for @sharedFilesCopySuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied to clipboard.'**
+  String get sharedFilesCopySuccess;
+
+  /// No description provided for @sharedFilesRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from shared files?'**
+  String sharedFilesRemoveConfirm(Object name);
+
+  /// No description provided for @sharedFilesRemoveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'File removed from shared library.'**
+  String get sharedFilesRemoveSuccess;
+
+  /// No description provided for @sharedFilesRemoveFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t remove that file.'**
+  String get sharedFilesRemoveFailure;
 
   /// No description provided for @analyticsTitle.
   ///
@@ -1424,6 +1766,54 @@ abstract class AppLocalizations {
   /// **'React to message'**
   String get collaborationChatReactTooltip;
 
+  /// No description provided for @emojiReactionPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'React with emoji'**
+  String get emojiReactionPickerTitle;
+
+  /// No description provided for @chatReplyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get chatReplyAction;
+
+  /// No description provided for @chatReplyingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Replying to {name}'**
+  String chatReplyingTo(Object name);
+
+  /// No description provided for @chatCancelReplyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reply'**
+  String get chatCancelReplyTooltip;
+
+  /// No description provided for @chatMessageNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Message not available'**
+  String get chatMessageNotAvailable;
+
+  /// No description provided for @chatQuotedFallbackMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get chatQuotedFallbackMessage;
+
+  /// No description provided for @chatAttachmentUploadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to upload attachment. Please try again.'**
+  String get chatAttachmentUploadError;
+
+  /// No description provided for @chatAttachmentCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one {# attachment} other {# attachments}}'**
+  String chatAttachmentCount(int count);
+
   /// No description provided for @contactDetailTitle.
   ///
   /// In en, this message translates to:
@@ -1622,6 +2012,90 @@ abstract class AppLocalizations {
   /// **'Add a short brief for your team...'**
   String get createProjectFieldDescriptionHint;
 
+  /// No description provided for @createProjectCatererSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event & catering context'**
+  String get createProjectCatererSectionTitle;
+
+  /// No description provided for @createProjectCatererSectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture headcount, menu preferences, and kitchen needs for this project.'**
+  String get createProjectCatererSectionSubtitle;
+
+  /// No description provided for @createProjectCatererGuestCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests'**
+  String get createProjectCatererGuestCountLabel;
+
+  /// No description provided for @createProjectCatererGuestCountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of expected guests'**
+  String get createProjectCatererGuestCountHint;
+
+  /// No description provided for @createProjectCatererMenuLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu style'**
+  String get createProjectCatererMenuLabel;
+
+  /// No description provided for @createProjectCatererMenuHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Seated dinner, buffet, cocktail'**
+  String get createProjectCatererMenuHint;
+
+  /// No description provided for @createProjectCatererAllergyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergies & dietary notes'**
+  String get createProjectCatererAllergyLabel;
+
+  /// No description provided for @createProjectCatererAllergyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarise restrictions or allergy notes'**
+  String get createProjectCatererAllergyHint;
+
+  /// No description provided for @createProjectCatererServiceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Service flow'**
+  String get createProjectCatererServiceLabel;
+
+  /// No description provided for @createProjectCatererServiceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Ceremony canapés, plated mains, late-night snacks'**
+  String get createProjectCatererServiceHint;
+
+  /// No description provided for @createProjectCatererTastingToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasting required'**
+  String get createProjectCatererTastingToggle;
+
+  /// No description provided for @createProjectCatererKitchenToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'On-site kitchen support'**
+  String get createProjectCatererKitchenToggle;
+
+  /// No description provided for @createProjectCatererKitchenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen notes'**
+  String get createProjectCatererKitchenLabel;
+
+  /// No description provided for @createProjectCatererKitchenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Access constraints, equipment, or vendor notes'**
+  String get createProjectCatererKitchenHint;
+
   /// No description provided for @createProjectInviteTitle.
   ///
   /// In en, this message translates to:
@@ -1669,6 +2143,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preview link: {link}'**
   String createProjectPreviewLink(Object link);
+
+  /// No description provided for @createProjectErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t create your project. Please try again.'**
+  String get createProjectErrorGeneric;
 
   /// No description provided for @createProjectPrimaryCta.
   ///
@@ -2516,6 +2996,96 @@ abstract class AppLocalizations {
   /// **'Open schedule'**
   String get projectDetailScheduleCta;
 
+  /// No description provided for @projectDetailIndustryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event & catering insights'**
+  String get projectDetailIndustryTitle;
+
+  /// No description provided for @projectDetailIndustryGuests.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests'**
+  String get projectDetailIndustryGuests;
+
+  /// No description provided for @projectDetailIndustryGuestsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} guests'**
+  String projectDetailIndustryGuestsValue(int count);
+
+  /// No description provided for @projectDetailIndustryMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu style'**
+  String get projectDetailIndustryMenu;
+
+  /// No description provided for @projectDetailIndustryAllergies.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergies & dietary notes'**
+  String get projectDetailIndustryAllergies;
+
+  /// No description provided for @projectDetailIndustryService.
+  ///
+  /// In en, this message translates to:
+  /// **'Service flow'**
+  String get projectDetailIndustryService;
+
+  /// No description provided for @projectDetailIndustryTasting.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasting'**
+  String get projectDetailIndustryTasting;
+
+  /// No description provided for @projectDetailIndustryTastingScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled on {date}'**
+  String projectDetailIndustryTastingScheduled(Object date);
+
+  /// No description provided for @projectDetailIndustryTastingPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Date to be confirmed'**
+  String get projectDetailIndustryTastingPending;
+
+  /// No description provided for @projectDetailIndustryKitchen.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen support'**
+  String get projectDetailIndustryKitchen;
+
+  /// No description provided for @projectDetailIndustryKitchenRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'On-site kitchen required'**
+  String get projectDetailIndustryKitchenRequired;
+
+  /// No description provided for @projectDetailIndustryKitchenOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen support optional'**
+  String get projectDetailIndustryKitchenOptional;
+
+  /// No description provided for @projectDetailIndustryKitchenNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen notes'**
+  String get projectDetailIndustryKitchenNotes;
+
+  /// No description provided for @projectDetailIndustryEmptyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Industry context'**
+  String get projectDetailIndustryEmptyLabel;
+
+  /// No description provided for @projectDetailIndustryEmptyValue.
+  ///
+  /// In en, this message translates to:
+  /// **'No extra details captured yet.'**
+  String get projectDetailIndustryEmptyValue;
+
   /// No description provided for @projectDetailTeamTitle.
   ///
   /// In en, this message translates to:
@@ -3127,6 +3697,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Collaborator'**
   String get crmContactTypeCollaborator;
+
+  /// No description provided for @crmContactTypeSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier'**
+  String get crmContactTypeSupplier;
 
   /// No description provided for @crmRowInsights.
   ///

@@ -40,3 +40,18 @@ class ContactFormData extends Equatable {
   @override
   List<Object?> get props => [name, email, phone, address, type, notes];
 }
+
+class ContactFormSubmission extends Equatable {
+  const ContactFormSubmission({
+    required this.mode,
+    required this.data,
+    this.contactId,
+  });
+
+  final ContactFormMode mode;
+  final ContactFormData data;
+  final String? contactId;
+
+  @override
+  List<Object?> get props => [mode, data, contactId];
+}

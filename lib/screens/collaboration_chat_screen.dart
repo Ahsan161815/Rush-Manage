@@ -1,18 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/custom_nav_bar.dart';
 import 'package:myapp/app/widgets/emoji_reaction_picker.dart';
+import 'package:myapp/app/widgets/message_reply_widgets.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
-import 'package:myapp/common/models/collaborator_contact.dart';
+import 'package:myapp/common/models/message.dart';
+import 'package:myapp/common/models/shared_file_record.dart';
+import 'package:myapp/common/utils/attachment_utils.dart';
 import 'package:myapp/controllers/project_controller.dart';
+import 'package:myapp/controllers/user_controller.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 import 'package:myapp/models/project.dart';
+import 'package:myapp/services/chat_attachment_service.dart';
 
 class CollaborationChatScreen extends StatefulWidget {
-  const CollaborationChatScreen({super.key});
+  const CollaborationChatScreen({super.key, this.initialContactId});
+
+  final String? initialContactId;
 
   @override
   State<CollaborationChatScreen> createState() =>
@@ -20,49 +31,15 @@ class CollaborationChatScreen extends StatefulWidget {
 }
 
 class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
-  static const String _threadContactId = 'c1';
-  static const List<_ChatMessage> _seedMessages = [
-    _ChatMessage(
-      authorId: _threadContactId,
-      sender: 'Sarah Collins',
-      message: 'Morning! I have the shot list ready for the Dupont reception.',
-      timeLabel: '09:12',
-      isMine: false,
-      attachments: ['shot_list.pdf'],
-      reactions: {'👍': 2},
-    ),
-    _ChatMessage(
-      authorId: 'me',
-      sender: 'You',
-      message:
-          'Perfect, can you also capture a few wide shots of the venue setup? @Sarah',
-      timeLabel: '09:14',
-      isMine: true,
-      mentions: ['@Sarah'],
-    ),
-    _ChatMessage(
-      authorId: _threadContactId,
-      sender: 'Sarah Collins',
-      message:
-          'Absolutely. I will share selects in the shared files folder tonight.',
-      timeLabel: '09:15',
-      isMine: false,
-      attachments: ['reception_preview.jpeg'],
-      reactions: {'❤️': 1, '✅': 1},
-    ),
-    _ChatMessage(
-      authorId: 'me',
-      sender: 'You',
-      message: 'Thanks! I will upload the final timeline there as well.',
-      timeLabel: '09:18',
-      isMine: true,
-      attachments: ['timeline_v3.pdf'],
-    ),
-  ];
-
-  final List<_ChatMessage> _messages = List<_ChatMessage>.of(_seedMessages);
+  String? _selectedProjectId;
+  bool _didInit = false;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ChatAttachmentService _attachmentService = ChatAttachmentService();
+  final List<UploadedAttachment> _pendingAttachments = [];
+  final Map<String, GlobalKey> _messageRowKeys = <String, GlobalKey>{};
+  bool _isUploadingAttachment = false;
+  MessageReplyPreview? _replyingTo;
 
   @override
   void dispose() {
@@ -71,35 +48,189 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
     super.dispose();
   }
 
-  void _handleSend() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-
-    setState(() {
-      _messages.add(
-        _ChatMessage(
-          authorId: 'me',
-          sender: 'You',
-          message: text,
-          timeLabel: 'Just now',
-          isMine: true,
-          mentions: _extractMentions(text),
-        ),
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didInit) return;
+    _didInit = true;
+    final contactId = widget.initialContactId;
+    if (contactId == null) return;
+    final controller = context.read<ProjectController>();
+    for (final proj in controller.projects) {
+      final hasMember = proj.members.any(
+        (m) => m.id == contactId || m.contactId == contactId,
       );
-    });
+      if (hasMember) {
+        setState(() => _selectedProjectId = proj.id);
+        return;
+      }
+    }
+  }
+
+  void _handleSend(Project project) {
+    final pendingAttachments = List<UploadedAttachment>.from(
+      _pendingAttachments,
+    );
+    final typedText = _messageController.text.trim();
+    final attachments = pendingAttachments
+        .map((attachment) => attachment.url)
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+    if (typedText.isEmpty && attachments.isEmpty) return;
+
+    FocusScope.of(context).unfocus();
+    final controller = context.read<ProjectController>();
+    final authorId = _viewerId(controller);
+    final replyPrefix = _replyPrefixText();
+    final body = replyPrefix == null
+        ? typedText
+        : typedText.isEmpty
+        ? replyPrefix.trimRight()
+        : '$replyPrefix$typedText';
+    final mentions = _extractMentions(body);
+    final receipts = <String, MessageReceiptStatus>{
+      for (final member in project.members)
+        member.id: MessageReceiptStatus.sent,
+    };
+    receipts[authorId] = MessageReceiptStatus.read;
+
+    controller.addMessage(
+      project.id,
+      Message(
+        id: 'workspace-${DateTime.now().millisecondsSinceEpoch}',
+        authorId: authorId,
+        body: body,
+        sentAt: DateTime.now(),
+        attachments: attachments,
+        mentions: mentions,
+        receipts: receipts,
+        replyToMessageId: _replyingTo?.messageId,
+        replyPreview: _replyingTo,
+      ),
+    );
 
     _messageController.clear();
+    _clearReply();
+    if (_pendingAttachments.isNotEmpty) {
+      setState(() => _pendingAttachments.clear());
+    }
+    _recordSharedFileUploads(project: project, attachments: pendingAttachments);
     _scrollToBottom();
   }
 
-  void _handleReaction(int index, String emoji) {
-    setState(() {
-      final current = _messages[index];
-      final updatedReactions = Map<String, int>.from(current.reactions)
-        ..update(emoji, (count) => count + 1, ifAbsent: () => 1);
+  String _tagTokenFromName(String name) {
+    final cleaned = name.trim().replaceAll(RegExp(r'\s+'), '_');
+    final buffer = StringBuffer();
+    for (final rune in cleaned.runes) {
+      final ch = String.fromCharCode(rune);
+      if (RegExp(r'[A-Za-z0-9_]').hasMatch(ch)) {
+        buffer.write(ch);
+      }
+    }
+    final token = buffer.toString();
+    return token.isEmpty ? 'user' : token;
+  }
 
-      _messages[index] = current.copyWith(reactions: updatedReactions);
+  String? _replyPrefixText() {
+    final preview = _replyingTo;
+    if (preview == null) {
+      return null;
+    }
+    final token = _tagTokenFromName(preview.authorName);
+    return '@$token ';
+  }
+
+  void _startReply(MessageReplyPreview preview) {
+    setState(() => _replyingTo = preview);
+  }
+
+  void _clearReply() {
+    if (_replyingTo == null) {
+      return;
+    }
+    setState(() => _replyingTo = null);
+  }
+
+  void _handleReaction(String projectId, String messageId, String emoji) {
+    final controller = context.read<ProjectController>();
+    controller.addReaction(projectId, messageId, emoji);
+  }
+
+  Future<void> _handleAttachmentSelected(ChatAttachmentSource source) async {
+    if (_isUploadingAttachment) {
+      return;
+    }
+    setState(() => _isUploadingAttachment = true);
+    try {
+      final uploaded = await _attachmentService.pickAndUpload(source);
+      if (!mounted || uploaded == null) {
+        return;
+      }
+      setState(() => _pendingAttachments.add(uploaded));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      _showAttachmentError();
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingAttachment = false);
+      }
+    }
+  }
+
+  void _removePendingAttachment(UploadedAttachment attachment) {
+    setState(() {
+      _pendingAttachments.removeWhere((item) => item.url == attachment.url);
     });
+  }
+
+  void _showAttachmentError() {
+    if (!mounted) {
+      return;
+    }
+    final loc = context.l10n;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(loc.chatAttachmentUploadError)));
+  }
+
+  void _recordSharedFileUploads({
+    required Project project,
+    required List<UploadedAttachment> attachments,
+    SharedFileOrigin origin = SharedFileOrigin.chat,
+  }) {
+    if (attachments.isEmpty) {
+      return;
+    }
+    final controller = context.read<ProjectController>();
+    final userController = context.read<UserController>();
+    final loc = context.l10n;
+    final uploaderId =
+        controller.currentUserId ?? controller.currentUserEmail ?? 'workspace';
+    final uploaderName =
+        userController.profile?.displayName ??
+        controller.currentUserEmail ??
+        loc.homeCollaboratorFallback;
+    final drafts = attachments
+        .where((attachment) => attachment.url.isNotEmpty)
+        .map(
+          (attachment) => SharedFileDraft(
+            fileUrl: attachment.url,
+            fileName: attachment.name,
+            contentType: attachment.contentType,
+            sizeBytes: attachment.sizeBytes,
+            origin: origin,
+            uploaderId: uploaderId,
+            uploaderName: uploaderName,
+            projectId: project.id,
+            projectName: project.name,
+          ),
+        )
+        .toList(growable: false);
+    for (final draft in drafts) {
+      unawaited(controller.saveSharedFile(draft));
+    }
   }
 
   List<String> _extractMentions(String text) {
@@ -120,16 +251,167 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
     });
   }
 
+  Future<void> _jumpToMessage(String messageId, List<Message> ordered) async {
+    if (!mounted) return;
+    final loc = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+
+    final key = _messageRowKeys[messageId];
+    final ctx = key?.currentContext;
+    if (ctx != null) {
+      if (!ctx.mounted) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          ctx,
+          alignment: 0.2,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOut,
+        ),
+      );
+      return;
+    }
+
+    final targetIndex = ordered.indexWhere((m) => m.id == messageId);
+    if (targetIndex == -1 || !_scrollController.hasClients) {
+      if (!mounted) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(loc.chatMessageNotAvailable)));
+      return;
+    }
+
+    final denom = ordered.length <= 1 ? 1 : ordered.length - 1;
+    final fraction = targetIndex / denom;
+    final estimatedOffset =
+        _scrollController.position.maxScrollExtent * fraction;
+
+    await _scrollController.animateTo(
+      estimatedOffset,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+    );
+
+    if (!mounted) return;
+
+    for (var attempt = 0; attempt < 6; attempt++) {
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      if (!mounted) return;
+      final afterCtx = _messageRowKeys[messageId]?.currentContext;
+      if (afterCtx != null) {
+        if (!afterCtx.mounted) {
+          continue;
+        }
+        unawaited(
+          Scrollable.ensureVisible(
+            afterCtx,
+            alignment: 0.2,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+          ),
+        );
+        return;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = context.l10n;
     final controller = context.watch<ProjectController>();
-    final threadContact = _resolveThreadContact(controller);
-    final threadName =
-        threadContact?.name ?? loc.collaborationChatTitleFallback;
-    final threadSubtitle =
-        threadContact?.profession ?? loc.collaborationChatSubtitleFallback;
+    final projects = controller.projects;
+    final viewerId = _viewerId(controller);
+    final project = _activeProject(projects);
+
+    if (project == null) {
+      return _EmptyWorkspaceState(
+        icon: Icons.chat_outlined,
+        message: loc.chatsEmptyTitle,
+      );
+    }
+
+    String? targetContactName;
+    if (widget.initialContactId != null) {
+      final controllerForName = context.read<ProjectController>();
+      final contact = controllerForName.contactById(widget.initialContactId!);
+      if (contact != null) {
+        targetContactName = contact.name;
+      } else {
+        // try to find a member with this id
+        for (final proj in controllerForName.projects) {
+          final member = proj.members.firstWhere(
+            (m) =>
+                m.id == widget.initialContactId ||
+                m.contactId == widget.initialContactId,
+            orElse: () => Member(id: '', name: ''),
+          );
+          if (member.id.isNotEmpty) {
+            targetContactName = member.name;
+            break;
+          }
+        }
+      }
+    }
+
+    final rawMessages = List<Message>.from(controller.messagesFor(project.id))
+      ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+    final messagesById = {
+      for (final message in rawMessages) message.id: message,
+    };
+    final members = {for (final member in project.members) member.id: member};
+    final workspaceMessages = rawMessages
+        .map((message) {
+          final member = members[message.authorId];
+          final isMine = message.authorId == viewerId;
+          final authorName = isMine
+              ? loc.homeAuthorYou
+              : _resolveAuthorName(
+                  authorId: message.authorId,
+                  member: member,
+                  controller: controller,
+                  loc: loc,
+                );
+          return _WorkspaceMessage(
+            projectId: project.id,
+            messageId: message.id,
+            authorId: message.authorId,
+            authorName: authorName,
+            body: message.body,
+            isMine: isMine,
+            sentAt: message.sentAt,
+            attachments: message.attachments,
+            mentions: message.mentions,
+            reactions: message.reactions,
+            replyToMessageId: message.replyToMessageId,
+            replyPreview: message.replyPreview,
+            member: member,
+          );
+        })
+        .toList(growable: false);
+
+    final unread = rawMessages
+        .where(
+          (message) =>
+              message.authorId != viewerId &&
+              message.receipts[viewerId] != MessageReceiptStatus.read,
+        )
+        .toList(growable: false);
+
+    if (unread.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        for (final message in unread) {
+          controller.markReceipt(
+            projectId: project.id,
+            messageId: message.id,
+            memberId: viewerId,
+            status: MessageReceiptStatus.read,
+          );
+        }
+      });
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -146,7 +428,10 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
         title: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => _openDirectContact(threadContact, threadName),
+            onTap: () => context.pushNamed(
+              'projectChat',
+              pathParameters: {'id': project.id},
+            ),
             borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -155,7 +440,7 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    threadName,
+                    project.name,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: AppColors.secondaryText,
                       fontWeight: FontWeight.bold,
@@ -163,7 +448,9 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    threadSubtitle,
+                    project.client.isEmpty
+                        ? loc.projectDetailClientPlaceholder
+                        : project.client,
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: AppColors.hintTextfiled,
                       fontWeight: FontWeight.w600,
@@ -175,6 +462,25 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
           ),
         ),
         actions: [
+          if (projects.length > 1)
+            PopupMenuButton<String>(
+              tooltip: loc.projectDetailMenuProjectChat,
+              icon: const Icon(
+                FeatherIcons.layers,
+                color: AppColors.secondaryText,
+              ),
+              onSelected: (value) {
+                setState(() => _selectedProjectId = value);
+              },
+              itemBuilder: (context) => projects
+                  .map(
+                    (proj) => PopupMenuItem<String>(
+                      value: proj.id,
+                      child: Text(proj.name),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
           IconButton(
             tooltip: loc.collaborationChatSharedFilesTooltip,
             icon: const Icon(
@@ -192,34 +498,126 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
               bottom: false,
               child: Column(
                 children: [
+                  if (targetContactName != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryBackground,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              FeatherIcons.messageCircle,
+                              color: AppColors.secondary,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '${loc.collaborationChatTitleFallback}: $targetContactName',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: AppColors.secondaryText,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   Expanded(
                     child: ListView.separated(
                       controller: _scrollController,
                       padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
                       itemBuilder: (context, index) {
-                        final message = _messages[index];
-                        final authorName = message.isMine
-                            ? loc.homeAuthorYou
-                            : threadContact?.name ?? message.sender;
-                        return _MessageBubble(
+                        final message = workspaceMessages[index];
+                        final rowKey = _messageRowKeys.putIfAbsent(
+                          message.messageId,
+                          () => GlobalKey(),
+                        );
+                        final replyAuthorName =
+                            message.member?.name ?? message.authorName;
+                        final replyPreview = MessageReplyPreview(
+                          messageId: message.messageId,
+                          authorId: message.authorId,
+                          authorName: replyAuthorName,
+                          authorAvatarUrl: message.member?.avatarUrl,
+                          sentAt: message.sentAt,
+                          body: message.body,
+                          attachments: message.attachments,
+                        );
+
+                        final bubble = _MessageBubble(
                           message: message,
-                          authorName: authorName,
-                          onAuthorTap: () => _openDirectAuthor(
-                            contact: threadContact,
+                          authorName: message.authorName,
+                          viewerId: viewerId,
+                          membersById: members,
+                          messagesById: messagesById,
+                          onReply: () => _startReply(replyPreview),
+                          onJumpToMessage: (id) =>
+                              _jumpToMessage(id, rawMessages),
+                          onAuthorTap: () => _openAuthor(
+                            project: project,
+                            member: message.member,
                             authorId: message.authorId,
-                            authorName: authorName,
+                            authorName: message.authorName,
                           ),
-                          onReact: (emoji) => _handleReaction(index, emoji),
+                          onReact: (emoji) => _handleReaction(
+                            message.projectId,
+                            message.messageId,
+                            emoji,
+                          ),
+                        );
+
+                        return KeyedSubtree(
+                          key: rowKey,
+                          child: Dismissible(
+                            key: ValueKey(
+                              'reply-${message.projectId}-${message.messageId}',
+                            ),
+                            direction: DismissDirection.horizontal,
+                            dismissThresholds: const {
+                              DismissDirection.startToEnd: 0.2,
+                              DismissDirection.endToStart: 0.2,
+                            },
+                            background: const _SwipeReplyBackground(
+                              alignment: AlignmentDirectional.centerStart,
+                            ),
+                            secondaryBackground: const _SwipeReplyBackground(
+                              alignment: AlignmentDirectional.centerEnd,
+                            ),
+                            confirmDismiss: (_) async {
+                              _startReply(replyPreview);
+                              return false;
+                            },
+                            child: bubble,
+                          ),
                         );
                       },
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemCount: _messages.length,
+                      itemCount: workspaceMessages.length,
                     ),
                   ),
                   const Divider(height: 1, color: AppColors.textfieldBorder),
                   _MessageComposer(
                     controller: _messageController,
-                    onSend: _handleSend,
+                    onSend: () => _handleSend(project),
+                    replyingTo: _replyingTo,
+                    replyPrefixText: _replyPrefixText(),
+                    onCancelReply: _clearReply,
+                    attachments: List<UploadedAttachment>.unmodifiable(
+                      _pendingAttachments,
+                    ),
+                    onAttachmentSelected: (source) =>
+                        _handleAttachmentSelected(source),
+                    onAttachmentRemoved: _removePendingAttachment,
+                    isUploadingAttachment: _isUploadingAttachment,
                     bottomPadding: CustomNavBar.totalHeight + 24,
                   ),
                 ],
@@ -237,49 +635,101 @@ class _CollaborationChatScreenState extends State<CollaborationChatScreen> {
     );
   }
 
-  CollaboratorContact? _resolveThreadContact(ProjectController controller) {
-    final directMatch = controller.contactById(_threadContactId);
-    if (directMatch != null) {
-      return directMatch;
+  Project? _activeProject(List<Project> projects) {
+    if (projects.isEmpty) {
+      return null;
     }
-    return controller.contacts.isNotEmpty ? controller.contacts.first : null;
+    for (final project in projects) {
+      if (project.id == _selectedProjectId) {
+        return project;
+      }
+    }
+    final fallback = projects.first;
+    if (_selectedProjectId != fallback.id) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _selectedProjectId = fallback.id);
+      });
+    }
+    return fallback;
   }
 
-  void _openDirectContact(CollaboratorContact? contact, String fallbackName) {
-    if (!mounted) {
-      return;
-    }
-
-    final controller = context.read<ProjectController>();
-    final detailArgs = controller.buildContactDetailArgs(
-      contact: contact,
-      member: contact == null
-          ? Member(id: _threadContactId, name: fallbackName)
-          : null,
-    );
-    context.pushNamed('contactDetail', extra: detailArgs);
-  }
-
-  void _openDirectAuthor({
-    CollaboratorContact? contact,
+  void _openAuthor({
+    required Project project,
+    Member? member,
     required String authorId,
     required String authorName,
   }) {
-    if (!mounted) {
-      return;
-    }
-
-    if (authorId == 'me') {
+    if (!mounted) return;
+    final controller = context.read<ProjectController>();
+    final viewerId = _viewerId(controller);
+    if (authorId == viewerId) {
       context.pushNamed('profile');
       return;
     }
-
-    final controller = context.read<ProjectController>();
     final detailArgs = controller.buildContactDetailArgs(
-      contact: contact,
-      member: Member(id: authorId, name: authorName),
+      member: member ?? Member(id: authorId, name: authorName),
+      currentProject: project,
     );
     context.pushNamed('contactDetail', extra: detailArgs);
+  }
+
+  String _viewerId(ProjectController controller) {
+    final id = controller.currentUserId;
+    if (id == null || id.isEmpty) {
+      return 'me';
+    }
+    return id;
+  }
+
+  String _resolveAuthorName({
+    required String authorId,
+    Member? member,
+    required ProjectController controller,
+    required AppLocalizations loc,
+  }) {
+    if (member != null) {
+      final contact = controller.contactForMember(member);
+      if (contact != null && contact.name.isNotEmpty) {
+        return contact.name;
+      }
+      if (member.name.isNotEmpty) {
+        return member.name;
+      }
+    }
+    final contact = controller.contactById(authorId);
+    if (contact != null && contact.name.isNotEmpty) {
+      return contact.name;
+    }
+    return loc.homeCollaboratorFallback;
+  }
+}
+
+class _SwipeReplyBackground extends StatelessWidget {
+  const _SwipeReplyBackground({required this.alignment});
+
+  final AlignmentDirectional alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        ),
+        child: const Icon(
+          Icons.reply_outlined,
+          color: AppColors.primary,
+          size: 20,
+        ),
+      ),
+    );
   }
 }
 
@@ -287,11 +737,25 @@ class _MessageComposer extends StatelessWidget {
   const _MessageComposer({
     required this.controller,
     required this.onSend,
+    this.replyingTo,
+    this.replyPrefixText,
+    this.onCancelReply,
+    required this.attachments,
+    required this.onAttachmentSelected,
+    required this.onAttachmentRemoved,
+    required this.isUploadingAttachment,
     this.bottomPadding = 20,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
+  final MessageReplyPreview? replyingTo;
+  final String? replyPrefixText;
+  final VoidCallback? onCancelReply;
+  final List<UploadedAttachment> attachments;
+  final ValueChanged<ChatAttachmentSource> onAttachmentSelected;
+  final ValueChanged<UploadedAttachment> onAttachmentRemoved;
+  final bool isUploadingAttachment;
   final double bottomPadding;
 
   @override
@@ -319,52 +783,101 @@ class _MessageComposer extends StatelessWidget {
           child: ValueListenableBuilder<TextEditingValue>(
             valueListenable: controller,
             builder: (context, value, _) {
-              final canSend = value.text.trim().isNotEmpty;
+              final hasText = value.text.trim().isNotEmpty;
+              final hasAttachments = attachments.isNotEmpty;
+              final canSend = hasText || hasAttachments;
 
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ComposerActionIcon(
-                    icon: FeatherIcons.paperclip,
-                    tooltip: loc.collaborationChatAddAttachment,
-                    onTap: () => _showAttachmentOptions(context),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      minLines: 1,
-                      maxLines: 6,
-                      decoration: InputDecoration(
-                        hintText: loc.collaborationChatComposerHint,
-                        hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.hintTextfiled,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        filled: true,
-                        fillColor: AppColors.textfieldBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 18,
+                  if (isUploadingAttachment)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: LinearProgressIndicator(minHeight: 3),
+                    ),
+                  if (isUploadingAttachment) const SizedBox(height: 12),
+                  if (replyingTo != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: MessageReplyBanner(
+                        preview: replyingTo!,
+                        onCancel: onCancelReply ?? () {},
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (hasAttachments)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: attachments
+                          .map(
+                            (attachment) => _AttachmentChip(
+                              attachment: attachment,
+                              onRemoved: onAttachmentRemoved,
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  if (hasAttachments) const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _ComposerActionIcon(
+                        icon: FeatherIcons.paperclip,
+                        tooltip: loc.collaborationChatAddAttachment,
+                        onTap: isUploadingAttachment
+                            ? null
+                            : () => _showAttachmentOptions(
+                                context,
+                                onSelected: onAttachmentSelected,
+                              ),
+                        enabled: !isUploadingAttachment,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          minLines: 1,
+                          maxLines: 6,
+                          decoration: InputDecoration(
+                            hintText: loc.collaborationChatComposerHint,
+                            hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.hintTextfiled,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            prefixText: replyPrefixText,
+                            prefixStyle: theme.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.textfieldBackground,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 18,
+                            ),
+                          ),
+                          textInputAction: TextInputAction.newline,
+                          onSubmitted: (_) {
+                            if (canSend) onSend();
+                          },
                         ),
                       ),
-                      textInputAction: TextInputAction.newline,
-                      onSubmitted: (_) {
-                        if (canSend) onSend();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  _ComposerActionIcon(
-                    icon: FeatherIcons.send,
-                    tooltip: loc.collaborationChatSendMessage,
-                    onTap: canSend ? onSend : null,
-                    enabled: canSend,
-                    variant: _ComposerButtonVariant.primary,
+                      const SizedBox(width: 12),
+                      _ComposerActionIcon(
+                        icon: FeatherIcons.send,
+                        tooltip: loc.collaborationChatSendMessage,
+                        onTap: canSend ? onSend : null,
+                        enabled: canSend,
+                        variant: _ComposerButtonVariant.primary,
+                      ),
+                    ],
                   ),
                 ],
               );
@@ -448,7 +961,56 @@ class _ComposerActionIcon extends StatelessWidget {
   }
 }
 
-void _showAttachmentOptions(BuildContext context) {
+class _EmptyWorkspaceState extends StatelessWidget {
+  const _EmptyWorkspaceState({required this.icon, required this.message});
+
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: SafeArea(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 58, color: AppColors.hintTextfiled),
+                    const SizedBox(height: 16),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: AppColors.secondaryText,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CustomNavBar(currentRouteName: 'crm'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+void _showAttachmentOptions(
+  BuildContext context, {
+  required ValueChanged<ChatAttachmentSource> onSelected,
+}) {
   final loc = context.l10n;
   showModalBottomSheet<void>(
     context: context,
@@ -492,22 +1054,34 @@ void _showAttachmentOptions(BuildContext context) {
                 _AttachmentOption(
                   icon: FeatherIcons.image,
                   label: loc.collaborationChatAttachPhoto,
-                  onTap: () => Navigator.of(sheetContext).pop(),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    onSelected(ChatAttachmentSource.photoLibrary);
+                  },
                 ),
                 _AttachmentOption(
                   icon: FeatherIcons.fileText,
                   label: loc.collaborationChatAttachDocument,
-                  onTap: () => Navigator.of(sheetContext).pop(),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    onSelected(ChatAttachmentSource.document);
+                  },
                 ),
                 _AttachmentOption(
                   icon: FeatherIcons.file,
                   label: loc.collaborationChatAttachPdf,
-                  onTap: () => Navigator.of(sheetContext).pop(),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    onSelected(ChatAttachmentSource.pdf);
+                  },
                 ),
                 _AttachmentOption(
                   icon: FeatherIcons.camera,
                   label: loc.collaborationChatAttachCamera,
-                  onTap: () => Navigator.of(sheetContext).pop(),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    onSelected(ChatAttachmentSource.camera);
+                  },
                 ),
               ],
             ),
@@ -549,18 +1123,64 @@ class _AttachmentOption extends StatelessWidget {
   }
 }
 
+class _AttachmentChip extends StatelessWidget {
+  const _AttachmentChip({required this.attachment, required this.onRemoved});
+
+  final UploadedAttachment attachment;
+  final ValueChanged<UploadedAttachment> onRemoved;
+
+  @override
+  Widget build(BuildContext context) {
+    return InputChip(
+      label: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 160),
+        child: Text(
+          attachment.name,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: AppColors.secondaryText,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      onDeleted: () => onRemoved(attachment),
+      deleteIcon: const Icon(Icons.close, size: 16),
+      deleteIconColor: AppColors.hintTextfiled,
+      backgroundColor: AppColors.textfieldBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: AppColors.textfieldBorder.withValues(alpha: 0.6),
+        ),
+      ),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   const _MessageBubble({
     required this.message,
     required this.onReact,
+    required this.onReply,
+    required this.onJumpToMessage,
     required this.authorName,
     required this.onAuthorTap,
+    required this.viewerId,
+    required this.membersById,
+    required this.messagesById,
   });
 
-  final _ChatMessage message;
+  final _WorkspaceMessage message;
   final ValueChanged<String> onReact;
+  final VoidCallback onReply;
+  final ValueChanged<String> onJumpToMessage;
   final String authorName;
   final VoidCallback onAuthorTap;
+
+  final String viewerId;
+  final Map<String, Member> membersById;
+  final Map<String, Message> messagesById;
 
   @override
   Widget build(BuildContext context) {
@@ -574,7 +1194,7 @@ class _MessageBubble extends StatelessWidget {
       fontWeight: FontWeight.w600,
     );
     final mentionStyle = baseStyle?.copyWith(
-      color: AppColors.secondary,
+      color: AppColors.primary,
       fontWeight: FontWeight.bold,
     );
 
@@ -627,12 +1247,34 @@ class _MessageBubble extends StatelessWidget {
                             ? CrossAxisAlignment.end
                             : CrossAxisAlignment.start,
                         children: [
+                          Builder(
+                            builder: (context) {
+                              final preview = _resolveReplyPreview(context);
+                              if (preview == null) {
+                                return const SizedBox.shrink();
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: QuotedReplyBlock(
+                                  preview: preview,
+                                  isMine: message.isMine,
+                                  onTap: () {
+                                    final targetId =
+                                        message.replyToMessageId ??
+                                        preview.messageId;
+                                    if (targetId.trim().isEmpty) return;
+                                    onJumpToMessage(targetId);
+                                  },
+                                ),
+                              );
+                            },
+                          ),
                           if (baseStyle != null)
                             RichText(
                               text: TextSpan(
                                 style: baseStyle,
                                 children: _buildBodySpans(
-                                  message.message,
+                                  message.body,
                                   message.mentions,
                                   baseStyle,
                                   mentionStyle ?? baseStyle,
@@ -640,7 +1282,7 @@ class _MessageBubble extends StatelessWidget {
                               ),
                             )
                           else
-                            Text(message.message),
+                            Text(message.body),
                           if (message.attachments.isNotEmpty) ...[
                             const SizedBox(height: 12),
                             _AttachmentStrip(
@@ -663,6 +1305,7 @@ class _MessageBubble extends StatelessWidget {
                         onTap: () => showEmojiReactionPicker(
                           context: context,
                           onSelected: onReact,
+                          onReply: onReply,
                         ),
                       ),
                     ),
@@ -715,17 +1358,20 @@ class _MessageBubble extends StatelessWidget {
     var cursor = 0;
 
     for (final match in regex.allMatches(body)) {
-      if (match.start > cursor) {
-        spans.add(
-          TextSpan(text: body.substring(cursor, match.start), style: base),
-        );
+      var start = match.start;
+      var end = match.end;
+      final mentionToken = match.group(0)!;
+
+      if (start > cursor) {
+        spans.add(TextSpan(text: body.substring(cursor, start), style: base));
       }
-      final token = match.group(0)!;
-      final style = mentionSet.isEmpty || mentionSet.contains(token)
+
+      final displayToken = body.substring(start, end);
+      final style = mentionSet.isEmpty || mentionSet.contains(mentionToken)
           ? mentionStyle
           : base;
-      spans.add(TextSpan(text: token, style: style));
-      cursor = match.end;
+      spans.add(TextSpan(text: displayToken, style: style));
+      cursor = end;
     }
 
     if (cursor < body.length) {
@@ -733,6 +1379,45 @@ class _MessageBubble extends StatelessWidget {
     }
 
     return spans;
+  }
+
+  MessageReplyPreview? _resolveReplyPreview(BuildContext context) {
+    final direct = message.replyPreview;
+    if (direct != null && direct.messageId.isNotEmpty) {
+      return direct;
+    }
+
+    final replyToId = message.replyToMessageId;
+    if (replyToId == null || replyToId.trim().isEmpty) {
+      return null;
+    }
+
+    final original = messagesById[replyToId];
+    final loc = context.l10n;
+
+    if (original == null) {
+      return MessageReplyPreview(
+        messageId: replyToId,
+        authorId: '',
+        authorName: loc.homeCollaboratorFallback,
+        sentAt: DateTime.now(),
+        body: loc.chatMessageNotAvailable,
+        attachments: const [],
+      );
+    }
+
+    final member = membersById[original.authorId];
+    final resolvedAuthorName = member?.name ?? loc.homeCollaboratorFallback;
+
+    return MessageReplyPreview(
+      messageId: original.id,
+      authorId: original.authorId,
+      authorName: resolvedAuthorName,
+      authorAvatarUrl: member?.avatarUrl,
+      sentAt: original.sentAt,
+      body: original.body,
+      attachments: original.attachments,
+    );
   }
 }
 
@@ -765,35 +1450,24 @@ class _BubbleActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = highlight
-        ? AppColors.primary.withValues(alpha: 0.18)
-        : AppColors.secondaryBackground;
-    final borderColor = highlight
-        ? AppColors.primary.withValues(alpha: 0.3)
-        : AppColors.textfieldBorder.withValues(alpha: 0.55);
     final iconColor = highlight ? AppColors.secondary : AppColors.hintTextfiled;
+    final hoverColor = AppColors.primary.withValues(alpha: 0.08);
+    final splashColor = AppColors.primary.withValues(alpha: 0.12);
 
     return Tooltip(
       message: context.l10n.collaborationChatReactTooltip,
       child: Material(
         color: Colors.transparent,
-        shape: const CircleBorder(),
         child: InkWell(
-          customBorder: const CircleBorder(),
+          borderRadius: BorderRadius.circular(12),
+          hoverColor: hoverColor,
+          splashColor: splashColor,
+          highlightColor: splashColor,
           onTap: onTap,
-          child: Ink(
+          child: SizedBox(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: background,
-              border: Border.all(color: borderColor),
-            ),
-            child: Icon(
-              FeatherIcons.moreHorizontal,
-              size: 18,
-              color: iconColor,
-            ),
+            child: Icon(FeatherIcons.moreVertical, size: 20, color: iconColor),
           ),
         ),
       ),
@@ -810,20 +1484,21 @@ class _AttachmentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final lower = filename.toLowerCase();
+    final normalized = AttachmentUtils.normalizedName(filename);
+    final displayName = AttachmentUtils.displayName(filename);
     IconData icon;
     Color iconColor;
 
-    if (_isImage(lower)) {
+    if (_isImage(normalized)) {
       icon = Icons.image_outlined;
       iconColor = AppColors.secondary;
-    } else if (lower.endsWith('.pdf')) {
+    } else if (normalized.endsWith('.pdf')) {
       icon = Icons.picture_as_pdf_outlined;
       iconColor = Colors.redAccent;
-    } else if (lower.endsWith('.doc') || lower.endsWith('.docx')) {
+    } else if (normalized.endsWith('.doc') || normalized.endsWith('.docx')) {
       icon = Icons.description_outlined;
       iconColor = AppColors.secondary;
-    } else if (lower.endsWith('.xlsx') || lower.endsWith('.csv')) {
+    } else if (normalized.endsWith('.xlsx') || normalized.endsWith('.csv')) {
       icon = Icons.table_chart_outlined;
       iconColor = Colors.teal;
     } else {
@@ -852,7 +1527,7 @@ class _AttachmentTile extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 160),
             child: Text(
-              filename,
+              displayName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelMedium?.copyWith(
@@ -927,48 +1602,38 @@ class _ReactionPill extends StatelessWidget {
   }
 }
 
-class _ChatMessage {
-  const _ChatMessage({
+class _WorkspaceMessage {
+  const _WorkspaceMessage({
+    required this.projectId,
+    required this.messageId,
     required this.authorId,
-    required this.sender,
-    required this.message,
-    required this.timeLabel,
+    required this.authorName,
+    required this.body,
+    required this.sentAt,
     required this.isMine,
-    this.attachments = const [],
-    this.mentions = const [],
-    this.reactions = const {},
+    required this.attachments,
+    required this.mentions,
+    required this.reactions,
+    this.replyToMessageId,
+    this.replyPreview,
+    this.member,
   });
 
+  final String projectId;
+  final String messageId;
   final String authorId;
-  final String sender;
-  final String message;
-  final String timeLabel;
+  final String authorName;
+  final String body;
+  final DateTime sentAt;
   final bool isMine;
   final List<String> attachments;
   final List<String> mentions;
   final Map<String, int> reactions;
+  final String? replyToMessageId;
+  final MessageReplyPreview? replyPreview;
+  final Member? member;
 
-  _ChatMessage copyWith({
-    String? authorId,
-    String? sender,
-    String? message,
-    String? timeLabel,
-    bool? isMine,
-    List<String>? attachments,
-    List<String>? mentions,
-    Map<String, int>? reactions,
-  }) {
-    return _ChatMessage(
-      sender: sender ?? this.sender,
-      message: message ?? this.message,
-      timeLabel: timeLabel ?? this.timeLabel,
-      isMine: isMine ?? this.isMine,
-      attachments: attachments ?? this.attachments,
-      mentions: mentions ?? this.mentions,
-      reactions: reactions ?? this.reactions,
-      authorId: authorId ?? this.authorId,
-    );
-  }
+  String get timeLabel => DateFormat.Hm().format(sentAt);
 }
 
 class _MessageAvatar extends StatelessWidget {

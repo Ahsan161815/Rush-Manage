@@ -10,8 +10,10 @@ import 'package:myapp/app/router.dart';
 import 'package:myapp/common/utils/password_recovery_redirect.dart';
 import 'package:myapp/controllers/dashboard_controller.dart';
 import 'package:myapp/controllers/project_controller.dart';
+import 'package:myapp/controllers/crm_controller.dart';
 import 'package:myapp/controllers/finance_controller.dart';
 import 'package:myapp/controllers/locale_controller.dart';
+import 'package:myapp/controllers/user_controller.dart';
 import 'package:myapp/l10n/app_localizations.dart';
 import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/services/supabase_service.dart';
@@ -20,6 +22,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final supabaseService = SupabaseService.instance;
   await supabaseService.init();
+  final client = supabaseService.client;
   final openResetOnLaunch = await handlePasswordRecoveryRedirect(
     supabaseService.client,
   );
@@ -30,8 +33,18 @@ Future<void> main() async {
         Provider(create: (_) => AuthService(supabaseService)),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => DashboardController()),
-        ChangeNotifierProvider(create: (context) => ProjectController()),
-        ChangeNotifierProvider(create: (context) => FinanceController()),
+        ChangeNotifierProvider(
+          create: (context) => ProjectController(client: client),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => FinanceController(client: client),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => CrmController(client: client),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => UserController(client: client),
+        ),
         ChangeNotifierProvider(create: (context) => LocaleController()),
       ],
       child: AuthStateListener(
@@ -97,16 +110,26 @@ class _AuthStateListenerState extends State<AuthStateListener> {
     super.initState();
     final authService = context.read<AuthService>();
     _subscription = authService.authStateChanges.listen((authState) {
+      if (!mounted) {
+        return;
+      }
       if (authState.event == AuthChangeEvent.passwordRecovery) {
         router.goNamed('resetPassword');
       }
+      if (authState.event == AuthChangeEvent.signedOut) {
+        _resetWorkspaceControllers();
+        return;
+      }
+      if (authState.session != null) {
+        _primeWorkspaceControllers();
+      }
     });
-
-    if (widget.openResetOnLaunch) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _primeWorkspaceControllers();
+      if (widget.openResetOnLaunch) {
         router.goNamed('resetPassword');
-      });
-    }
+      }
+    });
   }
 
   @override
@@ -117,4 +140,24 @@ class _AuthStateListenerState extends State<AuthStateListener> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+
+  void _primeWorkspaceControllers() {
+    if (!mounted) {
+      return;
+    }
+    context.read<ProjectController>().initialize();
+    context.read<FinanceController>().initialize();
+    context.read<CrmController>().initialize();
+    context.read<UserController>().loadProfile();
+  }
+
+  void _resetWorkspaceControllers() {
+    if (!mounted) {
+      return;
+    }
+    context.read<ProjectController>().reset();
+    context.read<FinanceController>().reset();
+    context.read<CrmController>().reset();
+    context.read<UserController>().clear();
+  }
 }

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:myapp/app/app_theme.dart';
 import 'package:myapp/app/widgets/gradient_button.dart';
 import 'package:myapp/common/localization/l10n_extensions.dart';
-import 'package:myapp/l10n/app_localizations.dart';
 import 'package:myapp/common/models/contact_detail_args.dart';
 import 'package:myapp/common/models/contact_form_models.dart';
 import 'package:myapp/common/utils/contact_form_launcher.dart';
+import 'package:myapp/controllers/crm_controller.dart';
+import 'package:myapp/l10n/app_localizations.dart';
 
 class ContactDetailScreen extends StatelessWidget {
   const ContactDetailScreen({super.key, required this.args});
@@ -46,7 +48,10 @@ class ContactDetailScreen extends StatelessWidget {
               FeatherIcons.messageCircle,
               color: AppColors.secondaryText,
             ),
-            onPressed: () => context.pushNamed('collaborationChat'),
+            onPressed: () => context.pushNamed(
+              'collaborationChat',
+              queryParameters: {'contactId': args.contactId},
+            ),
           ),
         ],
       ),
@@ -138,7 +143,10 @@ class ContactDetailScreen extends StatelessWidget {
               ],
               const SizedBox(height: 24),
               GradientButton(
-                onPressed: () => context.pushNamed('collaborationChat'),
+                onPressed: () => context.pushNamed(
+                  'collaborationChat',
+                  queryParameters: {'contactId': args.contactId},
+                ),
                 text: loc.collaboratorSendMessage,
                 width: double.infinity,
                 height: 52,
@@ -150,8 +158,9 @@ class ContactDetailScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openContactEditor(BuildContext context) {
-    return ContactFormLauncher.show(
+  Future<void> _openContactEditor(BuildContext context) async {
+    final controller = context.read<CrmController?>();
+    final submission = await ContactFormLauncher.show(
       context,
       mode: ContactFormMode.edit,
       data: ContactFormData(
@@ -162,7 +171,32 @@ class ContactDetailScreen extends StatelessWidget {
         type: args.title,
         notes: args.note,
       ),
+      contactId: args.contactId,
     );
+    if (controller == null || submission == null) {
+      return;
+    }
+    final targetId = submission.contactId ?? args.contactId;
+    if (targetId.isEmpty) {
+      return;
+    }
+    if (!context.mounted) {
+      return;
+    }
+    try {
+      await controller.updateContact(targetId, submission.data);
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Contact updated')));
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to update contact')),
+        );
+      }
+    }
   }
 
   void _openProjectCreation(BuildContext context) {
@@ -177,11 +211,31 @@ class ContactDetailScreen extends StatelessWidget {
   }
 
   void _openQuoteCreation(BuildContext context) {
-    context.pushNamed('financeCreateQuote');
+    context.pushNamed(
+      'financeCreateQuote',
+      queryParameters: {
+        'clientName': args.name,
+        if (args.email != null && args.email!.trim().isNotEmpty)
+          'clientEmail': args.email!.trim(),
+        'contactId': args.contactId,
+      },
+    );
   }
 
   void _openInvoiceCreation(BuildContext context) {
-    context.goNamed('finance');
+    final params = <String, String>{};
+    if (args.projects.isNotEmpty && args.projects.first.id.isNotEmpty) {
+      params['projectId'] = args.projects.first.id;
+    }
+    params['clientName'] = args.name;
+    if (args.email != null && args.email!.trim().isNotEmpty) {
+      params['clientEmail'] = args.email!.trim();
+    }
+    params['contactId'] = args.contactId;
+    context.pushNamed(
+      'financeCreateInvoiceForm',
+      queryParameters: params.cast<String, dynamic>(),
+    );
   }
 }
 
